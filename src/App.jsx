@@ -150,7 +150,7 @@ const FAQS = [
   { q: "Do you ship worldwide?", a: "Yes. Duties are calculated at checkout so there are no surprise fees at your door." },
 ];
 
-const SUPPORT_EMAIL = "kohenthrasher@gmail.com";
+const SUPPORT_EMAIL = "kohenjthrasher@gmail.com";
 
 const TOPICS = [
   {
@@ -186,7 +186,7 @@ const TOPICS = [
   {
     id: "other", n: "06", label: "Something else",
     help: "Collabs, wholesale, press, or anything that doesn't fit a box — hit us directly and a real person will get back to you within one business day.",
-    subject: "Avalanche — general inquiry",
+    subject: "Whitefall — general inquiry",
     body: "Hi Whitefall,%0D%0A%0D%0A",
   },
 ];
@@ -207,6 +207,7 @@ export default function App() {
   const [popupDone, setPopupDone] = useState(false);
   const [popupJoined, setPopupJoined] = useState(false);
   const [size, setSize] = useState(null);
+  const [relayFailed, setRelayFailed] = useState(false);
   const [shared, setShared] = useState(false);
   const [barDismissed, setBarDismissed] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
@@ -249,6 +250,18 @@ export default function App() {
         await window.storage.set(key, JSON.stringify({ ...row, size: sz }), true);
       } else {
         lsWrite(lsRead().map((r) => (r.email === clean ? { ...r, size: sz } : r)));
+        try {
+          await fetch("https://formsubmit.co/ajax/" + SUPPORT_EMAIL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify({
+              _subject: "▲ Whitefall waitlist — size added",
+              _template: "table",
+              email: clean,
+              size: sz,
+            }),
+          });
+        } catch (e) { console.error("size relay failed", e); }
       }
     } catch (e) { console.error("size save unavailable", e); }
   };
@@ -408,18 +421,23 @@ export default function App() {
         setSessionRows((rows) => rows.map((r) => (r.email === clean ? { ...r, num: n || r.num } : r)));
         setStoreMode("relay");
         try {
-          await fetch("https://formsubmit.co/ajax/kohenthrasher@gmail.com", {
+          const fr = await fetch("https://formsubmit.co/ajax/" + SUPPORT_EMAIL, {
             method: "POST",
             headers: { "Content-Type": "application/json", Accept: "application/json" },
             body: JSON.stringify({
               _subject: "▲ New Whitefall waitlist signup" + (n ? " — member #" + String(n).padStart(3, "0") : ""),
+              _template: "table",
               email: clean,
               member_number: n || "unassigned",
               wants: interests.join(", ") || "general waitlist",
               signed_up_at: new Date().toLocaleString(),
             }),
           });
-        } catch (e) { console.error("email relay failed", e); }
+          const fj = await fr.json().catch(() => null);
+          const delivered = fr.ok && fj && (fj.success === true || fj.success === "true");
+          setRelayFailed(!delivered);
+          if (!delivered) console.error("email relay not delivered", fj);
+        } catch (e) { console.error("email relay failed", e); setRelayFailed(true); }
       }
     } catch (e) {
       console.error("signup save failed", e);
@@ -685,6 +703,12 @@ export default function App() {
                   ? (founding ? "▲ FOUNDING MEMBER — EARLY ACCESS FOR LIFE" : "▲ MEMBER — THE LIST SHOPS FIRST")
                   : "▲ YOU'RE IN. WATCH YOUR INBOX."}
               </p>
+              {relayFailed && (
+                <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Waitlist signup")}&body=${encodeURIComponent("Add me to the FW26 waitlist: " + email.trim().toLowerCase())}`}
+                  style={{ ...mono, display: "inline-block", border: "1px solid rgba(191,211,219,.4)", color: S.frost, padding: "10px 16px", fontSize: 10, letterSpacing: "0.14em", textDecoration: "none", margin: "0 0 18px" }}>
+                  COULDN'T REACH THE LIST — TAP TO EMAIL YOUR SIGNUP INSTEAD ▲
+                </a>
+              )}
               {!size ? (
                 <div>
                   <p style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.16em", margin: "0 0 12px" }}>WHAT SIZE ARE YOU? (OPTIONAL — HELPS US MAKE ENOUGH OF YOURS)</p>
@@ -752,12 +776,12 @@ export default function App() {
               <div style={{ ...anton, fontSize: 22, marginBottom: 8 }}>@WHITEFALL26</div>
               <div style={{ color: S.ash, fontSize: 14, lineHeight: 1.6 }}>DM on Instagram for orders, sizing, and drop questions. Typical reply: under a few hours.</div>
             </a>
-            <a href="mailto:kohenthrasher@gmail.com" style={{ background: S.panel, border: `1px solid ${S.line}`, padding: "26px 22px", textDecoration: "none", color: S.snow, transition: "border-color .3s ease" }}
+            <a href={`mailto:${SUPPORT_EMAIL}`} style={{ background: S.panel, border: `1px solid ${S.line}`, padding: "26px 22px", textDecoration: "none", color: S.snow, transition: "border-color .3s ease" }}
               onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(191,211,219,.5)")}
               onMouseLeave={(e) => (e.currentTarget.style.borderColor = S.line)}>
               <div style={{ ...mono, fontSize: 10, letterSpacing: "0.18em", color: S.frost, marginBottom: 12 }}>ORDERS & RETURNS</div>
               <div style={{ ...anton, fontSize: 22, marginBottom: 8 }}>EMAIL SUPPORT</div>
-              <div style={{ color: S.ash, fontSize: 14, lineHeight: 1.6 }}>kohenthrasher@gmail.com — include your order number. Replies within one business day.</div>
+              <div style={{ color: S.ash, fontSize: 14, lineHeight: 1.6 }}>{SUPPORT_EMAIL} — include your order number. Replies within one business day.</div>
             </a>
             <a href="#fw26" onClick={go("fw26")} style={{ background: S.panel, border: `1px solid ${S.line}`, padding: "26px 22px", textDecoration: "none", color: S.snow, transition: "border-color .3s ease" }}
               onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(191,211,219,.5)")}
@@ -923,6 +947,12 @@ export default function App() {
                     ? (founding ? "FOUNDING MEMBER — EARLY ACCESS FOR LIFE" : "MEMBER — THE LIST SHOPS FIRST")
                     : "YOU'RE ON THE LIST ▲"}
                 </p>
+                {relayFailed && (
+                  <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Waitlist signup")}&body=${encodeURIComponent("Add me to the FW26 waitlist: " + email.trim().toLowerCase())}`}
+                    style={{ ...mono, display: "inline-block", border: "1px solid rgba(191,211,219,.4)", color: S.frost, padding: "9px 14px", fontSize: 9, letterSpacing: "0.12em", textDecoration: "none", margin: "0 0 12px" }}>
+                    COULDN'T REACH THE LIST — EMAIL YOUR SIGNUP ▲
+                  </a>
+                )}
                 <p style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.14em", margin: "0 0 12px" }}>WHAT SIZE ARE YOU? (OPTIONAL)</p>
                 <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap", marginBottom: 18 }}>
                   {["XS","S","M","L","XL","XXL"].map((sz) => (
@@ -1018,7 +1048,7 @@ export default function App() {
               It's used for one thing: telling you about drops. It is never sold, rented, or shared with anyone else.
             </p>
             <p style={{ color: S.ash, fontSize: 14, lineHeight: 1.75, margin: 0 }}>
-              Want off the list or your data deleted? Email <a href="mailto:kohenthrasher@gmail.com" style={{ color: S.frost }}>kohenthrasher@gmail.com</a> and it's done.
+              Want off the list or your data deleted? Email <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: S.frost }}>{SUPPORT_EMAIL}</a> and it's done.
             </p>
           </div>
         </div>
@@ -1082,7 +1112,7 @@ export default function App() {
 
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
                   <a
-                    href={`mailto:kohenthrasher@gmail.com?subject=${encodeURIComponent("Whitefall waitlist export — " + list.length + " signups")}&body=${encodeURIComponent(list.map((r) => (r.num ? "#" + pad3(r.num) + "  " : "") + r.email + (r.size ? "  [size: " + r.size + "]" : "") + (r.interests && r.interests.length ? "  [wants: " + r.interests.join(", ") + "]" : "") + "  (" + (r.at || "").slice(0, 10) + ")").join("\n") || "No signups yet.")}`}
+                    href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Whitefall waitlist export — " + list.length + " signups")}&body=${encodeURIComponent(list.map((r) => (r.num ? "#" + pad3(r.num) + "  " : "") + r.email + (r.size ? "  [size: " + r.size + "]" : "") + (r.interests && r.interests.length ? "  [wants: " + r.interests.join(", ") + "]" : "") + "  (" + (r.at || "").slice(0, 10) + ")").join("\n") || "No signups yet.")}`}
                     style={{ ...mono, background: S.snow, color: S.night, padding: "12px 18px", textDecoration: "none", fontSize: 11, fontWeight: 700, letterSpacing: "0.1em" }}>
                     EMAIL LIST TO ME ▲
                   </a>
