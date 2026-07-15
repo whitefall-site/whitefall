@@ -51,6 +51,8 @@ begin
       where email = p_email;
     return v_num;
   end if;
+  -- serialize number assignment so two simultaneous signups can't get the same number
+  perform pg_advisory_xact_lock(20261001);
   insert into signups (email, num, interests)
     values (p_email, (select coalesce(max(num), 0) + 1 from signups), p_interests)
     returning num into v_num;

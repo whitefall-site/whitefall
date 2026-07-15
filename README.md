@@ -19,7 +19,7 @@ npm run dev
 ### Option A — Vercel (best for a real brand site)
 1. Push this folder to a GitHub repo
 2. Go to vercel.com → "Add New Project" → import the repo
-3. Vercel auto-detects Vite. Click Deploy. Done — free HTTPS URL, and you can attach avalanche-apparel.com later.
+3. Vercel auto-detects Vite. Click Deploy. Done — free HTTPS URL, and you can attach your custom domain later.
 
 Or without GitHub: `npx vercel` in this folder and follow the prompts.
 

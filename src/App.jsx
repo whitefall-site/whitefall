@@ -457,6 +457,7 @@ export default function App() {
             body: JSON.stringify({
               _subject: "▲ New Whitefall waitlist signup" + (n ? " — member #" + String(n).padStart(3, "0") : ""),
               _template: "table",
+              _replyto: clean,
               email: clean,
               member_number: n || "unassigned",
               wants: interests.join(", ") || "general waitlist",
@@ -479,8 +480,8 @@ export default function App() {
   };
 
   const joinWaitlist = async () => {
-    if (!email.includes("@")) return;
-    await saveSignup(email);
+    const ok = await saveSignup(email);
+    if (!ok) return;
     setJoined(true);
     // thank-you popup with the founder number, no matter where they signed up
     setPopupJoined(true);
@@ -1037,12 +1038,12 @@ export default function App() {
                 type="email" value={email} placeholder="EMAIL ADDRESS" aria-label="Email address"
                 className="form-in"
                 onChange={(e) => setEmail(e.target.value)}
-                onKeyDown={async (e) => { if (e.key === "Enter" && email.includes("@")) { await joinWaitlist(); setPopupJoined(true); } }}
+                onKeyDown={(e) => { if (e.key === "Enter") joinWaitlist(); }}
                 style={{ ...mono, background: "rgba(255,255,255,.04)", border: `1px solid ${S.line}`, borderRight: "none", color: S.snow, padding: "15px 16px", fontSize: 13, width: "min(240px, 56vw)", letterSpacing: "0.06em" }}
               />
               <button
                 className="form-btn"
-                onClick={async () => { if (email.includes("@")) { await joinWaitlist(); setPopupJoined(true); } }}
+                onClick={joinWaitlist}
                 disabled={saving}
                 style={{ ...mono, background: S.snow, color: S.night, border: "none", padding: "15px 22px", fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", cursor: "pointer" }}>
                 {saving ? "SAVING…" : "JOIN ▲"}
