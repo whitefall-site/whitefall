@@ -30,13 +30,19 @@ Or without GitHub: `npx vercel` in this folder and follow the prompts.
 
 ## The email list — IMPORTANT one-time step
 
-Every waitlist signup on the live site is emailed to **kohenthrasher@gmail.com**
+Every waitlist signup on the live site is emailed to **kohenjthrasher@gmail.com**
 instantly via FormSubmit (free, no account).
 
 **The very first signup triggers a confirmation email to you — open it and click
-"Activate".** After that, every signup lands in your inbox automatically with the
-visitor's email and which pieces they want. Set up a Gmail filter on the subject
-"New Avalanche waitlist signup" to auto-label them.
+"Activate".** Do this yourself right after deploying: open the live site, sign up
+with any email, then check your inbox (and spam) for the FormSubmit activation
+email. Signups submitted *before* activation are NOT delivered, so activate before
+sharing the link. After that, every signup lands in your inbox automatically with
+the visitor's email, member number, and which pieces they want. Set up a Gmail
+filter on the subject "New Whitefall waitlist signup" to auto-label them.
+
+> Note: an earlier version of the site sent signups to `kohenthrasher@gmail.com`
+> (missing the "j") — a typo. Any signups from that period never reached you.
 
 ## Owner panel
 
