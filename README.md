@@ -28,36 +28,61 @@ Or without GitHub: `npx vercel` in this folder and follow the prompts.
 2. Go to app.netlify.com/drop and drag the `dist` folder onto the page
 3. Live instantly. (Re-drag after any change.)
 
-## The email list — IMPORTANT one-time step
+## The waitlist database — IMPORTANT one-time step
 
-Every waitlist signup on the live site is emailed to **kohenjthrasher@gmail.com**
-instantly via FormSubmit (free, no account).
+Every signup from every visitor is saved to one shared **Supabase** database
+(free tier), and the **owner panel on the site shows the full live list from any
+device**. Do this once:
 
-**The very first signup triggers a confirmation email to you — open it and click
-"Activate".** Do this yourself right after deploying: open the live site, sign up
-with any email, then check your inbox (and spam) for the FormSubmit activation
-email. Signups submitted *before* activation are NOT delivered, so activate before
-sharing the link. After that, every signup lands in your inbox automatically with
-the visitor's email, member number, and which pieces they want. Set up a Gmail
-filter on the subject "New Whitefall waitlist signup" to auto-label them.
+1. Go to [supabase.com](https://supabase.com) → sign up (free) → **New project**
+   (any name, any region, set a database password and keep it somewhere safe).
+2. In the project, open **SQL Editor** → **New query** → paste the entire
+   contents of `supabase-setup.sql` (in this repo) → **Run**. It creates the
+   signups table and the secure functions the site calls.
+3. Open **Project Settings → API** and copy two values: the **Project URL** and
+   the **anon public** key.
+4. In **Vercel** → your project → **Settings → Environment Variables**, add:
+   - `VITE_SUPABASE_URL` = the Project URL
+   - `VITE_SUPABASE_ANON_KEY` = the anon public key
+   Then **redeploy** (Deployments → ⋯ → Redeploy) so the build picks them up.
+5. For local dev: copy `.env.example` to `.env.local` and fill in the same two
+   values.
 
-> Note: an earlier version of the site sent signups to `kohenthrasher@gmail.com`
-> (missing the "j") — a typo. Any signups from that period never reached you.
+That's it. The owner panel (faint **OWNER** button in the footer) now checks the
+passcode against the database and shows every signup — email, member number,
+size, date — live from all visitors. Member numbers are assigned by the database
+in signup order, so the first 100 founding-member numbers are globally correct.
+
+**Change the passcode** (recommended — the default `0623` is visible in this
+repo's history): in Supabase SQL Editor run
+
+```sql
+update settings set value = 'YOUR-NEW-LONGER-CODE' where key = 'owner_code';
+```
+
+then use that code in the OWNER panel. Longer is better — anyone on the internet
+can attempt codes, so treat it like a password.
+
+**Fallback:** if the two env vars are not set, the site falls back to the old
+behavior — signups are emailed to **kohenthrasher@gmail.com** via FormSubmit
+(which requires a one-time "Activate" click on the email FormSubmit sends you)
+and the owner panel only shows signups made on that same device.
 
 ## Owner panel
 
-Bottom-right of the footer → the faint **OWNER** button → passcode **0623**.
-Shows signups recorded on that device, with copy + email-me-the-list buttons.
-(On the live site your inbox is the master list; the panel is a backup view.
-The passcode is a light lock — anyone reading the source code can find it,
-so don't put anything sensitive behind it.)
+Bottom-right of the footer → the faint **OWNER** button → enter your passcode.
+With Supabase set up (see above) it shows **every signup from every visitor,
+live, from any device** — emails, member numbers, a size tally, and copy /
+email-me-the-list buttons. The passcode is checked by the database, not by
+code in the page, so change it with the SQL one-liner above and it takes
+effect everywhere immediately.
 
 ## Editing quick-reference (all in `src/App.jsx`)
 
 - Products/teasers → the `TEASERS` array
 - FAQ answers → the `FAQS` array
 - Contact categories → the `TOPICS` array
-- Passcode → `OWNER_CODE`
+- Passcode → in Supabase (`settings` table); `OWNER_CODE` in App.jsx is only the fallback when Supabase isn't configured
 - Drop countdown date → the `DROP_DATE` line (placeholder: Oct 1, 2026, noon ET)
 - Slogan/copy → search the text you want to change
 
@@ -69,7 +94,7 @@ and link "Shop" to a Shopify/Stripe checkout.
 
 1. **Share card**: open `index.html` and replace `YOUR-SITE-URL` (2 places) with your
    real deployed URL, commit, redeploy. Now links pasted anywhere show the branded card.
-2. **Waitlist sizes**: signups can tap their size — the owner panel (passcode 0623)
+2. **Waitlist sizes**: signups can tap their size — the owner panel
    shows a size tally so you know how many of each size to produce.
 
 Note: the brand name is currently WHITEFALL throughout. If the final name changes,

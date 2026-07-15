@@ -150,7 +150,25 @@ const FAQS = [
   { q: "Do you ship worldwide?", a: "Yes. Duties are calculated at checkout so there are no surprise fees at your door." },
 ];
 
-const SUPPORT_EMAIL = "kohenjthrasher@gmail.com";
+const SUPPORT_EMAIL = "kohenthrasher@gmail.com";
+
+/* ——— SUPABASE (recommended): with these two env vars set, every signup from
+   every visitor lands in one shared database and the owner panel shows the
+   full live list from any device. Setup: README + supabase-setup.sql.
+   Without them the site falls back to email relay + this-device storage. ——— */
+const SB_URL = import.meta.env.VITE_SUPABASE_URL || "";
+const SB_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
+const hasSupabase = () => Boolean(SB_URL && SB_KEY);
+const sbRpc = async (fn, args) => {
+  const r = await fetch(`${SB_URL}/rest/v1/rpc/${fn}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` },
+    body: JSON.stringify(args),
+  });
+  if (!r.ok) throw new Error(`${fn} failed: ${await r.text()}`);
+  const t = await r.text();
+  return t ? JSON.parse(t) : null;
+};
 
 const TOPICS = [
   {
@@ -208,6 +226,7 @@ export default function App() {
   const [popupJoined, setPopupJoined] = useState(false);
   const [size, setSize] = useState(null);
   const [relayFailed, setRelayFailed] = useState(false);
+  const [unlockFailed, setUnlockFailed] = useState(false);
   const [shared, setShared] = useState(false);
   const [barDismissed, setBarDismissed] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
@@ -240,7 +259,10 @@ export default function App() {
     if (!clean.includes("@")) return;
     setSessionRows((rows) => rows.map((r) => (r.email === clean ? { ...r, size: sz } : r)));
     try {
-      if (hasArtifactStore()) {
+      if (hasSupabase()) {
+        await sbRpc("set_size", { p_email: clean, p_size: sz });
+        lsWrite(lsRead().map((r) => (r.email === clean ? { ...r, size: sz } : r)));
+      } else if (hasArtifactStore()) {
         const key = "signup:" + clean.replace(/[\s/\\'"]/g, "_");
         let row = { email: clean, interests: [], at: new Date().toISOString() };
         try {
@@ -390,7 +412,15 @@ export default function App() {
     const row = { email: clean, interests, at: new Date().toISOString() };
     setSessionRows((rows) => mergeRow(rows, row));
     try {
-      if (hasArtifactStore()) {
+      if (hasSupabase()) {
+        // One shared database for every visitor — the owner panel reads it live
+        const n = await sbRpc("join_waitlist", { p_email: clean, p_interests: interests });
+        if (n) { setMemberNum(n); row.num = n; }
+        lsWrite(mergeRow(lsRead(), row));
+        setSessionRows((rows) => rows.map((r) => (r.email === clean ? { ...r, num: n || r.num } : r)));
+        setStoreMode("cloud");
+        setRelayFailed(false);
+      } else if (hasArtifactStore()) {
         const key = "signup:" + clean.replace(/[\s/\\'"]/g, "_");
         let prior = [];
         try {
@@ -441,7 +471,8 @@ export default function App() {
       }
     } catch (e) {
       console.error("signup save failed", e);
-      setStoreMode(hasArtifactStore() ? "live" : "relay");
+      setRelayFailed(true);
+      setStoreMode(hasSupabase() ? "cloud" : hasArtifactStore() ? "live" : "relay");
     }
     setSaving(false);
     return true;
@@ -459,10 +490,17 @@ export default function App() {
 
 
 
-  const loadList = async () => {
+  const loadList = async (ownerCode) => {
     let rows = [];
     try {
-      if (hasArtifactStore()) {
+      if (hasSupabase()) {
+        const data = await sbRpc("list_signups", { p_code: (ownerCode ?? code).trim() });
+        rows = (data || []).map((r) => ({
+          email: r.email, num: r.num, size: r.size,
+          interests: r.interests || [], at: r.created_at || "",
+        }));
+        setStoreMode("cloud");
+      } else if (hasArtifactStore()) {
         const res = await window.storage.list("signup:", true);
         const keys = (res && res.keys) || [];
         for (const k of keys) {
@@ -478,14 +516,28 @@ export default function App() {
       }
     } catch (e) {
       console.error("list load failed", e);
+      if (hasSupabase()) return false; // wrong passcode or network — don't show a stale list
       setStoreMode(hasArtifactStore() ? "live" : "relay");
     }
     for (const s of sessionRows) rows = mergeRow(rows, s);
     rows.sort((a, b) => (b.at || "").localeCompare(a.at || ""));
     setList(rows);
+    return true;
   };
 
   const OWNER_CODE = "0623";
+
+  // With Supabase the passcode is verified by the database, not in this file
+  const tryUnlock = async () => {
+    if (hasSupabase()) {
+      const ok = await loadList(code);
+      if (ok) { setOwnerUnlocked(true); setUnlockFailed(false); }
+      else setUnlockFailed(true);
+    } else if (code.trim().toUpperCase() === OWNER_CODE) {
+      setOwnerUnlocked(true);
+      loadList();
+    }
+  };
 
   // Reliable in-page navigation (hash links are blocked in some sandboxed previews)
   const go = (id) => (e) => {
@@ -1074,26 +1126,32 @@ export default function App() {
                 <p style={{ color: S.ash, fontSize: 14, lineHeight: 1.6, margin: "0 0 16px" }}>Enter the owner passcode to view collected signups.</p>
                 <div className="form-row" style={{ display: "flex" }}>
                   <input type="password" className="form-in" value={code} placeholder="PASSCODE" aria-label="Owner passcode"
-                    onChange={(e) => setCode(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter" && code.trim().toUpperCase() === OWNER_CODE) { setOwnerUnlocked(true); loadList(); } }}
+                    onChange={(e) => { setCode(e.target.value); setUnlockFailed(false); }}
+                    onKeyDown={(e) => { if (e.key === "Enter") tryUnlock(); }}
                     style={{ ...mono, flex: 1, background: "rgba(255,255,255,.03)", border: `1px solid ${S.line}`, borderRight: "none", color: S.snow, padding: "13px 14px", fontSize: 13, letterSpacing: "0.1em" }} />
                   <button
-                    onClick={() => { if (code.trim().toUpperCase() === OWNER_CODE) { setOwnerUnlocked(true); loadList(); } }}
+                    onClick={tryUnlock}
                     style={{ ...mono, background: S.snow, color: S.night, border: "none", padding: "13px 20px", fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", cursor: "pointer" }}>
                     UNLOCK
                   </button>
                 </div>
-                {code && code.trim().toUpperCase() !== OWNER_CODE && (
-                  <p style={{ ...mono, color: S.ash, fontSize: 10, letterSpacing: "0.12em", marginTop: 10 }}>KEEP TYPING — THAT'S NOT IT YET.</p>
-                )}
+                {hasSupabase()
+                  ? unlockFailed && (
+                    <p style={{ ...mono, color: S.ash, fontSize: 10, letterSpacing: "0.12em", marginTop: 10 }}>THAT'S NOT IT — CHECK THE CODE AND TRY AGAIN.</p>
+                  )
+                  : code && code.trim().toUpperCase() !== OWNER_CODE && (
+                    <p style={{ ...mono, color: S.ash, fontSize: 10, letterSpacing: "0.12em", marginTop: 10 }}>KEEP TYPING — THAT'S NOT IT YET.</p>
+                  )}
               </div>
             ) : (
               <div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 16 }}>
                   <span style={{ ...mono, fontSize: 12, color: S.frost, letterSpacing: "0.14em" }}>
                     {list.length} SIGNUP{list.length === 1 ? "" : "S"} COLLECTED
-                    <span style={{ display: "block", fontSize: 9, color: storeMode === "live" ? S.frost : S.ash, marginTop: 6, letterSpacing: "0.12em" }}>
-                      {storeMode === "live"
+                    <span style={{ display: "block", fontSize: 9, color: storeMode === "live" || storeMode === "cloud" ? S.frost : S.ash, marginTop: 6, letterSpacing: "0.12em" }}>
+                      {storeMode === "cloud"
+                        ? "● SUPABASE LIVE — EVERY SIGNUP FROM EVERY VISITOR, ANY DEVICE"
+                        : storeMode === "live"
                         ? "● LIVE STORAGE — COLLECTING FROM ALL VISITORS"
                         : storeMode === "relay"
                         ? "● DEPLOYED — EVERY SIGNUP EMAILS YOUR INBOX INSTANTLY (WITH MEMBER #). THIS LIST SHOWS THIS DEVICE."
@@ -1143,7 +1201,9 @@ export default function App() {
                   </div>
                 )}
                 <p style={{ ...mono, fontSize: 9, color: S.ash, letterSpacing: "0.1em", marginTop: 14, lineHeight: 1.7 }}>
-                  {hasArtifactStore()
+                  {hasSupabase()
+                    ? 'THIS IS THE MASTER LIST — EVERY SIGNUP SAVES TO YOUR SUPABASE DATABASE AND SHOWS HERE FROM ANY DEVICE. "EMAIL LIST TO ME" OPENS A PRE-FILLED EMAIL WITH THE FULL LIST.'
+                    : hasArtifactStore()
                     ? 'SIGNUPS FROM EVERY VISITOR SAVE HERE AUTOMATICALLY. "EMAIL LIST TO ME" OPENS A PRE-FILLED EMAIL WITH THE FULL LIST.'
                     : "YOUR INBOX IS THE MASTER LIST ON THE LIVE SITE — EACH SIGNUP ARRIVES WITH ITS MEMBER NUMBER THE MOMENT IT HAPPENS."}
                 </p>
