@@ -612,7 +612,7 @@ export default function App() {
         {/* headline block */}
         <div className="hero-copy" style={{ position: "absolute", left: 0, right: 0, padding: "0 22px", textAlign: "center", zIndex: 2 }}>
           <p className="hero-in hd1" style={{ ...mono, color: S.frost, fontSize: 12, letterSpacing: "0.28em", margin: "0 0 10px" }}>
-            FALL / WINTER 2026 — THE SIGNAL IS UP
+            FALL / WINTER 2026
           </p>
           <h1 className="hero-in hd2" style={{ margin: 0, lineHeight: 1, textShadow: "0 0 55px rgba(191,211,219,.2)" }}>
             <Wordmark size="clamp(30px, 8.2vw, 124px)" stroke="2.5px" spacing="0.08em" glow />
