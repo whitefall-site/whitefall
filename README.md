@@ -31,18 +31,23 @@ Or without GitHub: `npx vercel` in this folder and follow the prompts.
 ## The email list — IMPORTANT one-time step
 
 Every waitlist signup on the live site is emailed to **kohenjthrasher@gmail.com**
-instantly via FormSubmit (free, no account).
+instantly via Web3Forms (free, no account, no activation link).
 
-**The very first signup triggers a confirmation email to you — open it and click
-"Activate".** Do this yourself right after deploying: open the live site, sign up
-with any email, then check your inbox (and spam) for the FormSubmit activation
-email. Signups submitted *before* activation are NOT delivered, so activate before
-sharing the link. After that, every signup lands in your inbox automatically with
-the visitor's email, member number, and which pieces they want. Set up a Gmail
-filter on the subject "New Whitefall waitlist signup" to auto-label them.
+**One-time setup:** go to https://web3forms.com, enter kohenjthrasher@gmail.com
+in the "Create your Access Key" box, and the key arrives in your inbox within a
+minute. Paste it into the `WEB3FORMS_KEY` line near the top of `src/App.jsx`
+(replacing `PASTE-YOUR-ACCESS-KEY-HERE`), commit, redeploy. Until the key is in
+place, the site shows each visitor a "couldn't reach the list — email your
+signup" button as a fallback, so no signup is silently lost.
 
-> Note: an earlier version of the site sent signups to `kohenthrasher@gmail.com`
-> (missing the "j") — a typo. Any signups from that period never reached you.
+The key is designed to live in public site code — it only lets people send email
+*to you*. Free tier is 250 submissions/month. Set up a Gmail filter on the
+subject "New Whitefall waitlist signup" to auto-label them.
+
+> History: the site previously used FormSubmit, whose activation flow never
+> completed (its one-time links kept reporting "not a valid link"), and before
+> that sent to `kohenthrasher@gmail.com` (missing the "j") — a typo. Signups
+> from those periods never arrived.
 
 ## Owner panel
 

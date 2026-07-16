@@ -214,6 +214,12 @@ const FAQS = [
 
 const SUPPORT_EMAIL = "kohenjthrasher@gmail.com";
 
+/* Web3Forms delivers each signup to the owner's inbox. Get a free access key
+   at https://web3forms.com (enter your email, the key arrives instantly —
+   no account, no activation link). The key is designed to be public. */
+const WEB3FORMS_KEY = "PASTE-YOUR-ACCESS-KEY-HERE";
+const relayReady = !WEB3FORMS_KEY.includes("PASTE");
+
 const TOPICS = [
   {
     id: "order", n: "01", label: "I can't find my order",
@@ -299,18 +305,21 @@ export default function App() {
         await window.storage.set(key, JSON.stringify({ ...row, size: sz }), true);
       } else {
         lsWrite(lsRead().map((r) => (r.email === clean ? { ...r, size: sz } : r)));
-        try {
-          await fetchT("https://formsubmit.co/ajax/" + SUPPORT_EMAIL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Accept: "application/json" },
-            body: JSON.stringify({
-              _subject: "▲ Whitefall waitlist — size added",
-              _template: "table",
-              email: clean,
-              size: sz,
-            }),
-          }, 12000);
-        } catch (e) { console.error("size relay failed", e); }
+        if (relayReady) {
+          try {
+            await fetchT("https://api.web3forms.com/submit", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Accept: "application/json" },
+              body: JSON.stringify({
+                access_key: WEB3FORMS_KEY,
+                subject: "▲ Whitefall waitlist — size added",
+                from_name: "Whitefall Waitlist",
+                email: clean,
+                size: sz,
+              }),
+            }, 12000);
+          } catch (e) { console.error("size relay failed", e); }
+        }
       }
     } catch (e) { console.error("size save unavailable", e); }
   };
@@ -469,24 +478,30 @@ export default function App() {
         lsWrite(mergeRow(lsRead(), row));
         setSessionRows((rows) => rows.map((r) => (r.email === clean ? { ...r, num: n || r.num } : r)));
         setStoreMode("relay");
-        try {
-          const fr = await fetchT("https://formsubmit.co/ajax/" + SUPPORT_EMAIL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Accept: "application/json" },
-            body: JSON.stringify({
-              _subject: "▲ New Whitefall waitlist signup" + (n ? " — member #" + String(n).padStart(3, "0") : ""),
-              _template: "table",
-              email: clean,
-              member_number: n || "unassigned",
-              wants: interests.join(", ") || "general waitlist",
-              signed_up_at: new Date().toLocaleString(),
-            }),
-          });
-          const fj = await fr.json().catch(() => null);
-          const delivered = fr.ok && fj && (fj.success === true || fj.success === "true");
-          setRelayFailed(!delivered);
-          if (!delivered) console.error("email relay not delivered", fj);
-        } catch (e) { console.error("email relay failed", e); setRelayFailed(true); }
+        if (!relayReady) {
+          // no access key configured yet — surface the email-me fallback
+          setRelayFailed(true);
+        } else {
+          try {
+            const fr = await fetchT("https://api.web3forms.com/submit", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Accept: "application/json" },
+              body: JSON.stringify({
+                access_key: WEB3FORMS_KEY,
+                subject: "▲ New Whitefall waitlist signup" + (n ? " — member #" + String(n).padStart(3, "0") : ""),
+                from_name: "Whitefall Waitlist",
+                email: clean,
+                member_number: n || "unassigned",
+                wants: interests.join(", ") || "general waitlist",
+                signed_up_at: new Date().toLocaleString(),
+              }),
+            }, 12000);
+            const fj = await fr.json().catch(() => null);
+            const delivered = fr.ok && fj && (fj.success === true || fj.success === "true");
+            setRelayFailed(!delivered);
+            if (!delivered) console.error("email relay not delivered", fj);
+          } catch (e) { console.error("email relay failed", e); setRelayFailed(true); }
+        }
       }
     } catch (e) {
       console.error("signup save failed", e);
