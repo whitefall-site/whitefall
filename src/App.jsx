@@ -33,7 +33,6 @@ const Wordmark = ({ size, stroke, glow = false, spacing = "0.1em" }) => (
 );
 
 const CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600&family=Space+Mono:wght@400;700&family=Syncopate:wght@700&display=swap');
 html { scroll-behavior: smooth; }
 section[id] { scroll-margin-top: 72px; }
 body { margin: 0; }
@@ -83,13 +82,18 @@ a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid 
 ::selection { background: #BFD3DB; color: #05070D; }
 
 /* ——— phone-first tuning ——— */
+/* svh units track the small viewport, so the hero doesn't jump when the
+   mobile browser's address bar hides/shows (vh lines are the fallback) */
+.hero { min-height: 100vh; min-height: 100svh; }
+.hero-wrap { top: 14vh; top: 14svh; }
+.hero-copy { bottom: 5vh; bottom: 5svh; }
 .nav-solo { display: none; }
 @media (max-width: 640px) {
   .nav-word { display: none; }
   .nav-solo { display: inline-block !important; }
   .nav-links { gap: 14px !important; }
   .ig-full { display: none; }
-  .hero-wrap { top: 11vh !important; }
+  .hero-wrap { top: 11vh !important; top: 11svh !important; }
   .hero-mark { width: 40vw !important; }
   .slogan { letter-spacing: 0.2em !important; }
 }
@@ -125,19 +129,77 @@ function useReveal() {
   }, []);
 }
 
-/* —— parallax hook: returns scrollY —— */
-function useScrollY() {
-  const [y, setY] = useState(0);
+/* —— parallax hook: writes the transform straight to the element on scroll,
+      so the rest of the app never re-renders while scrolling —— */
+function useParallax(toTransform) {
+  const ref = useRef(null);
   useEffect(() => {
     let raf = null;
-    const onScroll = () => {
-      if (raf) return;
-      raf = requestAnimationFrame(() => { setY(window.scrollY); raf = null; });
+    const apply = () => {
+      raf = null;
+      if (ref.current) ref.current.style.transform = toTransform(window.scrollY);
     };
+    const onScroll = () => { if (raf == null) raf = requestAnimationFrame(apply); };
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => { window.removeEventListener("scroll", onScroll); if (raf) cancelAnimationFrame(raf); };
+    apply();
+    return () => { window.removeEventListener("scroll", onScroll); if (raf != null) cancelAnimationFrame(raf); };
   }, []);
-  return y;
+  return ref;
+}
+
+/* —— fetch with a deadline, so a stalled network call can never leave the
+      signup button stuck on "SAVING…" —— */
+const fetchT = (url, opts = {}, ms = 10000) => {
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), ms);
+  return fetch(url, { ...opts, signal: ctl.signal }).finally(() => clearTimeout(t));
+};
+
+const S = {
+  snow: "#EDECE8",
+  frost: "#BFD3DB",
+  ash: "#7E8590",
+  night: "#05070D",
+  steel: "#0B0F18",
+  panel: "#0E131E",
+  line: "rgba(237,236,232,.12)",
+};
+const anton = { fontFamily: "'Anton', sans-serif" };
+const mono = { fontFamily: "'Space Mono', monospace" };
+const IG = "https://instagram.com/whitefall26";
+
+// ——— DROP DATE (placeholder — change this one line when the real date is locked) ———
+const DROP_DATE = new Date("2026-10-01T12:00:00-04:00").getTime();
+
+/* Self-contained so its once-a-second tick re-renders only these tiles,
+   not the whole page */
+function Countdown() {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const diff = Math.max(0, DROP_DATE - now);
+  const cd = {
+    d: Math.floor(diff / 86400000),
+    h: Math.floor(diff / 3600000) % 24,
+    m: Math.floor(diff / 60000) % 60,
+    s: Math.floor(diff / 1000) % 60,
+  };
+  const pad = (v) => String(v).padStart(2, "0");
+  return diff > 0 ? (
+    <>
+      {[["DAYS", pad(cd.d)], ["HRS", pad(cd.h)], ["MIN", pad(cd.m)], ["SEC", pad(cd.s)]].map(([l, v]) => (
+        <div key={l} style={{ border: `1px solid ${S.line}`, background: S.panel, padding: "12px 0", width: 74, textAlign: "center" }}>
+          <div style={{ ...anton, fontSize: 30, lineHeight: 1, color: S.snow }}>{v}</div>
+          <div style={{ ...mono, fontSize: 9, letterSpacing: "0.2em", color: S.ash, marginTop: 6 }}>{l}</div>
+        </div>
+      ))}
+      <span style={{ ...mono, fontSize: 10, letterSpacing: "0.18em", color: S.frost, marginLeft: 6 }}>UNTIL THE DROP</span>
+    </>
+  ) : (
+    <span style={{ ...anton, fontSize: 30, color: S.frost, letterSpacing: "0.06em" }}>THE DROP IS LIVE ▲</span>
+  );
 }
 
 
@@ -193,7 +255,10 @@ const TOPICS = [
 
 export default function App() {
   useReveal();
-  const y = useScrollY();
+  const moonRef = useParallax((y) => `translateY(${y * 0.06}px)`);
+  const heroRef = useParallax((y) => `translateX(-50%) translateY(${y * 0.22}px)`);
+  const poolRef = useParallax((y) => `translate(-50%, 0) translateY(${y * 0.16}px)`);
+  const markRef = useParallax((y) => `translateY(calc(-50% + ${(y - 1400) * 0.08}px)) rotate(6deg)`);
   useEffect(() => {
     const t = setTimeout(() => setPopup(true), 1600);
     return () => clearTimeout(t);
@@ -211,28 +276,12 @@ export default function App() {
   const [shared, setShared] = useState(false);
   const [barDismissed, setBarDismissed] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
-  const [now, setNow] = useState(Date.now());
   const [memberNum, setMemberNum] = useState(null);
   const [cardOpen, setCardOpen] = useState(false);
   const [cardUrl, setCardUrl] = useState(null);
   const [cardBusy, setCardBusy] = useState(false);
   const founding = memberNum != null && memberNum <= 100;
   const pad3 = (v) => String(v).padStart(3, "0");
-
-  // ——— DROP DATE (placeholder — change this one line when the real date is locked) ———
-  const DROP_DATE = new Date("2026-10-01T12:00:00-04:00").getTime();
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, []);
-  const diff = Math.max(0, DROP_DATE - now);
-  const cd = {
-    d: Math.floor(diff / 86400000),
-    h: Math.floor(diff / 3600000) % 24,
-    m: Math.floor(diff / 60000) % 60,
-    s: Math.floor(diff / 1000) % 60,
-  };
-  const pad = (v) => String(v).padStart(2, "0");
 
   const saveSize = async (sz) => {
     setSize(sz);
@@ -251,7 +300,7 @@ export default function App() {
       } else {
         lsWrite(lsRead().map((r) => (r.email === clean ? { ...r, size: sz } : r)));
         try {
-          await fetch("https://formsubmit.co/ajax/" + SUPPORT_EMAIL, {
+          await fetchT("https://formsubmit.co/ajax/" + SUPPORT_EMAIL, {
             method: "POST",
             headers: { "Content-Type": "application/json", Accept: "application/json" },
             body: JSON.stringify({
@@ -260,7 +309,7 @@ export default function App() {
               email: clean,
               size: sz,
             }),
-          });
+          }, 12000);
         } catch (e) { console.error("size relay failed", e); }
       }
     } catch (e) { console.error("size save unavailable", e); }
@@ -412,7 +461,7 @@ export default function App() {
         // Deployed: global member number from a free counter, then instant email to the owner
         let n = null;
         try {
-          const cr = await fetch("https://api.counterapi.dev/v1/whitefall-fw26/waitlist/up");
+          const cr = await fetchT("https://api.counterapi.dev/v1/whitefall-fw26/waitlist/up", {}, 6000);
           const cj = await cr.json();
           n = cj && (cj.count || (cj.data && cj.data.count)) || null;
         } catch (e) { console.error("counter unavailable", e); }
@@ -421,7 +470,7 @@ export default function App() {
         setSessionRows((rows) => rows.map((r) => (r.email === clean ? { ...r, num: n || r.num } : r)));
         setStoreMode("relay");
         try {
-          const fr = await fetch("https://formsubmit.co/ajax/" + SUPPORT_EMAIL, {
+          const fr = await fetchT("https://formsubmit.co/ajax/" + SUPPORT_EMAIL, {
             method: "POST",
             headers: { "Content-Type": "application/json", Accept: "application/json" },
             body: JSON.stringify({
@@ -449,7 +498,8 @@ export default function App() {
 
   const joinWaitlist = async () => {
     if (!email.includes("@")) return;
-    await saveSignup(email);
+    const ok = await saveSignup(email);
+    if (!ok) return; // rejected (e.g. spaces in the address) — don't pretend it worked
     setJoined(true);
     // thank-you popup with the founder number, no matter where they signed up
     setPopupJoined(true);
@@ -494,19 +544,6 @@ export default function App() {
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const S = {
-    snow: "#EDECE8",
-    frost: "#BFD3DB",
-    ash: "#7E8590",
-    night: "#05070D",
-    steel: "#0B0F18",
-    panel: "#0E131E",
-    line: "rgba(237,236,232,.12)",
-  };
-  const anton = { fontFamily: "'Anton', sans-serif" };
-  const mono = { fontFamily: "'Space Mono', monospace" };
-  const IG = "https://instagram.com/whitefall26";
-
   return (
     <div style={{ background: S.night, color: S.snow, fontFamily: "'Archivo', sans-serif", minHeight: "100vh", overflowX: "hidden" }}>
       <style>{CSS}</style>
@@ -539,26 +576,26 @@ export default function App() {
       </header>
 
       {/* ——— HERO: the signal over the city ——— */}
-      <section id="top" style={{ position: "relative", minHeight: "100vh", overflow: "hidden", background: "linear-gradient(180deg, #03040A 0%, #060A14 45%, #0A1120 78%, #05070D 100%)" }}>
+      <section id="top" className="hero" style={{ position: "relative", overflow: "hidden", background: "linear-gradient(180deg, #03040A 0%, #060A14 45%, #0A1120 78%, #05070D 100%)" }}>
         {/* stars */}
         <div className="snowfall" style={{ position: "absolute", inset: 0, opacity: 0.7, pointerEvents: "none" }} aria-hidden />
         {/* moon glow */}
-        <div style={{ position: "absolute", top: "-10%", right: "-8%", width: "50vw", height: "50vw", background: "radial-gradient(circle, rgba(191,211,219,.08), transparent 60%)", transform: `translateY(${y * 0.06}px)`, pointerEvents: "none" }} aria-hidden />
+        <div ref={moonRef} style={{ position: "absolute", top: "-10%", right: "-8%", width: "50vw", height: "50vw", background: "radial-gradient(circle, rgba(191,211,219,.08), transparent 60%)", transform: "translateY(0px)", pointerEvents: "none" }} aria-hidden />
 
         {/* the logo — hanging in the midnight sky */}
-        <div className="hero-wrap" style={{
-          position: "absolute", left: "50%", top: "14vh",
-          transform: `translateX(-50%) translateY(${y * 0.22}px)`,
+        <div ref={heroRef} className="hero-wrap" style={{
+          position: "absolute", left: "50%",
+          transform: "translateX(-50%) translateY(0px)",
           textAlign: "center", pointerEvents: "none",
         }}>
           <img src={LOGO} alt="" aria-hidden className="signal hero-in hero-mark"
             style={{ width: "min(52vw, 400px)", height: "auto" }} />
         </div>
         {/* soft glow pooling beneath the logo */}
-        <div aria-hidden style={{ position: "absolute", left: "50%", top: "44vh", width: "70vw", height: "30vh", transform: `translate(-50%, 0) translateY(${y * 0.16}px)`, background: "radial-gradient(50% 50% at 50% 50%, rgba(191,211,219,.07), transparent 70%)", pointerEvents: "none" }} />
+        <div aria-hidden ref={poolRef} style={{ position: "absolute", left: "50%", top: "44vh", width: "70vw", height: "30vh", transform: "translate(-50%, 0) translateY(0px)", background: "radial-gradient(50% 50% at 50% 50%, rgba(191,211,219,.07), transparent 70%)", pointerEvents: "none" }} />
 
         {/* headline block */}
-        <div style={{ position: "absolute", left: 0, right: 0, bottom: "5vh", padding: "0 22px", textAlign: "center", zIndex: 2 }}>
+        <div className="hero-copy" style={{ position: "absolute", left: 0, right: 0, padding: "0 22px", textAlign: "center", zIndex: 2 }}>
           <p className="hero-in hd1" style={{ ...mono, color: S.frost, fontSize: 12, letterSpacing: "0.28em", margin: "0 0 10px" }}>
             FALL / WINTER 2026 — THE SIGNAL IS UP
           </p>
@@ -598,9 +635,9 @@ export default function App() {
       {/* ——— MANIFESTO ——— */}
       <section id="manifesto" style={{ padding: "9vw 22px", background: S.night, position: "relative", overflow: "hidden" }}>
         {/* giant watermark logo drifting on scroll */}
-        <img src={LOGO} alt="" aria-hidden style={{
+        <img src={LOGO} alt="" aria-hidden ref={markRef} style={{
           position: "absolute", right: "-14%", top: "50%", width: "56vw", opacity: 0.04,
-          transform: `translateY(calc(-50% + ${(y - 1400) * 0.08}px)) rotate(6deg)`, pointerEvents: "none",
+          transform: "translateY(calc(-50% - 112px)) rotate(6deg)", pointerEvents: "none",
         }} />
         <div style={{ maxWidth: 1100, margin: "0 auto", position: "relative" }}>
           <p className="rv" style={{ ...mono, color: S.frost, fontSize: 12, letterSpacing: "0.28em", margin: "0 0 6vw" }}>MANIFESTO</p>
@@ -644,19 +681,7 @@ export default function App() {
 
           {/* drop countdown */}
           <div className="rv" style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", margin: "0 0 44px" }}>
-            {diff > 0 ? (
-              <>
-                {[["DAYS", pad(cd.d)], ["HRS", pad(cd.h)], ["MIN", pad(cd.m)], ["SEC", pad(cd.s)]].map(([l, v]) => (
-                  <div key={l} style={{ border: `1px solid ${S.line}`, background: S.panel, padding: "12px 0", width: 74, textAlign: "center" }}>
-                    <div style={{ ...anton, fontSize: 30, lineHeight: 1, color: S.snow }}>{v}</div>
-                    <div style={{ ...mono, fontSize: 9, letterSpacing: "0.2em", color: S.ash, marginTop: 6 }}>{l}</div>
-                  </div>
-                ))}
-                <span style={{ ...mono, fontSize: 10, letterSpacing: "0.18em", color: S.frost, marginLeft: 6 }}>UNTIL THE DROP</span>
-              </>
-            ) : (
-              <span style={{ ...anton, fontSize: 30, color: S.frost, letterSpacing: "0.06em" }}>THE DROP IS LIVE ▲</span>
-            )}
+            <Countdown />
           </div>
 
           <div className="stagger" style={{ borderTop: `1px solid ${S.line}` }}>
@@ -985,12 +1010,12 @@ export default function App() {
                 type="email" value={email} placeholder="EMAIL ADDRESS" aria-label="Email address"
                 className="form-in"
                 onChange={(e) => setEmail(e.target.value)}
-                onKeyDown={async (e) => { if (e.key === "Enter" && email.includes("@")) { await joinWaitlist(); setPopupJoined(true); } }}
+                onKeyDown={(e) => { if (e.key === "Enter") joinWaitlist(); }}
                 style={{ ...mono, background: "rgba(255,255,255,.04)", border: `1px solid ${S.line}`, borderRight: "none", color: S.snow, padding: "15px 16px", fontSize: 13, width: "min(240px, 56vw)", letterSpacing: "0.06em" }}
               />
               <button
                 className="form-btn"
-                onClick={async () => { if (email.includes("@")) { await joinWaitlist(); setPopupJoined(true); } }}
+                onClick={joinWaitlist}
                 disabled={saving}
                 style={{ ...mono, background: S.snow, color: S.night, border: "none", padding: "15px 22px", fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", cursor: "pointer" }}>
                 {saving ? "SAVING…" : "JOIN ▲"}
