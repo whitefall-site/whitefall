@@ -2,6 +2,23 @@
 
 Official FW26 site. Dark, premium, limited.
 
+## Where things stand (updated July 19, 2026)
+
+Done and live:
+- Deployed on Vercel — every merge to `main` redeploys automatically.
+- Glitch fixes shipped: smooth scrolling (no more full-page re-renders), stable
+  mobile layout (no address-bar jumping), fonts preloaded, signups can't hang.
+- Waitlist relay switched from FormSubmit (activation never worked) to Web3Forms.
+- Repeat signups from the same device keep their original member number.
+
+Two steps remain — both quick:
+1. **Signup emails**: get a free Web3Forms access key and paste it into the
+   `WEB3FORMS_KEY` line in `src/App.jsx` — full instructions in "The email
+   list" section below. Until then, visitors who join see an "email your
+   signup" backup button, so nothing is lost.
+2. **Share cards**: replace `YOUR-SITE-URL` (2 places) in `index.html` with the
+   real site URL so pasted links show the branded preview image.
+
 ## Run it locally
 
 1. Open this folder in VS Code
