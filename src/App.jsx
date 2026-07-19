@@ -425,6 +425,19 @@ export default function App() {
   const [sessionRows, setSessionRows] = useState([]);
   const [storeMode, setStoreMode] = useState("checking");
 
+  // Escape closes the top-most open overlay
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key !== "Escape") return;
+      if (ownerOpen) setOwnerOpen(false);
+      else if (cardOpen) setCardOpen(false);
+      else if (privacyOpen) setPrivacyOpen(false);
+      else if (popup && !popupDone) setPopupDone(true);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [ownerOpen, cardOpen, privacyOpen, popup, popupDone]);
+
   const mergeRow = (rows, row) => {
     const hit = rows.find((r) => r.email === row.email);
     if (hit) {
@@ -469,11 +482,17 @@ export default function App() {
       } else {
         // Deployed: global member number from a free counter, then instant email to the owner
         let n = null;
-        try {
-          const cr = await fetchT("https://api.counterapi.dev/v1/whitefall-fw26/waitlist/up", {}, 6000);
-          const cj = await cr.json();
-          n = cj && (cj.count || (cj.data && cj.data.count)) || null;
-        } catch (e) { console.error("counter unavailable", e); }
+        const prior = lsRead().find((r) => r.email === clean && r.num);
+        if (prior) {
+          // same device re-joining — keep their number, don't inflate the counter
+          n = prior.num;
+        } else {
+          try {
+            const cr = await fetchT("https://api.counterapi.dev/v1/whitefall-fw26/waitlist/up", {}, 6000);
+            const cj = await cr.json();
+            n = cj && (cj.count || (cj.data && cj.data.count)) || null;
+          } catch (e) { console.error("counter unavailable", e); }
+        }
         if (n) { setMemberNum(n); row.num = n; }
         lsWrite(mergeRow(lsRead(), row));
         setSessionRows((rows) => rows.map((r) => (r.email === clean ? { ...r, num: n || r.num } : r)));
