@@ -92,12 +92,29 @@ so don't put anything sensitive behind it.)
 
 ## Editing quick-reference (all in `src/App.jsx`)
 
-- Products/teasers → the `TEASERS` array
+- FW26 lineup → the `PIECES` array (name, `cat` spec line, `fit` note)
 - FAQ answers → the `FAQS` array
 - Contact categories → the `TOPICS` array
 - Passcode → `OWNER_CODE`
 - Drop countdown date → the `DROP_DATE` line (placeholder: Oct 1, 2026, noon ET)
 - Slogan/copy → search the text you want to change
+
+### Adding a product photo
+
+Drop the image in `public/` (e.g. `public/fw26-02-hoodie.jpg`), then add two
+fields to that piece in the `PIECES` array:
+
+```js
+shot: "/fw26-02-hoodie.jpg",
+alt:  "Short description of the photo, for screen readers and SEO.",
+```
+
+Any piece with a `shot` automatically switches from a compact text row to the
+full photo feature (image beside the details, with a FIRST LOOK badge) and
+stacks on phones. Pieces without one stay as text rows. Also update the `width`
+and `height` on the `piece-shot` image in the FW26 section if the new photo has
+a different aspect ratio — those attributes reserve space so the page doesn't
+jump while the image loads.
 
 When you outgrow this (real checkout, inventory), the natural next step is
 Shopify with this design as the storefront theme direction, or keep this site
