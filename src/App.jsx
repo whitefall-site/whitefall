@@ -216,9 +216,14 @@ const SUPPORT_EMAIL = "kohenjthrasher@gmail.com";
 
 /* Web3Forms delivers each signup to the owner's inbox. Get a free access key
    at https://web3forms.com (enter your email, the key arrives instantly —
-   no account, no activation link). The key is designed to be public. */
-const WEB3FORMS_KEY = "PASTE-YOUR-ACCESS-KEY-HERE";
-const relayReady = !WEB3FORMS_KEY.includes("PASTE");
+   no account, no activation link). The key is designed to be public.
+
+   Set it either way:
+   - Vercel → Settings → Environment Variables → VITE_WEB3FORMS_KEY (no code edit), or
+   - paste it into the fallback string below and commit. */
+const WEB3FORMS_KEY =
+  import.meta.env.VITE_WEB3FORMS_KEY || "PASTE-YOUR-ACCESS-KEY-HERE";
+const relayReady = Boolean(WEB3FORMS_KEY) && !WEB3FORMS_KEY.includes("PASTE");
 
 const TOPICS = [
   {
@@ -765,7 +770,7 @@ export default function App() {
               {relayFailed && (
                 <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Waitlist signup")}&body=${encodeURIComponent("Add me to the FW26 waitlist: " + email.trim().toLowerCase())}`}
                   style={{ ...mono, display: "inline-block", border: "1px solid rgba(191,211,219,.4)", color: S.frost, padding: "10px 16px", fontSize: 10, letterSpacing: "0.14em", textDecoration: "none", margin: "0 0 18px" }}>
-                  COULDN'T REACH THE LIST — TAP TO EMAIL YOUR SIGNUP INSTEAD ▲
+                  ONE LAST STEP — TAP TO CONFIRM YOUR SPOT BY EMAIL ▲
                 </a>
               )}
               {!size ? (
@@ -1009,7 +1014,7 @@ export default function App() {
                 {relayFailed && (
                   <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Waitlist signup")}&body=${encodeURIComponent("Add me to the FW26 waitlist: " + email.trim().toLowerCase())}`}
                     style={{ ...mono, display: "inline-block", border: "1px solid rgba(191,211,219,.4)", color: S.frost, padding: "9px 14px", fontSize: 9, letterSpacing: "0.12em", textDecoration: "none", margin: "0 0 12px" }}>
-                    COULDN'T REACH THE LIST — EMAIL YOUR SIGNUP ▲
+                    ONE LAST STEP — TAP TO CONFIRM YOUR SPOT ▲
                   </a>
                 )}
                 <p style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.14em", margin: "0 0 12px" }}>WHAT SIZE ARE YOU? (OPTIONAL)</p>

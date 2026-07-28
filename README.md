@@ -2,7 +2,7 @@
 
 Official FW26 site. Dark, premium, limited.
 
-## Where things stand (updated July 19, 2026)
+## Launch status (updated July 28, 2026)
 
 Done and live:
 - Deployed on Vercel — every merge to `main` redeploys automatically.
@@ -10,14 +10,23 @@ Done and live:
   mobile layout (no address-bar jumping), fonts preloaded, signups can't hang.
 - Waitlist relay switched from FormSubmit (activation never worked) to Web3Forms.
 - Repeat signups from the same device keep their original member number.
+- Share-card URLs now fill themselves in at build time from Vercel's domain —
+  nothing to edit by hand, and they follow a custom domain automatically.
+- Full signup path verified end-to-end in a browser against mocked live
+  services: member number assigned, owner email sent, member card generated.
 
-Two steps remain — both quick:
-1. **Signup emails**: get a free Web3Forms access key and paste it into the
-   `WEB3FORMS_KEY` line in `src/App.jsx` — full instructions in "The email
-   list" section below. Until then, visitors who join see an "email your
-   signup" backup button, so nothing is lost.
-2. **Share cards**: replace `YOUR-SITE-URL` (2 places) in `index.html` with the
-   real site URL so pasted links show the branded preview image.
+**One blocker before launch: the Web3Forms access key.** Without it no signup
+reaches the inbox — visitors get a "confirm your spot by email" fallback button
+instead, so nobody is lost, but it's a worse experience and manual on your end.
+Two-minute fix, either way:
+
+- **Easiest — no code:** Vercel → your project → Settings → Environment
+  Variables → add `VITE_WEB3FORMS_KEY` = your key → Redeploy.
+- **Or in code:** paste it into the `WEB3FORMS_KEY` line near the top of
+  `src/App.jsx`, replacing `PASTE-YOUR-ACCESS-KEY-HERE`, and commit.
+
+Get the key at https://web3forms.com — enter kohenjthrasher@gmail.com, it
+arrives by email in about a minute. No account, no activation link.
 
 ## Run it locally
 
@@ -52,10 +61,11 @@ instantly via Web3Forms (free, no account, no activation link).
 
 **One-time setup:** go to https://web3forms.com, enter kohenjthrasher@gmail.com
 in the "Create your Access Key" box, and the key arrives in your inbox within a
-minute. Paste it into the `WEB3FORMS_KEY` line near the top of `src/App.jsx`
-(replacing `PASTE-YOUR-ACCESS-KEY-HERE`), commit, redeploy. Until the key is in
-place, the site shows each visitor a "couldn't reach the list — email your
-signup" button as a fallback, so no signup is silently lost.
+minute. Then set it either as the `VITE_WEB3FORMS_KEY` environment variable in
+Vercel (Settings → Environment Variables → Redeploy — no code edit), or by
+pasting it into the `WEB3FORMS_KEY` line near the top of `src/App.jsx`. Until
+the key is in place, the site shows each visitor a "confirm your spot by email"
+button as a fallback, so no signup is silently lost.
 
 The key is designed to live in public site code — it only lets people send email
 *to you*. Free tier is 250 submissions/month. Set up a Gmail filter on the
@@ -87,12 +97,14 @@ When you outgrow this (real checkout, inventory), the natural next step is
 Shopify with this design as the storefront theme direction, or keep this site
 and link "Shop" to a Shopify/Stripe checkout.
 
-## After deploying — 2 quick things
+## After deploying
 
-1. **Share card**: open `index.html` and replace `YOUR-SITE-URL` (2 places) with your
-   real deployed URL, commit, redeploy. Now links pasted anywhere show the branded card.
-2. **Waitlist sizes**: signups can tap their size — the owner panel (passcode 0623)
-   shows a size tally so you know how many of each size to produce.
+- **Share card**: handled automatically — `vite.config.js` fills the real domain
+  into the og/twitter tags at build time using Vercel's own environment
+  variables, and follows a custom domain when you attach one. To force a
+  specific URL, set `VITE_SITE_URL` in Vercel's environment variables.
+- **Waitlist sizes**: signups can tap their size — the owner panel (passcode 0623)
+  shows a size tally so you know how many of each size to produce.
 
 Note: the brand name is currently WHITEFALL throughout. If the final name changes,
 tell Claude and it's a one-command swap.
