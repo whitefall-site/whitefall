@@ -19,20 +19,22 @@ Done and live:
 - Full signup path verified end-to-end in a browser against mocked live
   services: member number assigned, owner email sent, member card generated.
 
-**One blocker before launch: the Web3Forms access key.** Without it no signup
-reaches the inbox — visitors get a "confirm your spot by email" fallback button
-instead, so nobody is lost, but it's a worse experience and manual on your end.
-Two-minute fix, either way:
+**The commerce plan (decided):** the site is the storefront; **Shopify is the
+engine** behind it — payments, inventory that can't oversell, shipping labels,
+taxes, refunds. The October drop is the **Whitefall Crewneck only**; pieces
+02–04 sit in a NEXT UP section until their first looks are ready. The whole
+shop turns on and off from Vercel environment variables — no code edits on
+drop day. Full instructions: "Shopify — the commerce engine" below.
 
-- **Easiest — no code:** Vercel → your project → Settings → Environment
-  Variables → add `VITE_WEB3FORMS_KEY` = your key → Redeploy.
-- **Or in code:** paste it into the `WEB3FORMS_KEY` line near the top of
-  `src/App.jsx`, replacing `PASTE-YOUR-ACCESS-KEY-HERE`, and commit.
+**Two owner steps before launch:**
 
-Get the key at https://web3forms.com — enter the owner inbox address, and the
-key arrives by email in about a minute. No account, no activation link. That
-address stays private: it lives in Web3Forms behind the key, and never appears
-on the site or in this repo.
+1. **Web3Forms access key** (2 minutes) — without it no signup reaches the
+   inbox. Get the key at https://web3forms.com (enter the owner inbox address;
+   the key arrives by email — no account, no activation link). Then Vercel →
+   Settings → Environment Variables → add `VITE_WEB3FORMS_KEY` = the key →
+   Redeploy. (Or paste it into the `WEB3FORMS_KEY` line in `src/App.jsx`.)
+2. **Shopify store** (about an hour, needs ID + bank details for payouts) —
+   see the runbook below.
 
 ## Run it locally
 
@@ -59,6 +61,67 @@ Or without GitHub: `npx vercel` in this folder and follow the prompts.
 1. Run `npm run build` — this creates a `dist/` folder
 2. Go to app.netlify.com/drop and drag the `dist` folder onto the page
 3. Live instantly. (Re-drag after any change.)
+
+## Shopify — the commerce engine (owner runbook)
+
+The site stays the face of the brand; Shopify handles the money. This split is
+how the big streetwear brands run: a distinctive front, a bulletproof back
+office. Customers click BUY NOW on whitefall and land on your Shopify checkout.
+
+### One-time setup (~1 hour)
+
+1. Go to shopify.com → start the **Basic** plan (monthly fee applies; there's
+   usually a cheap trial period to set everything up).
+2. Add a product: **Whitefall Crewneck** — price, description (use the site's
+   spec line: contrast piping · 320 GSM · 80% cotton / 20% polyester · runs
+   tailored), and **six size variants** (XS–XXL).
+3. On each variant: set the inventory count for that size and make sure
+   **"Track quantity"** is ON and **"Continue selling when out of stock"** is
+   OFF. This is what makes overselling impossible during the drop.
+4. Settings → **Payments**: activate Shopify Payments (needs ID + bank account
+   — this is where the money lands).
+5. Settings → **Shipping**: set your rates — domestic first; add international
+   zones when you're ready. For worldwide selling, look at Settings → Markets.
+   The site's FAQ promises "duties calculated at checkout" — if your plan
+   doesn't support collecting duties, soften that FAQ line (ask Claude).
+6. Settings → **Policies**: set the 30-day return policy so it matches what
+   the site's FAQ promises. Shopify's order emails cover the "tracking link
+   within 24 hours" promise automatically when you fulfill orders.
+7. Copy the **product page link** (Sales channels → view product) — that's the
+   link the site's BUY NOW button will use.
+
+### Drop day (no code — Vercel dashboard only)
+
+Vercel → your project → Settings → Environment Variables:
+
+| Variable | Set it to | Effect |
+|---|---|---|
+| `VITE_CREWNECK_URL` | the Shopify product link | BUY NOW appears (once drop is live) |
+| `VITE_CREWNECK_PRICE` | e.g. `$120` | price shows on the product feature |
+| `VITE_DROP_LIVE` | `1` | forces the shop live before the countdown date |
+| `VITE_CREWNECK_SOLDOUT` | `1` | flips to SOLD OUT + restock-notify state |
+
+After adding or changing any of these: **Deployments → Redeploy**. The change
+is live in about a minute. Before the URL is set, the site shows GET NOTIFIED
+(waitlist) instead — so there's no broken state at any point.
+
+### The early-access play ("the list shops first" — for real)
+
+An hour before you set `VITE_CREWNECK_URL` publicly, email the product link to
+the waitlist (every signup is in your inbox) and/or post it to IG Close
+Friends. The list literally shops before the public button exists. Then flip
+the env var and the shop is open to everyone.
+
+### When it sells out
+
+Set `VITE_CREWNECK_SOLDOUT=1` → Redeploy. The site shows SOLD OUT with a
+"restocks heard here first" waitlist CTA — sold out becomes another reason to
+join the list.
+
+### After the drop
+
+Orders, refunds, shipping labels, and customer emails all live in the Shopify
+admin (their mobile app is good). The site needs nothing from you day-to-day.
 
 ## The email list — IMPORTANT one-time step
 

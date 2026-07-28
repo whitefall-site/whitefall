@@ -12,8 +12,9 @@ const LOGO = "/logo.png";
 
 const LOGO_GLYPH = "/logo-glyph.png";
 
-/* FW26 lineup. A piece with a `shot` renders as a photo feature; the rest
-   stay as compact rows until their first look is ready. */
+/* FW26 lineup. The piece with `dropping: true` renders as THE DROP — full
+   photo feature with the live shop states. The rest sit in NEXT UP as
+   compact rows until their first look is ready. */
 const PIECES = [
   {
     n: "01",
@@ -22,11 +23,34 @@ const PIECES = [
     fit: "RUNS TAILORED",
     shot: "/fw26-01-crewneck.jpg",
     alt: "Whitefall Crewneck in black, back view — outlined mountain logo across the shoulders with white contrast piping along the sleeves and body.",
+    dropping: true,
+    shop: "crewneck",
   },
   { n: "02", name: "AVALANCHE HOODIE", cat: "500GSM · BOX LOGO" },
   { n: "03", name: "MOMENTUM ATHLETIC SHIRT", cat: "PERFORMANCE KNIT · BUILT TO TRAIN" },
   { n: "04", name: "FREEFALL DOWN PUFFER", cat: "700-FILL DOWN · STORM SHELL" },
 ];
+
+/* ——— SHOP CONFIG — the switch that turns the store on ———
+   The site is the storefront; Shopify is the engine behind it (payments,
+   inventory, shipping, taxes, refunds). Everything here is controlled from
+   Vercel → Settings → Environment Variables → Redeploy. No code edits:
+
+     VITE_CREWNECK_URL      the Shopify product link — BUY NOW appears once
+                            this is set AND the drop is live
+     VITE_CREWNECK_PRICE    display price, e.g. "$120"
+     VITE_CREWNECK_SOLDOUT  set to 1 → SOLD OUT state + restock-notify CTA
+     VITE_DROP_LIVE         set to 1 → go live before the countdown date
+
+   Full owner runbook in README → "Shopify — the commerce engine". */
+const SHOP = {
+  crewneck: {
+    price: import.meta.env.VITE_CREWNECK_PRICE || "",
+    checkoutUrl: import.meta.env.VITE_CREWNECK_URL || "",
+    soldOut: import.meta.env.VITE_CREWNECK_SOLDOUT === "1",
+  },
+};
+const FORCE_DROP_LIVE = import.meta.env.VITE_DROP_LIVE === "1";
 
 /* The logo standing in as the letter A inside the wordmark */
 const MarkA = ({ h = "0.78em", glow = false }) => (
@@ -228,6 +252,57 @@ function Countdown() {
     </>
   ) : (
     <span style={{ ...anton, fontSize: 30, color: S.frost, letterSpacing: "0.06em" }}>THE DROP IS LIVE ▲</span>
+  );
+}
+
+/* The shop states for a dropping piece: GET NOTIFIED before the drop,
+   BUY NOW once live and configured, SOLD OUT when the run is gone.
+   Checks the clock on a slow tick so the flip happens without a reload. */
+function PieceShop({ shopId, fit, onNotify }) {
+  const cfg = SHOP[shopId] || {};
+  const [live, setLive] = useState(FORCE_DROP_LIVE || Date.now() >= DROP_DATE);
+  useEffect(() => {
+    if (live) return;
+    const t = setInterval(() => {
+      if (Date.now() >= DROP_DATE) { setLive(true); clearInterval(t); }
+    }, 15000);
+    return () => clearInterval(t);
+  }, [live]);
+  const buyable = live && cfg.checkoutUrl && !cfg.soldOut;
+  const dropDay = new Date(DROP_DATE).toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase();
+  const chip = { ...mono, fontSize: 10, letterSpacing: "0.14em", padding: "6px 10px" };
+  return (
+    <div>
+      {cfg.price && (
+        <div style={{ ...mono, fontSize: 17, color: S.snow, letterSpacing: "0.08em", margin: "0 0 14px" }}>{cfg.price}</div>
+      )}
+      <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 18 }}>
+        {fit && <span style={{ ...chip, color: S.frost, border: "1px solid rgba(191,211,219,.4)" }}>{fit}</span>}
+        <span style={{ ...chip, color: S.snow, border: `1px solid ${S.line}` }}>XS – XXL</span>
+        {cfg.soldOut && <span style={{ ...chip, fontWeight: 700, color: S.night, background: S.snow }}>SOLD OUT</span>}
+      </div>
+      {cfg.soldOut ? (
+        <button onClick={onNotify}
+          style={{ ...mono, background: "none", border: "1px solid rgba(191,211,219,.4)", color: S.frost, padding: "15px 26px", fontSize: 12, letterSpacing: "0.1em", cursor: "pointer" }}>
+          JOIN THE LIST — RESTOCKS HEARD HERE FIRST ▲
+        </button>
+      ) : buyable ? (
+        <a href={cfg.checkoutUrl} target="_blank" rel="noopener noreferrer"
+          style={{ ...mono, display: "inline-block", background: S.snow, color: S.night, padding: "16px 34px", textDecoration: "none", fontSize: 14, fontWeight: 700, letterSpacing: "0.1em" }}>
+          BUY NOW ▲
+        </a>
+      ) : (
+        <button onClick={onNotify}
+          style={{ ...mono, background: S.snow, color: S.night, border: "none", padding: "16px 28px", fontSize: 13, fontWeight: 700, letterSpacing: "0.1em", cursor: "pointer" }}>
+          GET NOTIFIED — THE LIST SHOPS FIRST ▲
+        </button>
+      )}
+      {!live && !cfg.soldOut && (
+        <p style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.16em", margin: "14px 0 0" }}>
+          DROPS {dropDay} · WAITLIST GETS EARLY ACCESS
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -735,12 +810,12 @@ export default function App() {
         <div style={{ maxWidth: 1400, margin: "0 auto" }}>
           <div className="rv-l" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 12, marginBottom: 12 }}>
             <h2 style={{ ...anton, fontSize: "clamp(40px,7vw,96px)", margin: 0, lineHeight: 1 }}>
-              FW26 <span style={{ color: S.frost }}>—</span> COMING SOON
+              FW26 <span style={{ color: S.frost }}>—</span> THE DROP
             </h2>
             <span style={{ ...mono, fontSize: 12, color: S.ash, letterSpacing: "0.18em" }}>FALL / WINTER 2026 · FOUR PIECES</span>
           </div>
           <p className="rv" style={{ color: S.ash, maxWidth: 560, lineHeight: 1.7, margin: "0 0 28px" }}>
-            Four pieces. Previews and first looks drop on{" "}
+            The Whitefall Crewneck leads the collection. Previews and first looks drop on{" "}
             <a href={IG} target="_blank" rel="noopener noreferrer" style={{ color: S.frost, textDecoration: "none", borderBottom: `1px solid rgba(191,211,219,.4)` }}>@whitefall26</a>
             {" "}— the waitlist gets the date first, and shops first.
           </p>
@@ -751,23 +826,18 @@ export default function App() {
           </div>
 
           <div className="stagger" style={{ borderTop: `1px solid ${S.line}` }}>
-            {PIECES.map((p) => (p.shot ? (
+            {PIECES.filter((p) => p.dropping).map((p) => (p.shot ? (
               /* photographed piece \u2014 full feature treatment */
               <div key={p.n} className="piece-feature" style={{ borderBottom: `1px solid ${S.line}` }}>
                 <img src={p.shot} alt={p.alt} className="piece-shot" width="880" height="1407" loading="lazy" decoding="async" />
                 <div>
                   <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 10 }}>
                     <span style={{ ...mono, fontSize: 11, color: S.frost, letterSpacing: "0.16em" }}>{p.n}</span>
-                    <span style={{ ...mono, fontSize: 9, fontWeight: 700, letterSpacing: "0.16em", color: S.night, background: S.frost, padding: "4px 9px" }}>FIRST LOOK</span>
+                    <span style={{ ...mono, fontSize: 9, fontWeight: 700, letterSpacing: "0.16em", color: S.night, background: S.frost, padding: "4px 9px" }}>THE DROP</span>
                   </div>
                   <h3 style={{ ...anton, fontSize: "clamp(26px, 4.2vw, 54px)", letterSpacing: "0.02em", margin: "0 0 14px", lineHeight: 1.05 }}>{p.name}</h3>
                   <p style={{ ...mono, fontSize: 11, color: S.ash, letterSpacing: "0.14em", lineHeight: 1.9, margin: "0 0 16px" }}>{p.cat}</p>
-                  <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-                    {p.fit && (
-                      <span style={{ ...mono, fontSize: 10, color: S.frost, letterSpacing: "0.14em", border: `1px solid rgba(191,211,219,.4)`, padding: "6px 10px" }}>{p.fit}</span>
-                    )}
-                    <span style={{ ...mono, fontSize: 10, color: S.snow, letterSpacing: "0.14em", border: `1px solid ${S.line}`, padding: "6px 10px" }}>COMING SOON</span>
-                  </div>
+                  <PieceShop shopId={p.shop} fit={p.fit} onNotify={go("waitlist")} />
                 </div>
               </div>
             ) : (
@@ -782,6 +852,30 @@ export default function App() {
                 </div>
               </div>
             )))}
+          </div>
+
+          {/* the rest of the collection — teased, not yet revealed */}
+          <div className="rv" style={{ marginTop: 54 }}>
+            <p style={{ ...mono, color: S.frost, fontSize: 11, letterSpacing: "0.24em", margin: "0 0 6px" }}>NEXT UP</p>
+            <p style={{ color: S.ash, fontSize: 14, lineHeight: 1.6, margin: "0 0 18px", maxWidth: 520 }}>
+              Three more pieces complete FW26. First looks land on the waitlist and{" "}
+              <a href={IG} target="_blank" rel="noopener noreferrer" style={{ color: S.frost, textDecoration: "none" }}>@whitefall26</a>
+              {" "}as each one is ready.
+            </p>
+            <div style={{ borderTop: `1px solid ${S.line}` }}>
+              {PIECES.filter((p) => !p.dropping).map((p) => (
+                <div key={p.n} style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 14, padding: "26px 0", borderBottom: `1px solid ${S.line}`, flexWrap: "wrap" }}>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 18, flexWrap: "wrap" }}>
+                    <span style={{ ...mono, fontSize: 11, color: S.frost, letterSpacing: "0.16em" }}>{p.n}</span>
+                    <span style={{ ...anton, fontSize: "clamp(22px, 3.6vw, 46px)", letterSpacing: "0.02em" }}>{p.name}</span>
+                  </div>
+                  <div style={{ display: "flex", gap: 16, alignItems: "baseline", flexWrap: "wrap" }}>
+                    <span style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.14em" }}>{p.cat}</span>
+                    <span style={{ ...mono, fontSize: 10, color: S.snow, letterSpacing: "0.14em", border: `1px solid ${S.line}`, padding: "6px 10px" }}>COMING SOON</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
