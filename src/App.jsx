@@ -723,7 +723,7 @@ export default function App() {
 
           <div className="stagger" style={{ borderTop: `1px solid ${S.line}` }}>
             {[
-              ["01", "WHITEOUT CREWNECK", "HEAVYWEIGHT BRUSHED FLEECE"],
+              ["01", "WHITEFALL CREWNECK", "HEAVYWEIGHT BRUSHED FLEECE"],
               ["02", "AVALANCHE HOODIE", "500GSM \u00b7 BOX LOGO"],
               ["03", "MOMENTUM ATHLETIC SHIRT", "PERFORMANCE KNIT \u00b7 BUILT TO TRAIN"],
               ["04", "FREEFALL DOWN PUFFER", "700-FILL DOWN \u00b7 STORM SHELL"],
