@@ -12,6 +12,22 @@ const LOGO = "/logo.png";
 
 const LOGO_GLYPH = "/logo-glyph.png";
 
+/* FW26 lineup. A piece with a `shot` renders as a photo feature; the rest
+   stay as compact rows until their first look is ready. */
+const PIECES = [
+  {
+    n: "01",
+    name: "WHITEFALL CREWNECK",
+    cat: "CONTRAST PIPING · 320 GSM · 80% COTTON / 20% POLYESTER",
+    fit: "RUNS TAILORED",
+    shot: "/fw26-01-crewneck.jpg",
+    alt: "Whitefall Crewneck in black, back view — outlined mountain logo across the shoulders with white contrast piping along the sleeves and body.",
+  },
+  { n: "02", name: "AVALANCHE HOODIE", cat: "500GSM · BOX LOGO" },
+  { n: "03", name: "MOMENTUM ATHLETIC SHIRT", cat: "PERFORMANCE KNIT · BUILT TO TRAIN" },
+  { n: "04", name: "FREEFALL DOWN PUFFER", cat: "700-FILL DOWN · STORM SHELL" },
+];
+
 /* The logo standing in as the letter A inside the wordmark */
 const MarkA = ({ h = "0.78em", glow = false }) => (
   <img src={LOGO_GLYPH} alt="A" style={{
@@ -74,6 +90,19 @@ body { margin: 0; }
 .stagger.in > *:nth-child(4) { transition-delay: .35s; }
 .stagger.in > *:nth-child(5) { transition-delay: .45s; }
 .stagger.in > *:nth-child(6) { transition-delay: .55s; }
+/* featured piece — photo beside the details, stacked on narrow screens */
+.piece-feature {
+  display: grid; grid-template-columns: minmax(0, 360px) 1fr;
+  gap: 36px; align-items: center; padding: 34px 0;
+}
+.piece-shot {
+  width: 100%; height: auto; display: block;
+  border: 1px solid rgba(237,236,232,.12); background: #0E131E;
+}
+@media (max-width: 760px) {
+  .piece-feature { grid-template-columns: 1fr; gap: 20px; padding: 26px 0; }
+  .piece-shot { max-width: 440px; margin: 0 auto; }
+}
 .tease { transition: transform .5s cubic-bezier(.16,.8,.24,1), border-color .4s ease; }
 .tease:hover { transform: translateY(-8px); border-color: rgba(191,211,219,.5) !important; }
 .tease:hover .tease-logo { opacity: .3; transform: scale(1.08) rotate(-2deg); }
@@ -722,23 +751,37 @@ export default function App() {
           </div>
 
           <div className="stagger" style={{ borderTop: `1px solid ${S.line}` }}>
-            {[
-              ["01", "WHITEFALL CREWNECK", "HEAVYWEIGHT BRUSHED FLEECE"],
-              ["02", "AVALANCHE HOODIE", "500GSM \u00b7 BOX LOGO"],
-              ["03", "MOMENTUM ATHLETIC SHIRT", "PERFORMANCE KNIT \u00b7 BUILT TO TRAIN"],
-              ["04", "FREEFALL DOWN PUFFER", "700-FILL DOWN \u00b7 STORM SHELL"],
-            ].map(([n, name, cat]) => (
-              <div key={n} style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 14, padding: "26px 0", borderBottom: `1px solid ${S.line}`, flexWrap: "wrap" }}>
+            {PIECES.map((p) => (p.shot ? (
+              /* photographed piece \u2014 full feature treatment */
+              <div key={p.n} className="piece-feature" style={{ borderBottom: `1px solid ${S.line}` }}>
+                <img src={p.shot} alt={p.alt} className="piece-shot" width="880" height="1407" loading="lazy" decoding="async" />
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 10 }}>
+                    <span style={{ ...mono, fontSize: 11, color: S.frost, letterSpacing: "0.16em" }}>{p.n}</span>
+                    <span style={{ ...mono, fontSize: 9, fontWeight: 700, letterSpacing: "0.16em", color: S.night, background: S.frost, padding: "4px 9px" }}>FIRST LOOK</span>
+                  </div>
+                  <h3 style={{ ...anton, fontSize: "clamp(26px, 4.2vw, 54px)", letterSpacing: "0.02em", margin: "0 0 14px", lineHeight: 1.05 }}>{p.name}</h3>
+                  <p style={{ ...mono, fontSize: 11, color: S.ash, letterSpacing: "0.14em", lineHeight: 1.9, margin: "0 0 16px" }}>{p.cat}</p>
+                  <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                    {p.fit && (
+                      <span style={{ ...mono, fontSize: 10, color: S.frost, letterSpacing: "0.14em", border: `1px solid rgba(191,211,219,.4)`, padding: "6px 10px" }}>{p.fit}</span>
+                    )}
+                    <span style={{ ...mono, fontSize: 10, color: S.snow, letterSpacing: "0.14em", border: `1px solid ${S.line}`, padding: "6px 10px" }}>COMING SOON</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div key={p.n} style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 14, padding: "26px 0", borderBottom: `1px solid ${S.line}`, flexWrap: "wrap" }}>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 18, flexWrap: "wrap" }}>
-                  <span style={{ ...mono, fontSize: 11, color: S.frost, letterSpacing: "0.16em" }}>{n}</span>
-                  <span style={{ ...anton, fontSize: "clamp(22px, 3.6vw, 46px)", letterSpacing: "0.02em" }}>{name}</span>
+                  <span style={{ ...mono, fontSize: 11, color: S.frost, letterSpacing: "0.16em" }}>{p.n}</span>
+                  <span style={{ ...anton, fontSize: "clamp(22px, 3.6vw, 46px)", letterSpacing: "0.02em" }}>{p.name}</span>
                 </div>
                 <div style={{ display: "flex", gap: 16, alignItems: "baseline", flexWrap: "wrap" }}>
-                  <span style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.14em" }}>{cat}</span>
+                  <span style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.14em" }}>{p.cat}</span>
                   <span style={{ ...mono, fontSize: 10, color: S.snow, letterSpacing: "0.14em", border: `1px solid ${S.line}`, padding: "6px 10px" }}>COMING SOON</span>
                 </div>
               </div>
-            ))}
+            )))}
           </div>
         </div>
       </section>
