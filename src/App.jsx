@@ -711,7 +711,9 @@ export default function App() {
             <span style={{ ...mono, fontSize: 12, color: S.ash, letterSpacing: "0.18em" }}>FALL / WINTER 2026 · FOUR PIECES</span>
           </div>
           <p className="rv" style={{ color: S.ash, maxWidth: 560, lineHeight: 1.7, margin: "0 0 28px" }}>
-            Four pieces. No previews, no leaks — the waitlist sees them first, shops them first.
+            Four pieces. Previews and first looks drop on{" "}
+            <a href={IG} target="_blank" rel="noopener noreferrer" style={{ color: S.frost, textDecoration: "none", borderBottom: `1px solid rgba(191,211,219,.4)` }}>@whitefall26</a>
+            {" "}— the waitlist gets the date first, and shops first.
           </p>
 
           {/* drop countdown */}
