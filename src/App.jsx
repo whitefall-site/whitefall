@@ -205,14 +205,16 @@ function Countdown() {
 
 const FAQS = [
   { q: "When does FW26 drop?", a: "October 2026. Waitlist members get the exact date, time, and early access 24 hours before anyone else. Join below — it's free and it's the only way in early." },
-  { q: "Where's my order?", a: "Every order gets a tracking link by email within 24 hours of shipping. Can't find it? DM us your order number on Instagram or email support — we respond within one business day." },
-  { q: "What's your return policy?", a: "30 days, no questions. Unworn, tags on, full refund to your original payment method. Start a return by emailing us your order number — we send the label, you drop it off." },
+  { q: "Where's my order?", a: "Every order gets a tracking link by email within 24 hours of shipping. Can't find it? DM us your order number on Instagram — we respond within one business day." },
+  { q: "What's your return policy?", a: "30 days, no questions. Unworn, tags on, full refund to your original payment method. Start a return by DMing us your order number on Instagram — we send the label, you drop it off." },
   { q: "How does sizing run?", a: "It varies piece to piece — some are cut boxy and oversized, others tailored and slim. Always read the description on the specific product you're interested in: every piece lists its own fit notes and exact garment measurements there." },
   { q: "Will pieces restock?", a: "Rarely, and never guaranteed. Runs are small and numbered by design — when a piece sells out, don't count on seeing it again. If a restock ever happens, the waitlist hears first." },
   { q: "Do you ship worldwide?", a: "Yes. Duties are calculated at checkout so there are no surprise fees at your door." },
 ];
 
-const SUPPORT_EMAIL = "kohenjthrasher@gmail.com";
+/* Support runs through Instagram DMs until a branded support inbox is live.
+   No personal address appears anywhere on the site — waitlist signups are
+   delivered by the access key below, not by a published email address. */
 
 /* Web3Forms delivers each signup to the owner's inbox. Get a free access key
    at https://web3forms.com (enter your email, the key arrives instantly —
@@ -228,39 +230,33 @@ const relayReady = Boolean(WEB3FORMS_KEY) && !WEB3FORMS_KEY.includes("PASTE");
 const TOPICS = [
   {
     id: "order", n: "01", label: "I can't find my order",
-    help: "No stress — it happens. Check your inbox (and spam) for a confirmation from us first. Still nothing? Send us your full name and the email you ordered with, and we'll track it down.",
-    subject: "Order help — I can't find my order",
-    body: "Hi Whitefall,%0D%0A%0D%0AI can't find my order.%0D%0A%0D%0AName on the order:%0D%0AEmail used at checkout:%0D%0AOrder number (if you have it):%0D%0A%0D%0AThanks!",
+    help: "No stress — it happens. Check your inbox (and spam) for a confirmation from us first. Still nothing? DM us and we'll track it down.",
+    include: ["Name on the order", "Email used at checkout", "Order number (if you have it)"],
   },
   {
     id: "shipping", n: "02", label: "Where's my package?",
-    help: "Tracking links go out within 24 hours of shipping. If yours hasn't moved in 3+ days, send us your order number and we'll chase the carrier for you.",
-    subject: "Shipping — where's my package?",
-    body: "Hi Whitefall,%0D%0A%0D%0AMy package hasn't arrived / tracking isn't updating.%0D%0A%0D%0AOrder number:%0D%0ATracking number (if you have it):%0D%0A%0D%0AThanks!",
+    help: "Tracking links go out within 24 hours of shipping. If yours hasn't moved in 3+ days, DM us and we'll chase the carrier for you.",
+    include: ["Order number", "Tracking number (if you have it)"],
   },
   {
     id: "size", n: "03", label: "Wrong size / exchange",
-    help: "Free size exchanges within 30 days — unworn, tags on. Tell us your order number, the piece, and the size you need, and we'll set the swap up.",
-    subject: "Exchange — wrong size",
-    body: "Hi Whitefall,%0D%0A%0D%0AI'd like to exchange for a different size.%0D%0A%0D%0AOrder number:%0D%0APiece:%0D%0ACurrent size:%0D%0ASize I need:%0D%0A%0D%0AThanks!",
+    help: "Free size exchanges within 30 days — unworn, tags on. DM us and we'll set the swap up.",
+    include: ["Order number", "Which piece", "Current size", "Size you need"],
   },
   {
     id: "return", n: "04", label: "Return & refund",
-    help: "30 days, no questions asked. Send your order number and we'll email you a return label — refund lands back on your original payment method once it's scanned in.",
-    subject: "Return — refund request",
-    body: "Hi Whitefall,%0D%0A%0D%0AI'd like to return my order.%0D%0A%0D%0AOrder number:%0D%0APiece(s) I'm returning:%0D%0A%0D%0AThanks!",
+    help: "30 days, no questions asked. DM us your order number and we'll send a return label — refund lands back on your original payment method once it's scanned in.",
+    include: ["Order number", "Piece(s) you're returning"],
   },
   {
     id: "drop", n: "05", label: "FW26 / waitlist question",
     help: "Drop details go to the waitlist first — join it below if you haven't. Anything else about FW26, ask away.",
-    subject: "FW26 — drop question",
-    body: "Hi Whitefall,%0D%0A%0D%0AQuestion about the FW26 drop:%0D%0A%0D%0A",
+    include: [],
   },
   {
     id: "other", n: "06", label: "Something else",
-    help: "Collabs, wholesale, press, or anything that doesn't fit a box — hit us directly and a real person will get back to you within one business day.",
-    subject: "Whitefall — general inquiry",
-    body: "Hi Whitefall,%0D%0A%0D%0A",
+    help: "Collabs, wholesale, press, or anything that doesn't fit a box — DM us and a real person will get back to you within one business day.",
+    include: [],
   },
 ];
 
@@ -503,7 +499,7 @@ export default function App() {
         setSessionRows((rows) => rows.map((r) => (r.email === clean ? { ...r, num: n || r.num } : r)));
         setStoreMode("relay");
         if (!relayReady) {
-          // no access key configured yet — surface the email-me fallback
+          // no access key configured yet — surface the DM fallback
           setRelayFailed(true);
         } else {
           try {
@@ -768,9 +764,9 @@ export default function App() {
                   : "▲ YOU'RE IN. WATCH YOUR INBOX."}
               </p>
               {relayFailed && (
-                <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Waitlist signup")}&body=${encodeURIComponent("Add me to the FW26 waitlist: " + email.trim().toLowerCase())}`}
+                <a href={IG} target="_blank" rel="noopener noreferrer"
                   style={{ ...mono, display: "inline-block", border: "1px solid rgba(191,211,219,.4)", color: S.frost, padding: "10px 16px", fontSize: 10, letterSpacing: "0.14em", textDecoration: "none", margin: "0 0 18px" }}>
-                  ONE LAST STEP — TAP TO CONFIRM YOUR SPOT BY EMAIL ▲
+                  ONE LAST STEP — DM @WHITEFALL26 TO CONFIRM YOUR SPOT ▲
                 </a>
               )}
               {!size ? (
@@ -840,13 +836,14 @@ export default function App() {
               <div style={{ ...anton, fontSize: 22, marginBottom: 8 }}>@WHITEFALL26</div>
               <div style={{ color: S.ash, fontSize: 14, lineHeight: 1.6 }}>DM on Instagram for orders, sizing, and drop questions. Typical reply: under a few hours.</div>
             </a>
-            <a href={`mailto:${SUPPORT_EMAIL}`} style={{ background: S.panel, border: `1px solid ${S.line}`, padding: "26px 22px", textDecoration: "none", color: S.snow, transition: "border-color .3s ease" }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(191,211,219,.5)")}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = S.line)}>
-              <div style={{ ...mono, fontSize: 10, letterSpacing: "0.18em", color: S.frost, marginBottom: 12 }}>ORDERS & RETURNS</div>
-              <div style={{ ...anton, fontSize: 22, marginBottom: 8 }}>EMAIL SUPPORT</div>
-              <div style={{ color: S.ash, fontSize: 14, lineHeight: 1.6 }}>{SUPPORT_EMAIL} — include your order number. Replies within one business day.</div>
-            </a>
+            <div style={{ background: S.panel, border: `1px dashed ${S.line}`, padding: "26px 22px", color: S.snow }}>
+              <div style={{ ...mono, fontSize: 10, letterSpacing: "0.18em", color: S.ash, marginBottom: 12 }}>ORDERS &amp; RETURNS</div>
+              <div style={{ ...anton, fontSize: 22, marginBottom: 8, color: S.ash, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                EMAIL SUPPORT
+                <span style={{ ...mono, fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", color: S.frost, border: `1px solid rgba(191,211,219,.4)`, padding: "4px 8px" }}>COMING SOON</span>
+              </div>
+              <div style={{ color: S.ash, fontSize: 14, lineHeight: 1.6 }}>A dedicated support inbox is on the way. Until then, DM us on Instagram — it's the fastest way to reach a real person.</div>
+            </div>
             <a href="#fw26" onClick={go("fw26")} style={{ background: S.panel, border: `1px solid ${S.line}`, padding: "26px 22px", textDecoration: "none", color: S.snow, transition: "border-color .3s ease" }}
               onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(191,211,219,.5)")}
               onMouseLeave={(e) => (e.currentTarget.style.borderColor = S.line)}>
@@ -883,18 +880,26 @@ export default function App() {
               <div key={t.id} style={{ border: `1px solid rgba(191,211,219,.35)`, borderTop: `2px solid ${S.frost}`, background: S.panel, padding: "26px 24px", marginTop: 12 }}>
                 <h3 style={{ ...anton, fontSize: 20, margin: "0 0 10px", letterSpacing: "0.04em" }}>{t.label.toUpperCase()}</h3>
                 <p style={{ color: S.ash, fontSize: 15, lineHeight: 1.7, margin: "0 0 20px", maxWidth: 680 }}>{t.help}</p>
+                {t.include.length > 0 && (
+                  <div style={{ margin: "0 0 20px" }}>
+                    <p style={{ ...mono, fontSize: 10, color: S.frost, letterSpacing: "0.18em", margin: "0 0 10px" }}>INCLUDE IN YOUR DM:</p>
+                    <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 6 }}>
+                      {t.include.map((item) => (
+                        <li key={item} style={{ color: S.ash, fontSize: 14, lineHeight: 1.5, display: "flex", gap: 10 }}>
+                          <span aria-hidden style={{ color: S.frost }}>▲</span>{item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                  <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(t.subject)}&body=${t.body}`}
+                  <a href={IG} target="_blank" rel="noopener noreferrer"
                     style={{ ...mono, background: S.snow, color: S.night, padding: "14px 24px", textDecoration: "none", fontSize: 12, letterSpacing: "0.1em", fontWeight: 700 }}>
-                    EMAIL US — PRE-FILLED ▲
-                  </a>
-                  <a href="https://instagram.com/whitefall26" target="_blank" rel="noopener noreferrer"
-                    style={{ ...mono, border: `1px solid ${S.line}`, color: S.snow, padding: "14px 24px", textDecoration: "none", fontSize: 12, letterSpacing: "0.1em" }}>
-                    OR DM @WHITEFALL26
+                    DM @WHITEFALL26 ▲
                   </a>
                 </div>
                 <p style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.12em", margin: "16px 0 0" }}>
-                  THE EMAIL OPENS WITH THE SUBJECT AND DETAILS ALREADY FILLED IN — JUST ADD YOUR INFO AND SEND.
+                  EMAIL SUPPORT IS COMING SOON — INSTAGRAM DMS ARE THE FASTEST WAY TO REACH US RIGHT NOW.
                 </p>
               </div>
             ))}
@@ -1012,9 +1017,9 @@ export default function App() {
                     : "YOU'RE ON THE LIST ▲"}
                 </p>
                 {relayFailed && (
-                  <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Waitlist signup")}&body=${encodeURIComponent("Add me to the FW26 waitlist: " + email.trim().toLowerCase())}`}
+                  <a href={IG} target="_blank" rel="noopener noreferrer"
                     style={{ ...mono, display: "inline-block", border: "1px solid rgba(191,211,219,.4)", color: S.frost, padding: "9px 14px", fontSize: 9, letterSpacing: "0.12em", textDecoration: "none", margin: "0 0 12px" }}>
-                    ONE LAST STEP — TAP TO CONFIRM YOUR SPOT ▲
+                    ONE LAST STEP — DM US TO CONFIRM YOUR SPOT ▲
                   </a>
                 )}
                 <p style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.14em", margin: "0 0 12px" }}>WHAT SIZE ARE YOU? (OPTIONAL)</p>
@@ -1112,7 +1117,7 @@ export default function App() {
               It's used for one thing: telling you about drops. It is never sold, rented, or shared with anyone else.
             </p>
             <p style={{ color: S.ash, fontSize: 14, lineHeight: 1.75, margin: 0 }}>
-              Want off the list or your data deleted? Email <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: S.frost }}>{SUPPORT_EMAIL}</a> and it's done.
+              Want off the list or your data deleted? DM <a href={IG} target="_blank" rel="noopener noreferrer" style={{ color: S.frost }}>@whitefall26</a> on Instagram and it's done — no questions asked.
             </p>
           </div>
         </div>
@@ -1176,9 +1181,9 @@ export default function App() {
 
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
                   <a
-                    href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Whitefall waitlist export — " + list.length + " signups")}&body=${encodeURIComponent(list.map((r) => (r.num ? "#" + pad3(r.num) + "  " : "") + r.email + (r.size ? "  [size: " + r.size + "]" : "") + (r.interests && r.interests.length ? "  [wants: " + r.interests.join(", ") + "]" : "") + "  (" + (r.at || "").slice(0, 10) + ")").join("\n") || "No signups yet.")}`}
+                    href={`mailto:?subject=${encodeURIComponent("Whitefall waitlist export — " + list.length + " signups")}&body=${encodeURIComponent(list.map((r) => (r.num ? "#" + pad3(r.num) + "  " : "") + r.email + (r.size ? "  [size: " + r.size + "]" : "") + (r.interests && r.interests.length ? "  [wants: " + r.interests.join(", ") + "]" : "") + "  (" + (r.at || "").slice(0, 10) + ")").join("\n") || "No signups yet.")}`}
                     style={{ ...mono, background: S.snow, color: S.night, padding: "12px 18px", textDecoration: "none", fontSize: 11, fontWeight: 700, letterSpacing: "0.1em" }}>
-                    EMAIL LIST TO ME ▲
+                    EMAIL THE LIST ▲
                   </a>
                   <button
                     onClick={async () => {
