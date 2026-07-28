@@ -12,6 +12,10 @@ Done and live:
 - Repeat signups from the same device keep their original member number.
 - Share-card URLs now fill themselves in at build time from Vercel's domain —
   nothing to edit by hand, and they follow a custom domain automatically.
+- No personal email address appears anywhere on the site or in this repo.
+  Support runs through Instagram DMs, and the support section shows an
+  "EMAIL SUPPORT — COMING SOON" card. To switch email support on later, add a
+  branded address (e.g. support@yourdomain) to that card in `src/App.jsx`.
 - Full signup path verified end-to-end in a browser against mocked live
   services: member number assigned, owner email sent, member card generated.
 
@@ -25,8 +29,10 @@ Two-minute fix, either way:
 - **Or in code:** paste it into the `WEB3FORMS_KEY` line near the top of
   `src/App.jsx`, replacing `PASTE-YOUR-ACCESS-KEY-HERE`, and commit.
 
-Get the key at https://web3forms.com — enter kohenjthrasher@gmail.com, it
-arrives by email in about a minute. No account, no activation link.
+Get the key at https://web3forms.com — enter the owner inbox address, and the
+key arrives by email in about a minute. No account, no activation link. That
+address stays private: it lives in Web3Forms behind the key, and never appears
+on the site or in this repo.
 
 ## Run it locally
 
@@ -56,16 +62,17 @@ Or without GitHub: `npx vercel` in this folder and follow the prompts.
 
 ## The email list — IMPORTANT one-time step
 
-Every waitlist signup on the live site is emailed to **kohenjthrasher@gmail.com**
-instantly via Web3Forms (free, no account, no activation link).
+Every waitlist signup on the live site is emailed to the owner inbox instantly
+via Web3Forms (free, no account, no activation link). The destination address is
+whichever inbox created the access key — it is never published on the site.
 
-**One-time setup:** go to https://web3forms.com, enter kohenjthrasher@gmail.com
-in the "Create your Access Key" box, and the key arrives in your inbox within a
-minute. Then set it either as the `VITE_WEB3FORMS_KEY` environment variable in
-Vercel (Settings → Environment Variables → Redeploy — no code edit), or by
-pasting it into the `WEB3FORMS_KEY` line near the top of `src/App.jsx`. Until
-the key is in place, the site shows each visitor a "confirm your spot by email"
-button as a fallback, so no signup is silently lost.
+**One-time setup:** go to https://web3forms.com, enter the owner inbox address
+in the "Create your Access Key" box, and the key arrives there within a minute.
+Then set it either as the `VITE_WEB3FORMS_KEY` environment variable in Vercel
+(Settings → Environment Variables → Redeploy — no code edit), or by pasting it
+into the `WEB3FORMS_KEY` line near the top of `src/App.jsx`. Until the key is in
+place, the site shows each visitor a "DM us to confirm your spot" button as a
+fallback, so no signup is silently lost.
 
 The key is designed to live in public site code — it only lets people send email
 *to you*. Free tier is 250 submissions/month. Set up a Gmail filter on the
@@ -73,8 +80,7 @@ subject "New Whitefall waitlist signup" to auto-label them.
 
 > History: the site previously used FormSubmit, whose activation flow never
 > completed (its one-time links kept reporting "not a valid link"), and before
-> that sent to `kohenthrasher@gmail.com` (missing the "j") — a typo. Signups
-> from those periods never arrived.
+> that sent to a misspelled address. Signups from those periods never arrived.
 
 ## Owner panel
 
