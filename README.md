@@ -8,7 +8,10 @@ Done and live:
 - Deployed on Vercel — every merge to `main` redeploys automatically.
 - Glitch fixes shipped: smooth scrolling (no more full-page re-renders), stable
   mobile layout (no address-bar jumping), fonts preloaded, signups can't hang.
-- Waitlist relay switched from FormSubmit (activation never worked) to Web3Forms.
+- Waitlist runs through this site's own `/api/signup` endpoint (see
+  `api/signup.js`) rather than a third-party call from the visitor's browser.
+  Ad blockers can't intercept it, no key is exposed to the client, and the
+  delivery provider can change without touching the site.
 - Repeat signups from the same device keep their original member number.
 - Share-card URLs now fill themselves in at build time from Vercel's domain —
   nothing to edit by hand, and they follow a custom domain automatically.
@@ -26,15 +29,16 @@ taxes, refunds. The October drop is the **Whitefall Crewneck only**; pieces
 shop turns on and off from Vercel environment variables — no code edits on
 drop day. Full instructions: "Shopify — the commerce engine" below.
 
-**Two owner steps before launch:**
+**One owner step before launch: set up Shopify.** It is now the *only*
+outstanding task — the waitlist and the store are handled by the same setup.
+While creating the store (runbook below) you also create one Admin API token;
+pasting that into Vercel makes every waitlist signup land in Shopify Customers
+automatically, tagged with member number, size, and founding-member status.
+No separate email service, no signup keys, no activation links.
 
-1. **Web3Forms access key** (2 minutes) — without it no signup reaches the
-   inbox. Get the key at https://web3forms.com (enter the owner inbox address;
-   the key arrives by email — no account, no activation link). Then Vercel →
-   Settings → Environment Variables → add `VITE_WEB3FORMS_KEY` = the key →
-   Redeploy. (Or paste it into the `WEB3FORMS_KEY` line in `src/App.jsx`.)
-2. **Shopify store** (about an hour, needs ID + bank details for payouts) —
-   see the runbook below.
+Until that token exists the site behaves honestly: visitors still get their
+member number and the site shows a "DM us to confirm your spot" button, so
+nobody is silently lost.
 
 ## Run it locally
 
@@ -89,6 +93,9 @@ office. Customers click BUY NOW on whitefall and land on your Shopify checkout.
    within 24 hours" promise automatically when you fulfill orders.
 7. Copy the **product page link** (Sales channels → view product) — that's the
    link the site's BUY NOW button will use.
+8. While you're in here, create the Admin API token that also powers the
+   waitlist — see "The waitlist" section below. Two minutes, and it means no
+   separate email service to sign up for.
 
 ### Drop day (no code — Vercel dashboard only)
 
@@ -123,27 +130,60 @@ join the list.
 Orders, refunds, shipping labels, and customer emails all live in the Shopify
 admin (their mobile app is good). The site needs nothing from you day-to-day.
 
-## The email list — IMPORTANT one-time step
+## The waitlist — where signups go
 
-Every waitlist signup on the live site is emailed to the owner inbox instantly
-via Web3Forms (free, no account, no activation link). The destination address is
-whichever inbox created the access key — it is never published on the site.
+Signups POST to this site's own endpoint (`api/signup.js`, running on Vercel),
+not to a third-party service from the visitor's browser. That endpoint assigns
+the member number and delivers the signup. Three practical wins: browser ad
+blockers can't silently swallow a signup, no key is ever exposed to the client,
+and the delivery provider can be swapped by changing an environment variable
+instead of the site's code.
 
-**One-time setup:** go to https://web3forms.com, enter the owner inbox address
-in the "Create your Access Key" box, and the key arrives there within a minute.
-Then set it either as the `VITE_WEB3FORMS_KEY` environment variable in Vercel
-(Settings → Environment Variables → Redeploy — no code edit), or by pasting it
-into the `WEB3FORMS_KEY` line near the top of `src/App.jsx`. Until the key is in
-place, the site shows each visitor a "DM us to confirm your spot" button as a
-fallback, so no signup is silently lost.
+### Recommended: Shopify (no extra service, no keys to chase)
 
-The key is designed to live in public site code — it only lets people send email
-*to you*. Free tier is 250 submissions/month. Set up a Gmail filter on the
-subject "New Whitefall waitlist signup" to auto-label them.
+Do this while setting up the store — it adds about two minutes:
 
-> History: the site previously used FormSubmit, whose activation flow never
-> completed (its one-time links kept reporting "not a valid link"), and before
-> that sent to a misspelled address. Signups from those periods never arrived.
+1. Shopify admin → **Settings → Apps and sales channels → Develop apps**
+2. **Create an app**, name it "Whitefall site"
+3. **Configure Admin API scopes** → tick `write_customers` and `read_customers`
+4. **Install app** → reveal the **Admin API access token** (starts `shpat_`)
+5. Vercel → Settings → Environment Variables, add both, then **Redeploy**:
+
+   | Variable | Value |
+   |---|---|
+   | `SHOPIFY_STORE` | `your-store.myshopify.com` |
+   | `SHOPIFY_ADMIN_TOKEN` | the `shpat_…` token |
+
+Every signup then becomes a Shopify customer, subscribed to email marketing and
+tagged `waitlist`, `fw26`, `member-007`, `founding-member` (first 100), and
+`size-L`. Which means: the list lives with the business, Shopify Email can mail
+it for free, and you can filter "founding members who wear L" in two clicks.
+Signing up again or changing size updates the same customer — the member number
+is never reassigned and size tags don't pile up.
+
+### Alternative: Resend (plain email notifications)
+
+If you'd rather just get an email per signup: create a Resend account, make an
+API key, then set `RESEND_API_KEY` and `OWNER_EMAIL` in Vercel. The default
+sender (`onboarding@resend.dev`) works without verifying a domain as long as
+notifications go to your own address. Set `RESEND_FROM` later for a branded
+sender on your own domain.
+
+`WEB3FORMS_KEY` is also still supported if a key ever turns up — set it
+server-side in Vercel (no `VITE_` prefix now; keys stay off the client).
+
+### Checking it works
+
+Visit `https://your-site/api/signup` in a browser. It returns
+`{"ok":true,"provider":"shopify"}` — or `"provider":null` if nothing is
+configured yet. No secrets are exposed, and it confirms setup without sending a
+test signup.
+
+> History: the site previously used FormSubmit, whose activation links kept
+> reporting "not a valid link", then Web3Forms, whose key flow also never
+> completed. Both required chasing a third-party signup; the current setup
+> removes that dependency by reusing the Shopify credentials the store needs
+> anyway.
 
 ## Owner panel
 
