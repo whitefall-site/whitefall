@@ -320,16 +320,9 @@ const FAQS = [
    No personal address appears anywhere on the site — waitlist signups are
    delivered by the access key below, not by a published email address. */
 
-/* Web3Forms delivers each signup to the owner's inbox. Get a free access key
-   at https://web3forms.com (enter your email, the key arrives instantly —
-   no account, no activation link). The key is designed to be public.
-
-   Set it either way:
-   - Vercel → Settings → Environment Variables → VITE_WEB3FORMS_KEY (no code edit), or
-   - paste it into the fallback string below and commit. */
-const WEB3FORMS_KEY =
-  import.meta.env.VITE_WEB3FORMS_KEY || "PASTE-YOUR-ACCESS-KEY-HERE";
-const relayReady = Boolean(WEB3FORMS_KEY) && !WEB3FORMS_KEY.includes("PASTE");
+/* Signups POST to this site's own /api/signup endpoint, which assigns the
+   member number and delivers the signup. Nothing about the delivery provider
+   lives in the browser — see api/signup.js and the README runbook. */
 
 const TOPICS = [
   {
@@ -409,22 +402,16 @@ export default function App() {
         } catch (e) { /* not stored yet */ }
         await window.storage.set(key, JSON.stringify({ ...row, size: sz }), true);
       } else {
-        lsWrite(lsRead().map((r) => (r.email === clean ? { ...r, size: sz } : r)));
-        if (relayReady) {
-          try {
-            await fetchT("https://api.web3forms.com/submit", {
-              method: "POST",
-              headers: { "Content-Type": "application/json", Accept: "application/json" },
-              body: JSON.stringify({
-                access_key: WEB3FORMS_KEY,
-                subject: "▲ Whitefall waitlist — size added",
-                from_name: "Whitefall Waitlist",
-                email: clean,
-                size: sz,
-              }),
-            }, 12000);
-          } catch (e) { console.error("size relay failed", e); }
-        }
+        const rows = lsRead().map((r) => (r.email === clean ? { ...r, size: sz } : r));
+        lsWrite(rows);
+        const known = rows.find((r) => r.email === clean && r.num);
+        try {
+          await fetchT("/api/signup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify({ email: clean, size: sz, num: known ? known.num : null }),
+          }, 12000);
+        } catch (e) { console.error("size update failed", e); }
       }
     } catch (e) { console.error("size save unavailable", e); }
   };
@@ -585,47 +572,29 @@ export default function App() {
           }
         } catch (e) { /* unnumbered */ }
       } else {
-        // Deployed: global member number from a free counter, then instant email to the owner
-        let n = null;
+        // Deployed: one call to our own endpoint. It assigns the member
+        // number and delivers the signup, so ad blockers can't intercept a
+        // third-party request and silently lose someone.
         const prior = lsRead().find((r) => r.email === clean && r.num);
-        if (prior) {
-          // same device re-joining — keep their number, don't inflate the counter
-          n = prior.num;
-        } else {
-          try {
-            const cr = await fetchT("https://api.counterapi.dev/v1/whitefall-fw26/waitlist/up", {}, 6000);
-            const cj = await cr.json();
-            n = cj && (cj.count || (cj.data && cj.data.count)) || null;
-          } catch (e) { console.error("counter unavailable", e); }
+        let n = prior ? prior.num : null;
+        setStoreMode("relay");
+        try {
+          const rs = await fetchT("/api/signup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify({ email: clean, interests, num: n }),
+          }, 12000);
+          const rj = rs.ok ? await rs.json().catch(() => null) : null;
+          if (rj && rj.num) n = rj.num;
+          setRelayFailed(!(rj && rj.stored));
+          if (rj && !rj.stored) console.error("waitlist not delivered — no provider configured");
+        } catch (e) {
+          console.error("signup endpoint unreachable", e);
+          setRelayFailed(true);
         }
         if (n) { setMemberNum(n); row.num = n; }
         lsWrite(mergeRow(lsRead(), row));
         setSessionRows((rows) => rows.map((r) => (r.email === clean ? { ...r, num: n || r.num } : r)));
-        setStoreMode("relay");
-        if (!relayReady) {
-          // no access key configured yet — surface the DM fallback
-          setRelayFailed(true);
-        } else {
-          try {
-            const fr = await fetchT("https://api.web3forms.com/submit", {
-              method: "POST",
-              headers: { "Content-Type": "application/json", Accept: "application/json" },
-              body: JSON.stringify({
-                access_key: WEB3FORMS_KEY,
-                subject: "▲ New Whitefall waitlist signup" + (n ? " — member #" + String(n).padStart(3, "0") : ""),
-                from_name: "Whitefall Waitlist",
-                email: clean,
-                member_number: n || "unassigned",
-                wants: interests.join(", ") || "general waitlist",
-                signed_up_at: new Date().toLocaleString(),
-              }),
-            }, 12000);
-            const fj = await fr.json().catch(() => null);
-            const delivered = fr.ok && fj && (fj.success === true || fj.success === "true");
-            setRelayFailed(!delivered);
-            if (!delivered) console.error("email relay not delivered", fj);
-          } catch (e) { console.error("email relay failed", e); setRelayFailed(true); }
-        }
       }
     } catch (e) {
       console.error("signup save failed", e);
