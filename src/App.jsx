@@ -309,16 +309,26 @@ function PieceShop({ shopId, fit, onNotify }) {
 
 const FAQS = [
   { q: "When does FW26 drop?", a: "October 2026. Waitlist members get the exact date, time, and early access 24 hours before anyone else. Join below — it's free and it's the only way in early." },
-  { q: "Where's my order?", a: "Every order gets a tracking link by email within 24 hours of shipping. Can't find it? DM us your order number on Instagram — we respond within one business day." },
-  { q: "What's your return policy?", a: "30 days, no questions. Unworn, tags on, full refund to your original payment method. Start a return by DMing us your order number on Instagram — we send the label, you drop it off." },
+  { q: "Where's my order?", a: "Every order gets a tracking link by email within 24 hours of shipping. Can't find it? Email us your order number, or DM us on Instagram — we respond within one business day." },
+  { q: "What's your return policy?", a: "30 days, no questions. Unworn, tags on, full refund to your original payment method. Start a return by emailing us your order number — we send the label, you drop it off." },
   { q: "How does sizing run?", a: "It varies piece to piece — some are cut boxy and oversized, others tailored and slim. Always read the description on the specific product you're interested in: every piece lists its own fit notes and exact garment measurements there." },
   { q: "Will pieces restock?", a: "Rarely, and never guaranteed. Runs are small and numbered by design — when a piece sells out, don't count on seeing it again. If a restock ever happens, the waitlist hears first." },
   { q: "Do you ship worldwide?", a: "Yes. Duties are calculated at checkout so there are no surprise fees at your door." },
 ];
 
-/* Support runs through Instagram DMs until a branded support inbox is live.
-   No personal address appears anywhere on the site — waitlist signups are
-   delivered by the access key below, not by a published email address. */
+/* Brand support inbox — published on the site on purpose. Keep this a brand
+   address, never a personal one. Waitlist delivery does NOT depend on it (see
+   api/signup.js); this is purely the customer-facing contact route. */
+const SUPPORT_EMAIL = "whitefall26@gmail.com";
+
+/* One source of truth for a topic's pre-filled email: the same "what to
+   include" list drives both the on-page checklist and the email body. */
+const topicMailto = (t) => {
+  const lines = ["Hi Whitefall,", "", t.label + ".", ""];
+  for (const f of t.include) lines.push(f + ":");
+  lines.push("", "Thanks!");
+  return `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Whitefall — " + t.label)}&body=${encodeURIComponent(lines.join("\n"))}`;
+};
 
 /* Signups POST to this site's own /api/signup endpoint, which assigns the
    member number and delivers the signup. Nothing about the delivery provider
@@ -872,9 +882,9 @@ export default function App() {
                   : "▲ YOU'RE IN. WATCH YOUR INBOX."}
               </p>
               {relayFailed && (
-                <a href={IG} target="_blank" rel="noopener noreferrer"
+                <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("FW26 waitlist signup")}&body=${encodeURIComponent("Add me to the FW26 waitlist: " + email.trim().toLowerCase())}`}
                   style={{ ...mono, display: "inline-block", border: "1px solid rgba(191,211,219,.4)", color: S.frost, padding: "10px 16px", fontSize: 10, letterSpacing: "0.14em", textDecoration: "none", margin: "0 0 18px" }}>
-                  ONE LAST STEP — DM @WHITEFALL26 TO CONFIRM YOUR SPOT ▲
+                  ONE LAST STEP — TAP TO CONFIRM YOUR SPOT BY EMAIL ▲
                 </a>
               )}
               {!size ? (
@@ -944,14 +954,14 @@ export default function App() {
               <div style={{ ...anton, fontSize: 22, marginBottom: 8 }}>@WHITEFALL26</div>
               <div style={{ color: S.ash, fontSize: 14, lineHeight: 1.6 }}>DM on Instagram for orders, sizing, and drop questions. Typical reply: under a few hours.</div>
             </a>
-            <div style={{ background: S.panel, border: `1px dashed ${S.line}`, padding: "26px 22px", color: S.snow }}>
-              <div style={{ ...mono, fontSize: 10, letterSpacing: "0.18em", color: S.ash, marginBottom: 12 }}>ORDERS &amp; RETURNS</div>
-              <div style={{ ...anton, fontSize: 22, marginBottom: 8, color: S.ash, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                EMAIL SUPPORT
-                <span style={{ ...mono, fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", color: S.frost, border: `1px solid rgba(191,211,219,.4)`, padding: "4px 8px" }}>COMING SOON</span>
-              </div>
-              <div style={{ color: S.ash, fontSize: 14, lineHeight: 1.6 }}>A dedicated support inbox is on the way. Until then, DM us on Instagram — it's the fastest way to reach a real person.</div>
-            </div>
+            <a href={`mailto:${SUPPORT_EMAIL}`} style={{ background: S.panel, border: `1px solid ${S.line}`, padding: "26px 22px", textDecoration: "none", color: S.snow, transition: "border-color .3s ease" }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(191,211,219,.5)")}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = S.line)}>
+              <div style={{ ...mono, fontSize: 10, letterSpacing: "0.18em", color: S.frost, marginBottom: 12 }}>ORDERS &amp; RETURNS</div>
+              <div style={{ ...anton, fontSize: 22, marginBottom: 8 }}>EMAIL SUPPORT</div>
+              <div style={{ ...mono, color: S.frost, fontSize: 12, letterSpacing: "0.04em", marginBottom: 8, wordBreak: "break-all" }}>{SUPPORT_EMAIL}</div>
+              <div style={{ color: S.ash, fontSize: 14, lineHeight: 1.6 }}>Include your order number. Replies within one business day.</div>
+            </a>
             <a href="#fw26" onClick={go("fw26")} style={{ background: S.panel, border: `1px solid ${S.line}`, padding: "26px 22px", textDecoration: "none", color: S.snow, transition: "border-color .3s ease" }}
               onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(191,211,219,.5)")}
               onMouseLeave={(e) => (e.currentTarget.style.borderColor = S.line)}>
@@ -990,7 +1000,7 @@ export default function App() {
                 <p style={{ color: S.ash, fontSize: 15, lineHeight: 1.7, margin: "0 0 20px", maxWidth: 680 }}>{t.help}</p>
                 {t.include.length > 0 && (
                   <div style={{ margin: "0 0 20px" }}>
-                    <p style={{ ...mono, fontSize: 10, color: S.frost, letterSpacing: "0.18em", margin: "0 0 10px" }}>INCLUDE IN YOUR DM:</p>
+                    <p style={{ ...mono, fontSize: 10, color: S.frost, letterSpacing: "0.18em", margin: "0 0 10px" }}>WHAT WE'LL NEED:</p>
                     <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 6 }}>
                       {t.include.map((item) => (
                         <li key={item} style={{ color: S.ash, fontSize: 14, lineHeight: 1.5, display: "flex", gap: 10 }}>
@@ -1001,13 +1011,17 @@ export default function App() {
                   </div>
                 )}
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                  <a href={IG} target="_blank" rel="noopener noreferrer"
+                  <a href={topicMailto(t)}
                     style={{ ...mono, background: S.snow, color: S.night, padding: "14px 24px", textDecoration: "none", fontSize: 12, letterSpacing: "0.1em", fontWeight: 700 }}>
-                    DM @WHITEFALL26 ▲
+                    EMAIL US — PRE-FILLED ▲
+                  </a>
+                  <a href={IG} target="_blank" rel="noopener noreferrer"
+                    style={{ ...mono, border: `1px solid ${S.line}`, color: S.snow, padding: "14px 24px", textDecoration: "none", fontSize: 12, letterSpacing: "0.1em" }}>
+                    OR DM @WHITEFALL26
                   </a>
                 </div>
                 <p style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.12em", margin: "16px 0 0" }}>
-                  EMAIL SUPPORT IS COMING SOON — INSTAGRAM DMS ARE THE FASTEST WAY TO REACH US RIGHT NOW.
+                  THE EMAIL OPENS WITH THE SUBJECT AND DETAILS ALREADY LAID OUT — JUST FILL THEM IN AND SEND.
                 </p>
               </div>
             ))}
@@ -1125,9 +1139,9 @@ export default function App() {
                     : "YOU'RE ON THE LIST ▲"}
                 </p>
                 {relayFailed && (
-                  <a href={IG} target="_blank" rel="noopener noreferrer"
+                  <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("FW26 waitlist signup")}&body=${encodeURIComponent("Add me to the FW26 waitlist: " + email.trim().toLowerCase())}`}
                     style={{ ...mono, display: "inline-block", border: "1px solid rgba(191,211,219,.4)", color: S.frost, padding: "9px 14px", fontSize: 9, letterSpacing: "0.12em", textDecoration: "none", margin: "0 0 12px" }}>
-                    ONE LAST STEP — DM US TO CONFIRM YOUR SPOT ▲
+                    ONE LAST STEP — TAP TO CONFIRM YOUR SPOT ▲
                   </a>
                 )}
                 <p style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.14em", margin: "0 0 12px" }}>WHAT SIZE ARE YOU? (OPTIONAL)</p>
@@ -1225,7 +1239,7 @@ export default function App() {
               It's used for one thing: telling you about drops. It is never sold, rented, or shared with anyone else.
             </p>
             <p style={{ color: S.ash, fontSize: 14, lineHeight: 1.75, margin: 0 }}>
-              Want off the list or your data deleted? DM <a href={IG} target="_blank" rel="noopener noreferrer" style={{ color: S.frost }}>@whitefall26</a> on Instagram and it's done — no questions asked.
+              Want off the list or your data deleted? Email <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Delete my data")}`} style={{ color: S.frost }}>{SUPPORT_EMAIL}</a> or DM <a href={IG} target="_blank" rel="noopener noreferrer" style={{ color: S.frost }}>@whitefall26</a> and it's done — no questions asked.
             </p>
           </div>
         </div>
@@ -1289,9 +1303,9 @@ export default function App() {
 
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
                   <a
-                    href={`mailto:?subject=${encodeURIComponent("Whitefall waitlist export — " + list.length + " signups")}&body=${encodeURIComponent(list.map((r) => (r.num ? "#" + pad3(r.num) + "  " : "") + r.email + (r.size ? "  [size: " + r.size + "]" : "") + (r.interests && r.interests.length ? "  [wants: " + r.interests.join(", ") + "]" : "") + "  (" + (r.at || "").slice(0, 10) + ")").join("\n") || "No signups yet.")}`}
+                    href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Whitefall waitlist export — " + list.length + " signups")}&body=${encodeURIComponent(list.map((r) => (r.num ? "#" + pad3(r.num) + "  " : "") + r.email + (r.size ? "  [size: " + r.size + "]" : "") + (r.interests && r.interests.length ? "  [wants: " + r.interests.join(", ") + "]" : "") + "  (" + (r.at || "").slice(0, 10) + ")").join("\n") || "No signups yet.")}`}
                     style={{ ...mono, background: S.snow, color: S.night, padding: "12px 18px", textDecoration: "none", fontSize: 11, fontWeight: 700, letterSpacing: "0.1em" }}>
-                    EMAIL THE LIST ▲
+                    EMAIL LIST TO ME ▲
                   </a>
                   <button
                     onClick={async () => {
