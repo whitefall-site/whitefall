@@ -5,17 +5,21 @@
    requests (a signup vanishes and nobody knows), API keys stay off the
    client, and the delivery provider can change without touching the site.
 
-   Delivery is tried in order and stops at the first success:
-     1. Shopify   — the customer list lives where the business lives
-     2. Resend    — plain email notification
-     3. Web3Forms — kept so any existing key keeps working
+   Two independent jobs, because they are complementary — not alternatives:
 
-   Configure whichever one you have (Vercel → Settings → Environment
-   Variables). With none configured the endpoint reports stored:false and
-   the site shows its DM fallback, so a signup is never silently dropped.
+     STORE  — Shopify: the signup becomes a tagged customer record, so the
+              list lives with the business and Shopify Email can mail it.
+     NOTIFY — an email lands in the owner's inbox the moment someone joins:
+              Gmail SMTP (no third-party service — the brand inbox sends to
+              itself), or Resend, or Web3Forms. First one configured wins.
 
-   GET /api/signup returns which provider is configured — a way to confirm
-   setup without sending a test signup, and without exposing any secret.
+   Either job succeeding counts as delivered. Configure one or both in
+   Vercel → Settings → Environment Variables. With neither configured the
+   endpoint reports stored:null and the site shows its "confirm by email"
+   fallback, so a signup is never silently dropped.
+
+   GET /api/signup reports what is configured — confirms setup without
+   sending a test signup, and without exposing any secret.
 ———————————————————————————————————————————————— */
 
 const COUNTER = "https://api.counterapi.dev/v1/whitefall-fw26/waitlist/up";
@@ -23,13 +27,19 @@ const COUNTER = "https://api.counterapi.dev/v1/whitefall-fw26/waitlist/up";
 const clean = (v, max = 200) => String(v == null ? "" : v).trim().slice(0, max);
 const validEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 
-/* Which provider is live, in priority order. */
-function provider() {
-  if (process.env.SHOPIFY_STORE && process.env.SHOPIFY_ADMIN_TOKEN) return "shopify";
+/* Gmail shows app passwords in spaced groups ("abcd efgh ijkl mnop") and
+   they are almost always pasted that way. SMTP needs them unspaced. */
+const appPassword = () => (process.env.GMAIL_APP_PASSWORD || "").replace(/\s+/g, "");
+
+const storeProvider = () =>
+  process.env.SHOPIFY_STORE && process.env.SHOPIFY_ADMIN_TOKEN ? "shopify" : null;
+
+const notifyProvider = () => {
+  if (process.env.GMAIL_USER && appPassword()) return "gmail";
   if (process.env.RESEND_API_KEY && process.env.OWNER_EMAIL) return "resend";
   if (process.env.WEB3FORMS_KEY) return "web3forms";
   return null;
-}
+};
 
 /* Small fetch wrapper so one slow provider can't hang the request. */
 async function post(url, opts, ms = 8000) {
@@ -98,8 +108,52 @@ async function toShopify({ email, size, interests, num }) {
   return res.status === 422;
 }
 
+/* Shared body for the owner notification. */
+function notifyText({ email, size, interests, num }) {
+  return [
+    `Email:  ${email}`,
+    `Member: ${num ? "#" + String(num).padStart(3, "0") : "unassigned"}` +
+      (num && num <= 100 ? "  (FOUNDING MEMBER)" : ""),
+    `Size:   ${size || "—"}`,
+    `Wants:  ${interests && interests.length ? interests.join(", ") : "general waitlist"}`,
+    `Time:   ${new Date().toUTCString()}`,
+  ].join("\n");
+}
+const notifySubject = ({ num }) =>
+  "▲ New Whitefall waitlist signup" + (num ? ` — member #${String(num).padStart(3, "0")}` : "");
+
+/* ——— Gmail SMTP: the brand inbox mails itself. No third-party service;
+       auth is a Google App Password generated inside the owner's own
+       account. Loaded dynamically so a missing dependency degrades to the
+       other adapters instead of crashing the endpoint. ——— */
+async function toGmail(payload) {
+  const { default: nodemailer } = await import("nodemailer");
+  const user = process.env.GMAIL_USER;
+  // Defaults to Gmail; SMTP_HOST/SMTP_PORT allow any other provider later
+  // (Outlook, a custom-domain mailbox) without a code change.
+  const port = Number(process.env.SMTP_PORT) || 465;
+  const transport = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || "smtp.gmail.com",
+    port,
+    secure: port === 465,
+    auth: { user, pass: appPassword() },
+    connectionTimeout: 8000,
+    greetingTimeout: 8000,
+    socketTimeout: 8000,
+    tls: process.env.SMTP_INSECURE === "1" ? { rejectUnauthorized: false } : undefined,
+  });
+  await transport.sendMail({
+    from: `"Whitefall Waitlist" <${user}>`,
+    to: process.env.OWNER_EMAIL || user,
+    replyTo: payload.email, // reply goes straight to the new member
+    subject: notifySubject(payload),
+    text: notifyText(payload),
+  });
+  return true;
+}
+
 /* ——— Resend: email the owner ——— */
-async function toResend({ email, size, interests, num }) {
+async function toResend(payload) {
   const res = await post("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -109,27 +163,23 @@ async function toResend({ email, size, interests, num }) {
     body: JSON.stringify({
       from: process.env.RESEND_FROM || "Whitefall <onboarding@resend.dev>",
       to: [process.env.OWNER_EMAIL],
-      subject: "▲ New Whitefall waitlist signup" + (num ? ` — member #${String(num).padStart(3, "0")}` : ""),
-      text: [
-        `Email:  ${email}`,
-        `Member: ${num ? "#" + String(num).padStart(3, "0") : "unassigned"}`,
-        `Size:   ${size || "—"}`,
-        `Wants:  ${interests && interests.length ? interests.join(", ") : "general waitlist"}`,
-        `Time:   ${new Date().toISOString()}`,
-      ].join("\n"),
+      reply_to: payload.email,
+      subject: notifySubject(payload),
+      text: notifyText(payload),
     }),
   });
   return res.ok;
 }
 
 /* ——— Web3Forms: kept working for any key already configured ——— */
-async function toWeb3Forms({ email, size, interests, num }) {
+async function toWeb3Forms(payload) {
+  const { email, size, interests, num } = payload;
   const res = await post("https://api.web3forms.com/submit", {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify({
       access_key: process.env.WEB3FORMS_KEY,
-      subject: "▲ New Whitefall waitlist signup" + (num ? ` — member #${String(num).padStart(3, "0")}` : ""),
+      subject: notifySubject(payload),
       from_name: "Whitefall Waitlist",
       email,
       member_number: num || "unassigned",
@@ -156,7 +206,13 @@ async function memberNumber(existing) {
 
 export default async function handler(req, res) {
   if (req.method === "GET") {
-    return res.status(200).json({ ok: true, provider: provider() });
+    return res.status(200).json({
+      ok: true,
+      store: storeProvider(),
+      notify: notifyProvider(),
+      // kept so an older cached page reading `provider` still works
+      provider: storeProvider() || notifyProvider(),
+    });
   }
   if (req.method !== "POST") {
     res.setHeader("Allow", "GET, POST");
@@ -181,20 +237,29 @@ export default async function handler(req, res) {
   const num = await memberNumber(Number(body.num) || null);
   const payload = { email, size, interests, num };
 
-  const which = provider();
-  let stored = null;
-  if (which) {
+  // Store and notify are independent: a Shopify outage must not stop the
+  // owner's email, and vice versa. Run both, report whatever succeeded.
+  const run = async (name, fn) => {
+    if (!name) return null;
     try {
-      const sent =
-        which === "shopify" ? await toShopify(payload) :
-        which === "resend" ? await toResend(payload) :
-        await toWeb3Forms(payload);
-      if (sent) stored = which;
+      return (await fn(payload)) ? name : null;
     } catch (e) {
-      // Never leak the address into logs; the outcome is what matters.
-      console.error("waitlist delivery failed via " + which + ":", e && e.message);
+      // Never log the address itself — only the outcome.
+      console.error(`waitlist ${name} failed:`, e && e.message);
+      return null;
     }
-  }
+  };
 
-  return res.status(200).json({ ok: true, stored, num });
+  const notifier = notifyProvider();
+  const [didStore, didNotify] = await Promise.all([
+    run(storeProvider(), toShopify),
+    run(notifier, notifier === "gmail" ? toGmail : notifier === "resend" ? toResend : toWeb3Forms),
+  ]);
+
+  const done = [didStore, didNotify].filter(Boolean);
+  return res.status(200).json({
+    ok: true,
+    stored: done.length ? done.join("+") : null,
+    num,
+  });
 }
