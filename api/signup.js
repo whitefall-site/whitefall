@@ -41,8 +41,12 @@ const notifyProvider = () => {
   return null;
 };
 
-/* Small fetch wrapper so one slow provider can't hang the request. */
-async function post(url, opts, ms = 8000) {
+/* Small fetch wrapper so one slow provider can't hang the request.
+   Budget matters: Vercel kills a function at maxDuration (30s, set in
+   vercel.json) and a killed function means a lost signup. Worst case here is
+   counter (4s) + Shopify search (5s) + Shopify write (5s) = 14s, with the
+   notifier running in parallel. */
+async function post(url, opts, ms = 5000) {
   const ctl = new AbortController();
   const t = setTimeout(() => ctl.abort(), ms);
   try {
@@ -196,7 +200,7 @@ async function toWeb3Forms(payload) {
 async function memberNumber(existing) {
   if (existing) return existing;
   try {
-    const r = await post(COUNTER, {}, 5000);
+    const r = await post(COUNTER, {}, 4000);
     const j = await r.json();
     return (j && (j.count || (j.data && j.data.count))) || null;
   } catch {
@@ -206,12 +210,36 @@ async function memberNumber(existing) {
 
 export default async function handler(req, res) {
   if (req.method === "GET") {
+    // Human-readable diagnosis: says what is missing and what to do about it,
+    // without ever echoing a secret back.
+    const store = storeProvider();
+    const notify = notifyProvider();
+    const halfGmail = Boolean(process.env.GMAIL_USER) !== Boolean(appPassword());
+    const halfShopify =
+      Boolean(process.env.SHOPIFY_STORE) !== Boolean(process.env.SHOPIFY_ADMIN_TOKEN);
+
+    let status;
+    if (notify || store) {
+      status = `Working — signups will ${notify ? `email you (via ${notify})` : ""}` +
+        `${notify && store ? " and " : ""}${store ? "save to Shopify" : ""}.`;
+    } else if (halfGmail) {
+      status = `Almost — ${process.env.GMAIL_USER ? "GMAIL_APP_PASSWORD" : "GMAIL_USER"} is missing. Add it in Vercel → Settings → Environment Variables, then Redeploy.`;
+    } else if (halfShopify) {
+      status = `Almost — ${process.env.SHOPIFY_STORE ? "SHOPIFY_ADMIN_TOKEN" : "SHOPIFY_STORE"} is missing. Add it in Vercel → Settings → Environment Variables, then Redeploy.`;
+    } else {
+      status =
+        "Not set up yet — signups reach nobody. Quickest fix: set GMAIL_USER " +
+        "and GMAIL_APP_PASSWORD in Vercel → Settings → Environment Variables, " +
+        "then Redeploy. See the README section 'Fastest: Gmail sends to itself'.";
+    }
+
     return res.status(200).json({
       ok: true,
-      store: storeProvider(),
-      notify: notifyProvider(),
+      status,
+      store,
+      notify,
       // kept so an older cached page reading `provider` still works
-      provider: storeProvider() || notifyProvider(),
+      provider: store || notify,
     });
   }
   if (req.method !== "POST") {
@@ -257,6 +285,19 @@ export default async function handler(req, res) {
   ]);
 
   const done = [didStore, didNotify].filter(Boolean);
+
+  if (!done.length) {
+    // Nothing delivered. Write the signup to this project's own Vercel
+    // runtime log as a last resort — it is private to the project owner and
+    // recoverable from the Vercel dashboard (Logs) for as long as the plan
+    // retains them. Not a substitute for real delivery, but it means a
+    // signup during a misconfiguration window isn't gone for good.
+    console.warn(
+      "WAITLIST_UNDELIVERED " +
+        JSON.stringify({ email, num, size, interests, at: new Date().toISOString() })
+    );
+  }
+
   return res.status(200).json({
     ok: true,
     stored: done.length ? done.join("+") : null,

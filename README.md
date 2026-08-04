@@ -150,6 +150,16 @@ The endpoint does two independent jobs, and either one succeeding counts:
 They are complementary, not alternatives. Set up one now and the other later;
 if both are on, a Shopify outage still can't stop the email.
 
+> **Is it working right now?** Open `https://your-site/api/signup` in any
+> browser. It answers in plain English — "Working — signups will email you",
+> or exactly which variable is missing and where to add it. Safe to open
+> anywhere; it never echoes a secret.
+>
+> **If nothing is configured**, undelivered signups are still written to the
+> project's private Vercel runtime log as `WAITLIST_UNDELIVERED` lines
+> (Vercel → your project → Logs). Retention is short and this is a safety
+> net, not a solution — but a signup during a setup gap isn't gone for good.
+
 ### Fastest: Gmail sends to itself (no third-party service at all)
 
 `whitefall26@gmail.com` can mail *itself* every signup. Nothing to sign up
