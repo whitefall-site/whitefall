@@ -30,16 +30,18 @@ taxes, refunds. The October drop is the **Whitefall Crewneck only**; pieces
 shop turns on and off from Vercel environment variables — no code edits on
 drop day. Full instructions: "Shopify — the commerce engine" below.
 
-**One owner step before launch: set up Shopify.** It is now the *only*
-outstanding task — the waitlist and the store are handled by the same setup.
-While creating the store (runbook below) you also create one Admin API token;
-pasting that into Vercel makes every waitlist signup land in Shopify Customers
-automatically, tagged with member number, size, and founding-member status.
-No separate email service, no signup keys, no activation links.
+**Owner steps before launch:**
 
-Until that token exists the site behaves honestly: visitors still get their
-member number and the site shows a "DM us to confirm your spot" button, so
-nobody is silently lost.
+1. **Waitlist emails — 5 minutes, no third-party service.** Generate a Google
+   App Password on the whitefall26 account and paste it into Vercel. Every
+   signup then emails the brand inbox instantly. Steps: "Fastest: Gmail sends
+   to itself" below.
+2. **Shopify** — the store itself, plus (optionally) an Admin API token that
+   also files each signup as a tagged customer. Runbook below.
+
+Neither is a hard blocker: until they're set the site behaves honestly —
+visitors still get their member number and see a "confirm your spot by email"
+button, so nobody is silently lost.
 
 ## Run it locally
 
@@ -140,7 +142,49 @@ blockers can't silently swallow a signup, no key is ever exposed to the client,
 and the delivery provider can be swapped by changing an environment variable
 instead of the site's code.
 
-### Recommended: Shopify (no extra service, no keys to chase)
+The endpoint does two independent jobs, and either one succeeding counts:
+
+- **NOTIFY** — an email hits the brand inbox the second someone joins.
+- **STORE** — the signup becomes a tagged Shopify customer.
+
+They are complementary, not alternatives. Set up one now and the other later;
+if both are on, a Shopify outage still can't stop the email.
+
+### Fastest: Gmail sends to itself (no third-party service at all)
+
+`whitefall26@gmail.com` can mail *itself* every signup. Nothing to sign up
+for, no key emailed to you, no activation link — the credential is generated
+inside the Google account you already own.
+
+1. Go to **myaccount.google.com/security** (signed in as whitefall26)
+2. Turn on **2-Step Verification** if it isn't already (required by Google
+   before app passwords exist)
+3. Go to **myaccount.google.com/apppasswords**, type a name like
+   "Whitefall site", and hit **Create**
+4. Google shows a 16-character password like `abcd efgh ijkl mnop` — copy it
+   (spaces are fine, the endpoint strips them)
+5. Vercel → Settings → Environment Variables → add both → **Redeploy**:
+
+   | Variable | Value |
+   |---|---|
+   | `GMAIL_USER` | `whitefall26@gmail.com` |
+   | `GMAIL_APP_PASSWORD` | the 16-character password |
+
+Each signup then arrives as an email titled
+"▲ New Whitefall waitlist signup — member #007" with the member number,
+size, and founding-member status. **Reply-To is set to the new member**, so
+hitting reply in Gmail writes straight to them — handy for welcoming founding
+members personally.
+
+An app password only permits sending mail and can be revoked on that same
+page at any time. It is stored in Vercel, never in this repo, and never
+reaches the browser.
+
+> Using a different mailbox later (Outlook, or `support@` on a custom
+> domain)? Set `SMTP_HOST` and `SMTP_PORT` too — any SMTP provider works
+> without a code change.
+
+### Recommended alongside it: Shopify (no extra service, no keys to chase)
 
 Do this while setting up the store — it adds about two minutes:
 
@@ -176,10 +220,13 @@ server-side in Vercel (no `VITE_` prefix now; keys stay off the client).
 
 ### Checking it works
 
-Visit `https://your-site/api/signup` in a browser. It returns
-`{"ok":true,"provider":"shopify"}` — or `"provider":null` if nothing is
-configured yet. No secrets are exposed, and it confirms setup without sending a
-test signup.
+Visit `https://your-site/api/signup` in a browser. It returns something like
+`{"ok":true,"store":"shopify","notify":"gmail"}` — either field is `null` if
+that job isn't configured yet. No secrets are exposed, and it confirms setup
+without sending a test signup.
+
+Then join the waitlist on the live site with any address. If the "confirm your
+spot by email" button does *not* appear, delivery worked.
 
 > History: the site previously used FormSubmit, whose activation links kept
 > reporting "not a valid link", then Web3Forms, whose key flow also never
