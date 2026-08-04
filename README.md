@@ -15,10 +15,11 @@ Done and live:
 - Repeat signups from the same device keep their original member number.
 - Share-card URLs now fill themselves in at build time from Vercel's domain —
   nothing to edit by hand, and they follow a custom domain automatically.
-- No personal email address appears anywhere on the site or in this repo.
-  Support runs through Instagram DMs, and the support section shows an
-  "EMAIL SUPPORT — COMING SOON" card. To switch email support on later, add a
-  branded address (e.g. support@yourdomain) to that card in `src/App.jsx`.
+- Support runs on two live lanes: **whitefall26@gmail.com** (brand inbox) and
+  Instagram DMs. No personal address appears anywhere on the site or in this
+  repo. The address lives in one constant, `SUPPORT_EMAIL` in `src/App.jsx` —
+  change it there and every contact point follows, including the pre-filled
+  topic emails. Swap it for `support@yourdomain` once a custom domain is live.
 - Full signup path verified end-to-end in a browser against mocked live
   services: member number assigned, owner email sent, member card generated.
 
@@ -164,8 +165,9 @@ is never reassigned and size tags don't pile up.
 ### Alternative: Resend (plain email notifications)
 
 If you'd rather just get an email per signup: create a Resend account, make an
-API key, then set `RESEND_API_KEY` and `OWNER_EMAIL` in Vercel. The default
-sender (`onboarding@resend.dev`) works without verifying a domain as long as
+API key, then set `RESEND_API_KEY` and `OWNER_EMAIL` (use
+`whitefall26@gmail.com`) in Vercel. The default sender
+(`onboarding@resend.dev`) works without verifying a domain as long as
 notifications go to your own address. Set `RESEND_FROM` later for a branded
 sender on your own domain.
 
