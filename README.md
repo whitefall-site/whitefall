@@ -43,6 +43,21 @@ Neither is a hard blocker: until they're set the site behaves honestly —
 visitors still get their member number and see a "confirm your spot by email"
 button, so nobody is silently lost.
 
+## Analytics
+
+Vercel Analytics is wired in (`<Analytics />` in `src/main.jsx`). It is
+privacy-friendly and cookieless — no consent banner needed — and it no-ops
+anywhere other than Vercel, so local dev stays clean.
+
+**Turn it on:** Vercel → your project → **Analytics** tab → Enable. Data
+starts appearing within a few minutes of real traffic. The free tier caps
+monthly events; if a drop blows past it, collection pauses until the next
+period rather than charging you.
+
+Worth watching around a drop: which sources send traffic (Instagram vs direct),
+how many land on the site versus reach the waitlist, and mobile-vs-desktop
+split.
+
 ## Run it locally
 
 1. Open this folder in VS Code
