@@ -22,7 +22,31 @@
    sending a test signup, and without exposing any secret.
 ———————————————————————————————————————————————— */
 
-const COUNTER = "https://api.counterapi.dev/v1/whitefall-fw26/waitlist/up";
+/* Member numbers come from a shared counter. These are free, unauthenticated
+   services, so any one of them can vanish without warning — which is exactly
+   what happened once already. They are tried in order until one returns a
+   number, and their response shapes differ, so parsing is deliberately loose.
+
+   This is still the weakest link in the stack. The durable fix is a counter
+   we own (Shopify customer count, or Vercel KV); see the README. */
+const COUNTERS = [
+  "https://api.counterapi.dev/v2/whitefall-fw26/waitlist/up",
+  "https://api.counterapi.dev/v1/whitefall-fw26/waitlist/up",
+  "https://abacus.jasoncameron.dev/hit/whitefall-fw26/waitlist",
+];
+
+/* Pull the first plausible count out of whatever shape came back. */
+function readCount(j) {
+  if (!j || typeof j !== "object") return null;
+  const pools = [j, j.data, j.counter].filter((o) => o && typeof o === "object");
+  for (const o of pools) {
+    for (const k of ["count", "up_count", "value", "hits", "current"]) {
+      const n = o[k];
+      if (typeof n === "number" && Number.isFinite(n) && n > 0) return Math.floor(n);
+    }
+  }
+  return null;
+}
 
 const clean = (v, max = 200) => String(v == null ? "" : v).trim().slice(0, max);
 const validEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
@@ -199,13 +223,19 @@ async function toWeb3Forms(payload) {
 /* Member number. Done server-side so ad blockers can't break it. */
 async function memberNumber(existing) {
   if (existing) return existing;
-  try {
-    const r = await post(COUNTER, {}, 4000);
-    const j = await r.json();
-    return (j && (j.count || (j.data && j.data.count))) || null;
-  } catch {
-    return null;
+  for (const url of COUNTERS) {
+    try {
+      const r = await post(url, { headers: { Accept: "application/json" } }, 3500);
+      if (!r.ok) { console.warn(`counter ${new URL(url).host} returned ${r.status}`); continue; }
+      const n = readCount(await r.json().catch(() => null));
+      if (n) return n;
+      console.warn(`counter ${new URL(url).host} returned no usable count`);
+    } catch (e) {
+      console.warn(`counter ${new URL(url).host} unreachable:`, e && e.message);
+    }
   }
+  console.error("ALL COUNTERS FAILED — signup will have no member number");
+  return null;
 }
 
 export default async function handler(req, res) {
@@ -302,5 +332,6 @@ export default async function handler(req, res) {
     ok: true,
     stored: done.length ? done.join("+") : null,
     num,
+    counter: num ? "ok" : "unavailable",
   });
 }
