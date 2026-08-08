@@ -491,11 +491,19 @@ export default function App() {
       x.fillText(founding ? "FOUNDING MEMBER" : "MEMBER", 540, 430 + shift);
 
       /* ——— the number, hero ——— */
-      ls("0px");
       x.fillStyle = "#EDECE8";
       x.shadowColor = "rgba(191,211,219,.45)"; x.shadowBlur = 70;
-      x.font = "400 400px Anton, sans-serif";
-      x.fillText(memberNum != null ? pad3(memberNum) : "—", 540, 900 + shift);
+      if (memberNum != null) {
+        ls("0px");
+        x.font = "400 400px Anton, sans-serif";
+        x.fillText(pad3(memberNum), 540, 900 + shift);
+      } else {
+        // No number assigned (counter unavailable) — a giant dash reads as a
+        // broken card, so say something true instead.
+        ls("6px");
+        x.font = "400 118px Anton, sans-serif";
+        x.fillText("ON THE LIST", 540, 860 + shift);
+      }
       x.shadowBlur = 0;
 
       /* ——— scarcity: 100 slots, yours lit ———
