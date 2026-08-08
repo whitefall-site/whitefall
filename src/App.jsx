@@ -441,12 +441,13 @@ export default function App() {
     setCardBusy(true);
     try {
       if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch (e) {} }
-      const glyphImg = await new Promise((res, rej) => {
-        const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = LOGO_GLYPH;
-      });
       const c = document.createElement("canvas");
       c.width = 1080; c.height = 1920;
       const x = c.getContext("2d");
+      const ls = (v) => { try { x.letterSpacing = v; } catch (e) {} };
+      const founding = memberNum != null && memberNum <= 100;
+
+      /* ——— ground: night gradient + starfield ——— */
       const grad = x.createLinearGradient(0, 0, 0, 1920);
       grad.addColorStop(0, "#03040A"); grad.addColorStop(0.55, "#070C18"); grad.addColorStop(1, "#0B1322");
       x.fillStyle = grad; x.fillRect(0, 0, 1080, 1920);
@@ -455,36 +456,115 @@ export default function App() {
         const r = Math.random() < 0.7 ? 2 : 3;
         x.fillRect(Math.random() * 1080, Math.random() * 1920, r, r);
       }
-      // glowing glyph
-      const gw = 430, gh = gw * glyphImg.height / glyphImg.width;
-      x.save(); x.shadowColor = "rgba(191,211,219,.85)"; x.shadowBlur = 80;
-      x.drawImage(glyphImg, (1080 - gw) / 2, 250, gw, gh); x.restore();
+      /* pooled glow behind the number, replacing the old logo glow */
+      const pool = x.createRadialGradient(540, 940, 0, 540, 940, 620);
+      pool.addColorStop(0, "rgba(191,211,219,.13)");
+      pool.addColorStop(1, "rgba(191,211,219,0)");
+      x.fillStyle = pool; x.fillRect(0, 320, 1080, 1240);
+
+      /* ——— credential frame ——— */
+      x.strokeStyle = "rgba(191,211,219,.22)"; x.lineWidth = 2;
+      x.strokeRect(64, 64, 1080 - 128, 1920 - 128);
+
       x.textAlign = "center";
-      // hollow wordmark
-      try { x.letterSpacing = "12px"; } catch (e) {}
-      x.lineWidth = 5; x.strokeStyle = "#EDECE8";
-      x.font = "700 88px Syncopate, sans-serif";
-      x.strokeText("WHITEFALL", 540, 250 + gh + 150);
-      // member label
-      try { x.letterSpacing = "10px"; } catch (e) {}
-      x.fillStyle = "#BFD3DB";
-      x.font = "700 40px 'Space Mono', monospace";
-      x.fillText(memberNum != null && memberNum <= 100 ? "FOUNDING MEMBER" : "MEMBER", 540, 250 + gh + 290);
-      // the number
-      try { x.letterSpacing = "0px"; } catch (e) {}
-      x.fillStyle = "#EDECE8";
-      x.shadowColor = "rgba(191,211,219,.4)"; x.shadowBlur = 60;
-      x.font = "400 330px Anton, sans-serif";
-      x.fillText(memberNum != null ? "#" + pad3(memberNum) : "▲", 540, 250 + gh + 640);
-      x.shadowBlur = 0;
-      // slogan + footer
-      try { x.letterSpacing = "8px"; } catch (e) {}
-      x.fillStyle = "#BFD3DB";
-      x.font = "700 34px 'Space Mono', monospace";
-      x.fillText("UNSTOPPABLE MOMENTUM.", 540, 250 + gh + 780);
+
+      /* ——— header: wordmark, no glyph ——— */
+      ls("14px");
+      x.lineWidth = 3; x.strokeStyle = "#EDECE8";
+      x.font = "700 52px Syncopate, sans-serif";
+      x.strokeText("WHITEFALL", 540, 210);
+      ls("10px");
       x.fillStyle = "#7E8590";
-      x.font = "400 28px 'Space Mono', monospace";
-      x.fillText("FW26 — THE LIST SHOPS FIRST", 540, 1810);
+      x.font = "400 24px 'Space Mono', monospace";
+      x.fillText("FW26  ·  THE LIST SHOPS FIRST", 540, 268);
+      x.strokeStyle = "rgba(237,236,232,.16)"; x.lineWidth = 1;
+      x.beginPath(); x.moveTo(150, 320); x.lineTo(930, 320); x.stroke();
+
+      /* Without the scarcity grid there is a void beneath the number, so the
+         whole block drops to stay optically centred. */
+      const shift = founding ? 0 : 190;
+
+      /* ——— status line ——— */
+      ls("12px");
+      x.fillStyle = founding ? "#BFD3DB" : "#7E8590";
+      x.font = "700 34px 'Space Mono', monospace";
+      x.fillText(founding ? "FOUNDING MEMBER" : "MEMBER", 540, 430 + shift);
+
+      /* ——— the number, hero ——— */
+      ls("0px");
+      x.fillStyle = "#EDECE8";
+      x.shadowColor = "rgba(191,211,219,.45)"; x.shadowBlur = 70;
+      x.font = "400 400px Anton, sans-serif";
+      x.fillText(memberNum != null ? pad3(memberNum) : "—", 540, 900 + shift);
+      x.shadowBlur = 0;
+
+      /* ——— scarcity: 100 slots, yours lit ———
+         Turns an abstract number into visible earliness: a low number
+         shows a nearly empty grid, which is the whole point of the list. */
+      if (founding) {
+        ls("8px");
+        x.fillStyle = "#7E8590";
+        x.font = "400 26px 'Space Mono', monospace";
+        x.fillText("OF THE FIRST 100", 540, 985);
+
+        const cols = 10, gap = 34;
+        const gridW = (cols - 1) * gap;
+        const startX = (1080 - gridW) / 2, startY = 1070;
+        for (let i = 0; i < 100; i++) {
+          const cx = startX + (i % cols) * gap;
+          const cy = startY + Math.floor(i / cols) * gap;
+          const claimed = i < memberNum;
+          const isYou = i === memberNum - 1;
+          x.beginPath();
+          x.arc(cx, cy, isYou ? 9 : 5.5, 0, Math.PI * 2);
+          if (isYou) {
+            x.fillStyle = "#EDECE8";
+            x.shadowColor = "rgba(191,211,219,.95)"; x.shadowBlur = 30;
+            x.fill(); x.shadowBlur = 0;
+          } else if (claimed) {
+            x.fillStyle = "rgba(191,211,219,.7)"; x.fill();
+          } else {
+            x.fillStyle = "rgba(237,236,232,.18)"; x.fill();
+          }
+        }
+      } else if (memberNum != null) {
+        ls("8px");
+        x.fillStyle = "#7E8590";
+        x.font = "400 26px 'Space Mono', monospace";
+        x.fillText("THE FIRST 100 ARE CLAIMED", 540, 980 + shift);
+      }
+
+      /* ——— credential data rows ——— */
+      const rowY = 1530;
+      x.strokeStyle = "rgba(237,236,232,.16)"; x.lineWidth = 1;
+      x.beginPath(); x.moveTo(150, rowY - 80); x.lineTo(930, rowY - 80); x.stroke();
+      const cells = [
+        ["ISSUED", new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }).toUpperCase()],
+        ["ACCESS", founding ? "EARLY · FOR LIFE" : "EARLY"],
+        ["DROP", "FW26"],
+      ];
+      cells.forEach(([label, value], i) => {
+        const cx = 260 + i * 280;
+        ls("6px");
+        x.fillStyle = "#7E8590";
+        x.font = "400 20px 'Space Mono', monospace";
+        x.fillText(label, cx, rowY);
+        ls("2px");
+        x.fillStyle = "#EDECE8";
+        x.font = "700 24px 'Space Mono', monospace";
+        x.fillText(value, cx, rowY + 42);
+      });
+
+      /* ——— footer ——— */
+      ls("10px");
+      x.fillStyle = "#BFD3DB";
+      x.font = "700 32px 'Space Mono', monospace";
+      x.fillText("UNSTOPPABLE MOMENTUM.", 540, 1752);
+      ls("6px");
+      x.fillStyle = "#7E8590";
+      x.font = "400 22px 'Space Mono', monospace";
+      x.fillText("WHITEFALL26.COM", 540, 1808);
+
       setCardUrl(c.toDataURL("image/png"));
       setCardOpen(true);
     } catch (e) { console.error("card build failed", e); }
