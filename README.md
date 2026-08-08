@@ -43,20 +43,32 @@ Neither is a hard blocker: until they're set the site behaves honestly —
 visitors still get their member number and see a "confirm your spot by email"
 button, so nobody is silently lost.
 
-## Analytics
+## Analytics & Speed Insights
 
-Vercel Analytics is wired in (`<Analytics />` in `src/main.jsx`). It is
-privacy-friendly and cookieless — no consent banner needed — and it no-ops
-anywhere other than Vercel, so local dev stays clean.
+Both are wired into `src/main.jsx` (`<Analytics />` and `<SpeedInsights />`).
+They are privacy-friendly and cookieless — no consent banner needed — and both
+no-op anywhere other than Vercel, so local dev stays clean. Combined cost is
+about 1.5 KB gzipped.
 
-**Turn it on:** Vercel → your project → **Analytics** tab → Enable. Data
-starts appearing within a few minutes of real traffic. The free tier caps
-monthly events; if a drop blows past it, collection pauses until the next
-period rather than charging you.
+**Turn them on:** Vercel → your project → **Analytics** tab and **Speed
+Insights** tab → Enable each. Data appears within a few minutes of real
+traffic. Free tiers cap monthly events; past the cap collection pauses until
+the next period rather than charging you.
 
-Worth watching around a drop: which sources send traffic (Instagram vs direct),
-how many land on the site versus reach the waitlist, and mobile-vs-desktop
-split.
+**Analytics** answers *who is showing up*: traffic sources (Instagram vs
+direct), mobile-vs-desktop split, and how many visitors reach the waitlist.
+
+**Speed Insights** answers *how it feels for them*, scored on real visitors'
+devices rather than a lab test:
+
+- **LCP** — how fast the hero logo paints
+- **INP** — responsiveness when tapping JOIN or a size button
+- **CLS** — layout jumping while loading
+
+CLS currently measures ~0.000 in testing, because the product image carries
+explicit `width`/`height` attributes that reserve its space. **If a future
+image is added without those attributes, CLS will regress** — that is the
+number to watch after adding photos for pieces 02–04.
 
 ## Run it locally
 
