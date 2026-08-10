@@ -331,7 +331,7 @@ const topicMailto = (t) => {
 };
 
 /* Signups POST to this site's own /api/signup endpoint, which assigns the
-   member number and delivers the signup. Nothing about the delivery provider
+   and delivers the signup. Nothing about the delivery provider
    lives in the browser — see api/signup.js and the README runbook. */
 
 const TOPICS = [
@@ -390,12 +390,15 @@ export default function App() {
   const [shared, setShared] = useState(false);
   const [barDismissed, setBarDismissed] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
-  const [memberNum, setMemberNum] = useState(null);
+  const [joinedAt, setJoinedAt] = useState(null);
   const [cardOpen, setCardOpen] = useState(false);
   const [cardUrl, setCardUrl] = useState(null);
   const [cardBusy, setCardBusy] = useState(false);
-  const founding = memberNum != null && memberNum <= 100;
-  const pad3 = (v) => String(v).padStart(3, "0");
+  /* The join date replaces the old member number: it is the one personal,
+     "I was early" detail that needs no shared counter and can never fail. */
+  const joinedLabel = (joinedAt || new Date())
+    .toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    .toUpperCase();
 
   const saveSize = async (sz) => {
     setSize(sz);
@@ -414,12 +417,11 @@ export default function App() {
       } else {
         const rows = lsRead().map((r) => (r.email === clean ? { ...r, size: sz } : r));
         lsWrite(rows);
-        const known = rows.find((r) => r.email === clean && r.num);
         try {
           await fetchT("/api/signup", {
             method: "POST",
             headers: { "Content-Type": "application/json", Accept: "application/json" },
-            body: JSON.stringify({ email: clean, size: sz, num: known ? known.num : null }),
+            body: JSON.stringify({ email: clean, size: sz }),
           }, 12000);
         } catch (e) { console.error("size update failed", e); }
       }
@@ -445,7 +447,6 @@ export default function App() {
       c.width = 1080; c.height = 1920;
       const x = c.getContext("2d");
       const ls = (v) => { try { x.letterSpacing = v; } catch (e) {} };
-      const founding = memberNum != null && memberNum <= 100;
 
       /* ——— ground: night gradient + starfield ——— */
       const grad = x.createLinearGradient(0, 0, 0, 1920);
@@ -480,76 +481,44 @@ export default function App() {
       x.strokeStyle = "rgba(237,236,232,.16)"; x.lineWidth = 1;
       x.beginPath(); x.moveTo(150, 320); x.lineTo(930, 320); x.stroke();
 
-      /* Without the scarcity grid there is a void beneath the number, so the
-         whole block drops to stay optically centred. */
-      const shift = founding ? 0 : 190;
-
       /* ——— status line ——— */
       ls("12px");
-      x.fillStyle = founding ? "#BFD3DB" : "#7E8590";
+      x.fillStyle = "#BFD3DB";
       x.font = "700 34px 'Space Mono', monospace";
-      x.fillText(founding ? "FOUNDING MEMBER" : "MEMBER", 540, 430 + shift);
+      x.fillText("EARLY ACCESS GRANTED", 540, 560);
 
-      /* ——— the number, hero ——— */
+      /* ——— the hero: the drop this pass is for ——— */
+      ls("2px");
       x.fillStyle = "#EDECE8";
       x.shadowColor = "rgba(191,211,219,.45)"; x.shadowBlur = 70;
-      if (memberNum != null) {
-        ls("0px");
-        x.font = "400 400px Anton, sans-serif";
-        x.fillText(pad3(memberNum), 540, 900 + shift);
-      } else {
-        // No number assigned (counter unavailable) — a giant dash reads as a
-        // broken card, so say something true instead.
-        ls("6px");
-        x.font = "400 118px Anton, sans-serif";
-        x.fillText("ON THE LIST", 540, 860 + shift);
-      }
+      x.font = "400 300px Anton, sans-serif";
+      x.fillText("FW26", 540, 900);
       x.shadowBlur = 0;
 
-      /* ——— scarcity: 100 slots, yours lit ———
-         Turns an abstract number into visible earliness: a low number
-         shows a nearly empty grid, which is the whole point of the list. */
-      if (founding) {
-        ls("8px");
-        x.fillStyle = "#7E8590";
-        x.font = "400 26px 'Space Mono', monospace";
-        x.fillText("OF THE FIRST 100", 540, 985);
+      /* ——— the promise, spelled out ——— */
+      ls("8px");
+      x.fillStyle = "#7E8590";
+      x.font = "400 30px 'Space Mono', monospace";
+      x.fillText("THE LIST SHOPS 24 HOURS EARLY", 540, 1010);
 
-        const cols = 10, gap = 34;
-        const gridW = (cols - 1) * gap;
-        const startX = (1080 - gridW) / 2, startY = 1070;
-        for (let i = 0; i < 100; i++) {
-          const cx = startX + (i % cols) * gap;
-          const cy = startY + Math.floor(i / cols) * gap;
-          const claimed = i < memberNum;
-          const isYou = i === memberNum - 1;
-          x.beginPath();
-          x.arc(cx, cy, isYou ? 9 : 5.5, 0, Math.PI * 2);
-          if (isYou) {
-            x.fillStyle = "#EDECE8";
-            x.shadowColor = "rgba(191,211,219,.95)"; x.shadowBlur = 30;
-            x.fill(); x.shadowBlur = 0;
-          } else if (claimed) {
-            x.fillStyle = "rgba(191,211,219,.7)"; x.fill();
-          } else {
-            x.fillStyle = "rgba(237,236,232,.18)"; x.fill();
-          }
-        }
-      } else if (memberNum != null) {
-        ls("8px");
-        x.fillStyle = "#7E8590";
-        x.font = "400 26px 'Space Mono', monospace";
-        x.fillText("THE FIRST 100 ARE CLAIMED", 540, 980 + shift);
-      }
+      /* ——— join date: the personal detail, and the earliness signal ——— */
+      ls("10px");
+      x.fillStyle = "#BFD3DB";
+      x.font = "700 26px 'Space Mono', monospace";
+      x.fillText("ON THE LIST SINCE", 540, 1180);
+      ls("4px");
+      x.fillStyle = "#EDECE8";
+      x.font = "400 96px Anton, sans-serif";
+      x.fillText(joinedLabel, 540, 1290);
 
       /* ——— credential data rows ——— */
       const rowY = 1530;
       x.strokeStyle = "rgba(237,236,232,.16)"; x.lineWidth = 1;
       x.beginPath(); x.moveTo(150, rowY - 80); x.lineTo(930, rowY - 80); x.stroke();
       const cells = [
-        ["ISSUED", new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }).toUpperCase()],
-        ["ACCESS", founding ? "EARLY · FOR LIFE" : "EARLY"],
+        ["ACCESS", "EARLY"],
         ["DROP", "FW26"],
+        ["STATUS", "CONFIRMED"],
       ];
       cells.forEach(([label, value], i) => {
         const cx = 260 + i * 280;
@@ -660,39 +629,27 @@ export default function App() {
         } catch (e) { /* first signup */ }
         await window.storage.set(key, JSON.stringify({ ...row, interests: [...new Set([...prior, ...interests])] }), true);
         setStoreMode("live");
-        try {
-          const res = await window.storage.list("signup:", true);
-          const n = ((res && res.keys) || []).length;
-          if (n > 0) {
-            setMemberNum(n);
-            await window.storage.set(key, JSON.stringify({ ...row, interests: [...new Set([...prior, ...interests])], num: n }), true);
-            setSessionRows((rows) => rows.map((r) => (r.email === clean ? { ...r, num: n } : r)));
-          }
-        } catch (e) { /* unnumbered */ }
+        setJoinedAt(new Date());
       } else {
-        // Deployed: one call to our own endpoint. It assigns the member
-        // number and delivers the signup, so ad blockers can't intercept a
-        // third-party request and silently lose someone.
-        const prior = lsRead().find((r) => r.email === clean && r.num);
-        let n = prior ? prior.num : null;
+        // Deployed: one call to our own endpoint, which delivers the signup.
+        // Going through our own origin means ad blockers have no third-party
+        // request to intercept and silently lose.
         setStoreMode("relay");
         try {
           const rs = await fetchT("/api/signup", {
             method: "POST",
             headers: { "Content-Type": "application/json", Accept: "application/json" },
-            body: JSON.stringify({ email: clean, interests, num: n }),
+            body: JSON.stringify({ email: clean, interests }),
           }, 12000);
           const rj = rs.ok ? await rs.json().catch(() => null) : null;
-          if (rj && rj.num) n = rj.num;
           setRelayFailed(!(rj && rj.stored));
           if (rj && !rj.stored) console.error("waitlist not delivered — no provider configured");
         } catch (e) {
           console.error("signup endpoint unreachable", e);
           setRelayFailed(true);
         }
-        if (n) { setMemberNum(n); row.num = n; }
+        setJoinedAt(new Date());
         lsWrite(mergeRow(lsRead(), row));
-        setSessionRows((rows) => rows.map((r) => (r.email === clean ? { ...r, num: n || r.num } : r)));
       }
     } catch (e) {
       console.error("signup save failed", e);
@@ -820,7 +777,7 @@ export default function App() {
             </a>
           </div>
           <p className="hero-in hd3" style={{ ...mono, color: S.ash, fontSize: 10, letterSpacing: "0.2em", margin: "18px 0 0" }}>
-            FIRST 100 SIGNUPS BECOME <span style={{ color: S.frost }}>FOUNDING MEMBERS</span> — NUMBER LOCKED FOR LIFE
+            THE LIST GETS <span style={{ color: S.frost }}>24 HOURS EARLY ACCESS</span> — AND THE DROP DATE FIRST
           </p>
         </div>
       </section>
@@ -954,20 +911,17 @@ export default function App() {
           <img src={LOGO} alt="" aria-hidden className="signal" style={{ width: 90, margin: "0 auto 22px", display: "block" }} />
           <h2 style={{ ...anton, fontSize: "clamp(34px,6.5vw,88px)", margin: "0 0 16px" }}>THE LIST SHOPS FIRST</h2>
           <p style={{ color: S.ash, maxWidth: 480, margin: "0 auto 30px", lineHeight: 1.7 }}>
-            Every signup gets a permanent member number — the first 100 are Founding Members
-            with early access for life. When FW26 hits, that number is everything.
+            Runs are small and numbered by design. The list gets the drop date before
+            anyone else, and shops a full 24 hours early — which is how you actually
+            get the piece you want in the size you want.
           </p>
           {joined ? (
             <div>
-              {memberNum != null && (
-                <div style={{ ...anton, fontSize: "clamp(72px, 16vw, 140px)", lineHeight: 1, color: S.snow, textShadow: "0 0 60px rgba(191,211,219,.35)", margin: "0 0 8px" }}>
-                  #{pad3(memberNum)}
-                </div>
-              )}
+              <div style={{ ...anton, fontSize: "clamp(40px, 8vw, 76px)", lineHeight: 1.05, color: S.snow, textShadow: "0 0 60px rgba(191,211,219,.35)", margin: "0 0 10px" }}>
+                YOU'RE ON THE LIST
+              </div>
               <p style={{ ...mono, color: S.frost, fontSize: 12, letterSpacing: "0.2em", margin: "0 0 20px" }}>
-                {memberNum != null
-                  ? (founding ? "▲ FOUNDING MEMBER — EARLY ACCESS FOR LIFE" : "▲ MEMBER — THE LIST SHOPS FIRST")
-                  : "▲ YOU'RE IN. WATCH YOUR INBOX."}
+                ▲ EARLY ACCESS CONFIRMED — WATCH YOUR INBOX
               </p>
               {relayFailed && (
                 <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("FW26 waitlist signup")}&body=${encodeURIComponent("Add me to the FW26 waitlist: " + email.trim().toLowerCase())}`}
@@ -1216,15 +1170,11 @@ export default function App() {
             {popupJoined ? (
               <div>
                 <h2 style={{ ...anton, fontSize: "clamp(22px, 4.6vw, 30px)", margin: "0 0 4px", lineHeight: 1.05 }}>THANK YOU.</h2>
-                {memberNum != null && (
-                  <div style={{ ...anton, fontSize: "clamp(54px, 13vw, 84px)", lineHeight: 1, color: S.snow, textShadow: "0 0 40px rgba(191,211,219,.35)", margin: "6px 0 4px" }}>
-                    #{pad3(memberNum)}
-                  </div>
-                )}
+                <div style={{ ...anton, fontSize: "clamp(34px, 8vw, 52px)", lineHeight: 1.05, color: S.snow, textShadow: "0 0 40px rgba(191,211,219,.35)", margin: "6px 0 6px" }}>
+                  YOU'RE ON THE LIST
+                </div>
                 <p style={{ ...mono, fontSize: 10, color: S.frost, letterSpacing: "0.18em", margin: "0 0 14px" }}>
-                  {memberNum != null
-                    ? (founding ? "FOUNDING MEMBER — EARLY ACCESS FOR LIFE" : "MEMBER — THE LIST SHOPS FIRST")
-                    : "YOU'RE ON THE LIST ▲"}
+                  EARLY ACCESS CONFIRMED ▲
                 </p>
                 {relayFailed && (
                   <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("FW26 waitlist signup")}&body=${encodeURIComponent("Add me to the FW26 waitlist: " + email.trim().toLowerCase())}`}
@@ -1253,11 +1203,12 @@ export default function App() {
               </div>
             ) : (
             <div>
-            <h2 style={{ ...anton, fontSize: "clamp(26px, 5vw, 36px)", margin: "0 0 8px", lineHeight: 1.05 }}>THE FIRST 100 ARE FOUNDERS</h2>
-            <p style={{ ...mono, color: S.frost, fontSize: 10, letterSpacing: "0.18em", margin: "0 0 12px" }}>YOUR NUMBER. LOCKED FOREVER.</p>
+            <h2 style={{ ...anton, fontSize: "clamp(26px, 5vw, 36px)", margin: "0 0 8px", lineHeight: 1.05 }}>THE LIST SHOPS FIRST</h2>
+            <p style={{ ...mono, color: S.frost, fontSize: 10, letterSpacing: "0.18em", margin: "0 0 12px" }}>24 HOURS BEFORE ANYONE ELSE.</p>
             <p style={{ color: S.ash, fontSize: 14, lineHeight: 1.65, margin: "0 0 22px" }}>
-              Every signup gets a permanent member number. The first 100 become Founding Members —
-              early access for life, and first claim on every drop, starting with FW26.
+              Runs are small and numbered by design. The list gets the drop date first
+              and shops a full day early — the difference between getting your size
+              and reading about it.
             </p>
             <div className="form-row" style={{ display: "flex", justifyContent: "center", flexWrap: "wrap" }}>
               <input
@@ -1375,7 +1326,7 @@ export default function App() {
                       {storeMode === "live"
                         ? "● LIVE STORAGE — COLLECTING FROM ALL VISITORS"
                         : storeMode === "relay"
-                        ? "● DEPLOYED — EVERY SIGNUP EMAILS YOUR INBOX INSTANTLY (WITH MEMBER #). THIS LIST SHOWS THIS DEVICE."
+                        ? "● DEPLOYED — EVERY SIGNUP EMAILS YOUR INBOX INSTANTLY. THIS LIST SHOWS THIS DEVICE."
                         : "○ PREVIEW MODE — SHOWING THIS SESSION ONLY."}
                     </span>
                   </span>
@@ -1391,7 +1342,7 @@ export default function App() {
 
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
                   <a
-                    href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Whitefall waitlist export — " + list.length + " signups")}&body=${encodeURIComponent(list.map((r) => (r.num ? "#" + pad3(r.num) + "  " : "") + r.email + (r.size ? "  [size: " + r.size + "]" : "") + (r.interests && r.interests.length ? "  [wants: " + r.interests.join(", ") + "]" : "") + "  (" + (r.at || "").slice(0, 10) + ")").join("\n") || "No signups yet.")}`}
+                    href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Whitefall waitlist export — " + list.length + " signups")}&body=${encodeURIComponent(list.map((r) => r.email + (r.size ? "  [size: " + r.size + "]" : "") + (r.interests && r.interests.length ? "  [wants: " + r.interests.join(", ") + "]" : "") + "  (" + (r.at || "").slice(0, 10) + ")").join("\n") || "No signups yet.")}`}
                     style={{ ...mono, background: S.snow, color: S.night, padding: "12px 18px", textDecoration: "none", fontSize: 11, fontWeight: 700, letterSpacing: "0.1em" }}>
                     EMAIL LIST TO ME ▲
                   </a>
@@ -1413,7 +1364,7 @@ export default function App() {
                   <div style={{ border: `1px solid ${S.line}`, borderBottom: "none" }}>
                     {list.map((r, i) => (
                       <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "11px 12px", borderBottom: `1px solid ${S.line}`, flexWrap: "wrap" }}>
-                        <span style={{ ...mono, fontSize: 12 }}>{r.num ? "#" + pad3(r.num) + "  " : ""}{r.email}</span>
+                        <span style={{ ...mono, fontSize: 12 }}>{r.email}</span>
                         <span style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.08em" }}>
                           {r.size ? r.size + "  " : ""}{(r.interests && r.interests.length ? r.interests.join(" · ") + "  " : "")}{(r.at || "").slice(0, 10)}
                         </span>
@@ -1424,7 +1375,7 @@ export default function App() {
                 <p style={{ ...mono, fontSize: 9, color: S.ash, letterSpacing: "0.1em", marginTop: 14, lineHeight: 1.7 }}>
                   {hasArtifactStore()
                     ? 'SIGNUPS FROM EVERY VISITOR SAVE HERE AUTOMATICALLY. "EMAIL LIST TO ME" OPENS A PRE-FILLED EMAIL WITH THE FULL LIST.'
-                    : "YOUR INBOX IS THE MASTER LIST ON THE LIVE SITE — EACH SIGNUP ARRIVES WITH ITS MEMBER NUMBER THE MOMENT IT HAPPENS."}
+                    : "YOUR INBOX IS THE MASTER LIST ON THE LIVE SITE — EVERY SIGNUP ARRIVES THE MOMENT IT HAPPENS."}
                 </p>
               </div>
             )}

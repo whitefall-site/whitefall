@@ -22,31 +22,12 @@
    sending a test signup, and without exposing any secret.
 ———————————————————————————————————————————————— */
 
-/* Member numbers come from a shared counter. These are free, unauthenticated
-   services, so any one of them can vanish without warning — which is exactly
-   what happened once already. They are tried in order until one returns a
-   number, and their response shapes differ, so parsing is deliberately loose.
-
-   This is still the weakest link in the stack. The durable fix is a counter
-   we own (Shopify customer count, or Vercel KV); see the README. */
-const COUNTERS = [
-  "https://api.counterapi.dev/v2/whitefall-fw26/waitlist/up",
-  "https://api.counterapi.dev/v1/whitefall-fw26/waitlist/up",
-  "https://abacus.jasoncameron.dev/hit/whitefall-fw26/waitlist",
-];
-
-/* Pull the first plausible count out of whatever shape came back. */
-function readCount(j) {
-  if (!j || typeof j !== "object") return null;
-  const pools = [j, j.data, j.counter].filter((o) => o && typeof o === "object");
-  for (const o of pools) {
-    for (const k of ["count", "up_count", "value", "hits", "current"]) {
-      const n = o[k];
-      if (typeof n === "number" && Number.isFinite(n) && n > 0) return Math.floor(n);
-    }
-  }
-  return null;
-}
+/* Member numbers were removed deliberately. They depended on a shared counter,
+   and every free counter service tried turned out to be unreliable — which
+   meant the site's headline promise ("your number, locked for life") rested on
+   something that could silently fail or, worse, hand two people the same
+   number. The waitlist now promises early access, which needs no shared state
+   and can always be honoured. */
 
 const clean = (v, max = 200) => String(v == null ? "" : v).trim().slice(0, max);
 const validEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
@@ -81,7 +62,7 @@ async function post(url, opts, ms = 5000) {
 }
 
 /* ——— Shopify: upsert the customer, tagged for the waitlist ——— */
-async function toShopify({ email, size, interests, num }) {
+async function toShopify({ email, size, interests }) {
   const shop = process.env.SHOPIFY_STORE.replace(/^https?:\/\//, "").replace(/\/+$/, "");
   const base = `https://${shop}/admin/api/2024-10`;
   const headers = {
@@ -90,8 +71,6 @@ async function toShopify({ email, size, interests, num }) {
   };
 
   const tags = ["waitlist", "fw26"];
-  if (num) tags.push(`member-${String(num).padStart(3, "0")}`);
-  if (num && num <= 100) tags.push("founding-member");
   if (size) tags.push(`size-${size}`);
   if (interests && interests.length) tags.push(...interests.map((i) => `wants-${i}`));
 
@@ -105,12 +84,10 @@ async function toShopify({ email, size, interests, num }) {
 
   if (existing) {
     const prior = (existing.tags || "").split(",").map((t) => t.trim()).filter(Boolean);
-    // A member number is assigned once and never reassigned, so an existing
-    // one wins. Size is a correction — the newest answer replaces the old.
-    const keptNumber = prior.find((t) => /^member-\d+$/.test(t));
+    // Size is a correction — the newest answer replaces any earlier one.
     const merged = [...new Set([
       ...prior.filter((t) => !(size && /^size-/.test(t))),
-      ...tags.filter((t) => !(keptNumber && /^member-\d+$/.test(t))),
+      ...tags,
     ])];
     const res = await post(`${base}/customers/${existing.id}.json`, {
       method: "PUT",
@@ -137,18 +114,15 @@ async function toShopify({ email, size, interests, num }) {
 }
 
 /* Shared body for the owner notification. */
-function notifyText({ email, size, interests, num }) {
+function notifyText({ email, size, interests }) {
   return [
     `Email:  ${email}`,
-    `Member: ${num ? "#" + String(num).padStart(3, "0") : "unassigned"}` +
-      (num && num <= 100 ? "  (FOUNDING MEMBER)" : ""),
     `Size:   ${size || "—"}`,
     `Wants:  ${interests && interests.length ? interests.join(", ") : "general waitlist"}`,
     `Time:   ${new Date().toUTCString()}`,
   ].join("\n");
 }
-const notifySubject = ({ num }) =>
-  "▲ New Whitefall waitlist signup" + (num ? ` — member #${String(num).padStart(3, "0")}` : "");
+const notifySubject = () => "▲ New Whitefall waitlist signup";
 
 /* ——— Gmail SMTP: the brand inbox mails itself. No third-party service;
        auth is a Google App Password generated inside the owner's own
@@ -210,7 +184,6 @@ async function toWeb3Forms(payload) {
       subject: notifySubject(payload),
       from_name: "Whitefall Waitlist",
       email,
-      member_number: num || "unassigned",
       size: size || "—",
       wants: interests && interests.length ? interests.join(", ") : "general waitlist",
     }),
@@ -218,24 +191,6 @@ async function toWeb3Forms(payload) {
   if (!res.ok) return false;
   const j = await res.json().catch(() => null);
   return Boolean(j && (j.success === true || j.success === "true"));
-}
-
-/* Member number. Done server-side so ad blockers can't break it. */
-async function memberNumber(existing) {
-  if (existing) return existing;
-  for (const url of COUNTERS) {
-    try {
-      const r = await post(url, { headers: { Accept: "application/json" } }, 3500);
-      if (!r.ok) { console.warn(`counter ${new URL(url).host} returned ${r.status}`); continue; }
-      const n = readCount(await r.json().catch(() => null));
-      if (n) return n;
-      console.warn(`counter ${new URL(url).host} returned no usable count`);
-    } catch (e) {
-      console.warn(`counter ${new URL(url).host} unreachable:`, e && e.message);
-    }
-  }
-  console.error("ALL COUNTERS FAILED — signup will have no member number");
-  return null;
 }
 
 export default async function handler(req, res) {
@@ -292,8 +247,7 @@ export default async function handler(req, res) {
     ? body.interests.slice(0, 12).map((i) => clean(i, 60)).filter(Boolean)
     : [];
 
-  const num = await memberNumber(Number(body.num) || null);
-  const payload = { email, size, interests, num };
+  const payload = { email, size, interests };
 
   // Store and notify are independent: a Shopify outage must not stop the
   // owner's email, and vice versa. Run both, report whatever succeeded.
@@ -324,14 +278,12 @@ export default async function handler(req, res) {
     // signup during a misconfiguration window isn't gone for good.
     console.warn(
       "WAITLIST_UNDELIVERED " +
-        JSON.stringify({ email, num, size, interests, at: new Date().toISOString() })
+        JSON.stringify({ email, size, interests, at: new Date().toISOString() })
     );
   }
 
   return res.status(200).json({
     ok: true,
     stored: done.length ? done.join("+") : null,
-    num,
-    counter: num ? "ok" : "unavailable",
   });
 }
