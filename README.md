@@ -12,7 +12,11 @@ Done and live:
   `api/signup.js`) rather than a third-party call from the visitor's browser.
   Ad blockers can't intercept it, no key is exposed to the client, and the
   delivery provider can change without touching the site.
-- Repeat signups from the same device keep their original member number.
+- Member numbers were removed: they needed a shared counter, every free
+  counter service tried proved unreliable, and a headline promise of "your
+  number, locked for life" cannot rest on something that can silently fail or
+  hand two people the same number. The waitlist now promises **24 hours early
+  access**, which needs no shared state and can always be honoured.
 - Share-card URLs now fill themselves in at build time from Vercel's domain —
   nothing to edit by hand, and they follow a custom domain automatically.
 - Support runs on two live lanes: **whitefall26@gmail.com** (brand inbox) and
@@ -21,7 +25,7 @@ Done and live:
   change it there and every contact point follows, including the pre-filled
   topic emails. Swap it for `support@yourdomain` once a custom domain is live.
 - Full signup path verified end-to-end in a browser against mocked live
-  services: member number assigned, owner email sent, member card generated.
+  services: signup delivered, owner email sent, member card generated.
 
 **The commerce plan (decided):** the site is the storefront; **Shopify is the
 engine** behind it — payments, inventory that can't oversell, shipping labels,
@@ -40,7 +44,7 @@ drop day. Full instructions: "Shopify — the commerce engine" below.
    also files each signup as a tagged customer. Runbook below.
 
 Neither is a hard blocker: until they're set the site behaves honestly —
-visitors still get their member number and see a "confirm your spot by email"
+visitors still get their confirmation and see a "confirm your spot by email"
 button, so nobody is silently lost.
 
 ## Analytics & Speed Insights
@@ -164,7 +168,7 @@ admin (their mobile app is good). The site needs nothing from you day-to-day.
 
 Signups POST to this site's own endpoint (`api/signup.js`, running on Vercel),
 not to a third-party service from the visitor's browser. That endpoint assigns
-the member number and delivers the signup. Three practical wins: browser ad
+and delivers the signup. Three practical wins: browser ad
 blockers can't silently swallow a signup, no key is ever exposed to the client,
 and the delivery provider can be swapped by changing an environment variable
 instead of the site's code.
@@ -208,10 +212,9 @@ inside the Google account you already own.
    | `GMAIL_APP_PASSWORD` | the 16-character password |
 
 Each signup then arrives as an email titled
-"▲ New Whitefall waitlist signup — member #007" with the member number,
-size, and founding-member status. **Reply-To is set to the new member**, so
-hitting reply in Gmail writes straight to them — handy for welcoming founding
-members personally.
+"▲ New Whitefall waitlist signup" with the address and size. **Reply-To is set
+to the new member**, so hitting reply in Gmail writes straight to them — handy
+for welcoming early signups personally.
 
 An app password only permits sending mail and can be revoked on that same
 page at any time. It is stored in Vercel, never in this repo, and never
@@ -237,11 +240,10 @@ Do this while setting up the store — it adds about two minutes:
    | `SHOPIFY_ADMIN_TOKEN` | the `shpat_…` token |
 
 Every signup then becomes a Shopify customer, subscribed to email marketing and
-tagged `waitlist`, `fw26`, `member-007`, `founding-member` (first 100), and
-`size-L`. Which means: the list lives with the business, Shopify Email can mail
-it for free, and you can filter "founding members who wear L" in two clicks.
-Signing up again or changing size updates the same customer — the member number
-is never reassigned and size tags don't pile up.
+tagged `waitlist`, `fw26`, and `size-L`. Which means: the list lives with the business, Shopify Email can mail
+it for free, and you can filter "everyone on the waitlist who wears L" in two
+clicks. Signing up again or changing size updates the same customer rather than
+duplicating it, and size tags are replaced rather than stacked.
 
 ### Alternative: Resend (plain email notifications)
 
