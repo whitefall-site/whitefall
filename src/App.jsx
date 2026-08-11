@@ -807,7 +807,6 @@ export default function App() {
           {[
             "COMFORT BURIES QUIETLY.",
             "ALL LOSS IS PSYCHOLOGICAL — UNTIL DEATH.",
-            "EVERYONE WANTS THE MOON. ALMOST NO ONE LEAVES THE GROUND.",
             "FEAR POINTS AT EVERYTHING WORTH DOING.",
             "BETTER A FAILURE THAN A COWARD.",
           ].map((line) => (
@@ -912,8 +911,7 @@ export default function App() {
           <h2 style={{ ...anton, fontSize: "clamp(34px,6.5vw,88px)", margin: "0 0 16px" }}>THE LIST SHOPS FIRST</h2>
           <p style={{ color: S.ash, maxWidth: 480, margin: "0 auto 30px", lineHeight: 1.7 }}>
             Runs are small and numbered by design. The list gets the drop date before
-            anyone else, and shops a full 24 hours early — which is how you actually
-            get the piece you want in the size you want.
+            anyone else, and shops a full 24 hours early.
           </p>
           {joined ? (
             <div>
@@ -1207,8 +1205,7 @@ export default function App() {
             <p style={{ ...mono, color: S.frost, fontSize: 10, letterSpacing: "0.18em", margin: "0 0 12px" }}>24 HOURS BEFORE ANYONE ELSE.</p>
             <p style={{ color: S.ash, fontSize: 14, lineHeight: 1.65, margin: "0 0 22px" }}>
               Runs are small and numbered by design. The list gets the drop date first
-              and shops a full day early — the difference between getting your size
-              and reading about it.
+              and shops a full day early.
             </p>
             <div className="form-row" style={{ display: "flex", justifyContent: "center", flexWrap: "wrap" }}>
               <input
