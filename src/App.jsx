@@ -308,7 +308,7 @@ function PieceShop({ shopId, fit, onNotify }) {
 
 
 const FAQS = [
-  { q: "When does FW26 drop?", a: "October 2026. Waitlist members get the exact date, time, and early access 24 hours before anyone else. Join below — it's free and it's the only way in early." },
+  { q: "When does FW26 drop?", a: "October 2026. Waitlist members get the exact date, time, and access one hour before anyone else. Join below — it's free and it's the only way in early." },
   { q: "Where's my order?", a: "Every order gets a tracking link by email within 24 hours of shipping. Can't find it? Email us your order number, or DM us on Instagram — we respond within one business day." },
   { q: "What's your return policy?", a: "30 days, no questions. Unworn, tags on, full refund to your original payment method. Start a return by emailing us your order number — we send the label, you drop it off." },
   { q: "How does sizing run?", a: "It varies piece to piece — some are cut boxy and oversized, others tailored and slim. Always read the description on the specific product you're interested in: every piece lists its own fit notes and exact garment measurements there." },
@@ -499,7 +499,7 @@ export default function App() {
       ls("8px");
       x.fillStyle = "#7E8590";
       x.font = "400 30px 'Space Mono', monospace";
-      x.fillText("THE LIST SHOPS 24 HOURS EARLY", 540, 1010);
+      x.fillText("THE LIST SHOPS ONE HOUR EARLY", 540, 1010);
 
       /* ——— join date: the personal detail, and the earliness signal ——— */
       ls("10px");
@@ -777,7 +777,7 @@ export default function App() {
             </a>
           </div>
           <p className="hero-in hd3" style={{ ...mono, color: S.ash, fontSize: 10, letterSpacing: "0.2em", margin: "18px 0 0" }}>
-            THE LIST GETS <span style={{ color: S.frost }}>24 HOURS EARLY ACCESS</span> — AND THE DROP DATE FIRST
+            THE LIST GETS <span style={{ color: S.frost }}>A ONE HOUR HEAD START</span> — AND THE DROP DATE FIRST
           </p>
         </div>
       </section>
@@ -911,7 +911,7 @@ export default function App() {
           <h2 style={{ ...anton, fontSize: "clamp(34px,6.5vw,88px)", margin: "0 0 16px" }}>THE LIST SHOPS FIRST</h2>
           <p style={{ color: S.ash, maxWidth: 480, margin: "0 auto 30px", lineHeight: 1.7 }}>
             Runs are small and numbered by design. The list gets the drop date before
-            anyone else, and shops a full 24 hours early.
+            anyone else, and shops an hour early.
           </p>
           {joined ? (
             <div>
@@ -1202,10 +1202,10 @@ export default function App() {
             ) : (
             <div>
             <h2 style={{ ...anton, fontSize: "clamp(26px, 5vw, 36px)", margin: "0 0 8px", lineHeight: 1.05 }}>THE LIST SHOPS FIRST</h2>
-            <p style={{ ...mono, color: S.frost, fontSize: 10, letterSpacing: "0.18em", margin: "0 0 12px" }}>24 HOURS BEFORE ANYONE ELSE.</p>
+            <p style={{ ...mono, color: S.frost, fontSize: 10, letterSpacing: "0.18em", margin: "0 0 12px" }}>ONE HOUR BEFORE ANYONE ELSE.</p>
             <p style={{ color: S.ash, fontSize: 14, lineHeight: 1.65, margin: "0 0 22px" }}>
               Runs are small and numbered by design. The list gets the drop date first
-              and shops a full day early.
+              and shops an hour early.
             </p>
             <div className="form-row" style={{ display: "flex", justifyContent: "center", flexWrap: "wrap" }}>
               <input
