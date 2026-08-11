@@ -15,8 +15,8 @@ Done and live:
 - Member numbers were removed: they needed a shared counter, every free
   counter service tried proved unreliable, and a headline promise of "your
   number, locked for life" cannot rest on something that can silently fail or
-  hand two people the same number. The waitlist now promises **24 hours early
-  access**, which needs no shared state and can always be honoured.
+  hand two people the same number. The waitlist now promises **a one hour head
+  start**, which needs no shared state and can always be honoured.
 - Share-card URLs now fill themselves in at build time from Vercel's domain —
   nothing to edit by hand, and they follow a custom domain automatically.
 - Support runs on two live lanes: **whitefall26@gmail.com** (brand inbox) and
@@ -148,7 +148,7 @@ is live in about a minute. Before the URL is set, the site shows GET NOTIFIED
 
 ### The early-access play ("the list shops first" — for real)
 
-An hour before you set `VITE_CREWNECK_URL` publicly, email the product link to
+One hour before you set `VITE_CREWNECK_URL` publicly, email the product link to
 the waitlist (every signup is in your inbox) and/or post it to IG Close
 Friends. The list literally shops before the public button exists. Then flip
 the env var and the shop is open to everyone.
