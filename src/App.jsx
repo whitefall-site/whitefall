@@ -278,7 +278,7 @@ function PieceShop({ shopId, fit, onNotify }) {
       )}
       <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 18 }}>
         {fit && <span style={{ ...chip, color: S.frost, border: "1px solid rgba(191,211,219,.4)" }}>{fit}</span>}
-        <span style={{ ...chip, color: S.snow, border: `1px solid ${S.line}` }}>XS – XXL</span>
+        <span style={{ ...chip, color: S.snow, border: `1px solid ${S.line}` }}>S – XXL</span>
         {cfg.soldOut && <span style={{ ...chip, fontWeight: 700, color: S.night, background: S.snow }}>SOLD OUT</span>}
       </div>
       {cfg.soldOut ? (
@@ -385,7 +385,6 @@ export default function App() {
   const [popup, setPopup] = useState(false);
   const [popupDone, setPopupDone] = useState(false);
   const [popupJoined, setPopupJoined] = useState(false);
-  const [size, setSize] = useState(null);
   const [relayFailed, setRelayFailed] = useState(false);
   const [shared, setShared] = useState(false);
   const [barDismissed, setBarDismissed] = useState(false);
@@ -399,34 +398,6 @@ export default function App() {
   const joinedLabel = (joinedAt || new Date())
     .toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
     .toUpperCase();
-
-  const saveSize = async (sz) => {
-    setSize(sz);
-    const clean = email.trim().toLowerCase();
-    if (!clean.includes("@")) return;
-    setSessionRows((rows) => rows.map((r) => (r.email === clean ? { ...r, size: sz } : r)));
-    try {
-      if (hasArtifactStore()) {
-        const key = "signup:" + clean.replace(/[\s/\\'"]/g, "_");
-        let row = { email: clean, interests: [], at: new Date().toISOString() };
-        try {
-          const existing = await window.storage.get(key, true);
-          if (existing) row = JSON.parse(existing.value);
-        } catch (e) { /* not stored yet */ }
-        await window.storage.set(key, JSON.stringify({ ...row, size: sz }), true);
-      } else {
-        const rows = lsRead().map((r) => (r.email === clean ? { ...r, size: sz } : r));
-        lsWrite(rows);
-        try {
-          await fetchT("/api/signup", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Accept: "application/json" },
-            body: JSON.stringify({ email: clean, size: sz }),
-          }, 12000);
-        } catch (e) { console.error("size update failed", e); }
-      }
-    } catch (e) { console.error("size save unavailable", e); }
-  };
 
   const shareSite = async () => {
     const data = { title: "WHITEFALL", text: "FW26 is coming. The list shops first. UNSTOPPABLE MOMENTUM.", url: typeof location !== "undefined" ? location.href : "" };
@@ -927,22 +898,6 @@ export default function App() {
                   ONE LAST STEP — TAP TO CONFIRM YOUR SPOT BY EMAIL ▲
                 </a>
               )}
-              {!size ? (
-                <div>
-                  <p style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.16em", margin: "0 0 12px" }}>WHAT SIZE ARE YOU? (OPTIONAL — HELPS US MAKE ENOUGH OF YOURS)</p>
-                  <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
-                    {["XS","S","M","L","XL","XXL"].map((sz) => (
-                      <button key={sz} onClick={() => saveSize(sz)}
-                        style={{ ...mono, background: "transparent", border: `1px solid ${S.line}`, color: S.snow, width: 52, padding: "11px 0", fontSize: 12, cursor: "pointer", transition: "all .2s ease" }}
-                        onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(191,211,219,.6)")}
-                        onMouseLeave={(e) => (e.currentTarget.style.borderColor = S.line)}
-                      >{sz}</button>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <p style={{ ...mono, fontSize: 10, color: S.frost, letterSpacing: "0.16em", margin: "0 0 12px" }}>SIZE {size} NOTED ▲</p>
-              )}
               <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap", marginTop: 18 }}>
                 <button onClick={buildCard} disabled={cardBusy}
                   style={{ ...mono, background: S.snow, color: S.night, border: "none", padding: "14px 24px", fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", cursor: "pointer" }}>
@@ -1180,15 +1135,7 @@ export default function App() {
                     ONE LAST STEP — TAP TO CONFIRM YOUR SPOT ▲
                   </a>
                 )}
-                <p style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.14em", margin: "0 0 12px" }}>WHAT SIZE ARE YOU? (OPTIONAL)</p>
-                <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap", marginBottom: 18 }}>
-                  {["XS","S","M","L","XL","XXL"].map((sz) => (
-                    <button key={sz} onClick={() => saveSize(sz)}
-                      style={{ ...mono, background: size === sz ? S.frost : "transparent", color: size === sz ? S.night : S.snow, border: `1px solid ${size === sz ? S.frost : S.line}`, width: 48, padding: "10px 0", fontSize: 12, cursor: "pointer" }}
-                    >{sz}</button>
-                  ))}
-                </div>
-                <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
+                <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap", marginTop: 18 }}>
                   <button onClick={buildCard} disabled={cardBusy}
                     style={{ ...mono, background: S.snow, color: S.night, border: "none", padding: "13px 18px", fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", cursor: "pointer" }}>
                     {cardBusy ? "BUILDING…" : "GET YOUR MEMBER CARD ▲"}
@@ -1268,8 +1215,7 @@ export default function App() {
               <button onClick={() => setPrivacyOpen(false)} aria-label="Close" style={{ ...mono, background: "none", border: "none", color: S.ash, fontSize: 13, cursor: "pointer" }}>✕</button>
             </div>
             <p style={{ color: S.ash, fontSize: 14, lineHeight: 1.75, margin: "0 0 14px" }}>
-              When you join the waitlist we store your email address, and — only if you choose to share them —
-              your size and the pieces you're interested in. That's the whole list.
+              When you join the waitlist we store your email address. That's the whole list.
             </p>
             <p style={{ color: S.ash, fontSize: 14, lineHeight: 1.75, margin: "0 0 14px" }}>
               It's used for one thing: telling you about drops. It is never sold, rented, or shared with anyone else.
@@ -1331,15 +1277,10 @@ export default function App() {
                     ↻ REFRESH
                   </button>
                 </div>
-                {list.some((r) => r.size) && (
-                  <p style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.12em", margin: "0 0 14px" }}>
-                    SIZES — {["XS","S","M","L","XL","XXL"].map((sz) => `${sz}:${list.filter((r) => r.size === sz).length}`).join("  ")}
-                  </p>
-                )}
 
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
                   <a
-                    href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Whitefall waitlist export — " + list.length + " signups")}&body=${encodeURIComponent(list.map((r) => r.email + (r.size ? "  [size: " + r.size + "]" : "") + (r.interests && r.interests.length ? "  [wants: " + r.interests.join(", ") + "]" : "") + "  (" + (r.at || "").slice(0, 10) + ")").join("\n") || "No signups yet.")}`}
+                    href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Whitefall waitlist export — " + list.length + " signups")}&body=${encodeURIComponent(list.map((r) => r.email + (r.interests && r.interests.length ? "  [wants: " + r.interests.join(", ") + "]" : "") + "  (" + (r.at || "").slice(0, 10) + ")").join("\n") || "No signups yet.")}`}
                     style={{ ...mono, background: S.snow, color: S.night, padding: "12px 18px", textDecoration: "none", fontSize: 11, fontWeight: 700, letterSpacing: "0.1em" }}>
                     EMAIL LIST TO ME ▲
                   </a>
@@ -1363,7 +1304,7 @@ export default function App() {
                       <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "11px 12px", borderBottom: `1px solid ${S.line}`, flexWrap: "wrap" }}>
                         <span style={{ ...mono, fontSize: 12 }}>{r.email}</span>
                         <span style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.08em" }}>
-                          {r.size ? r.size + "  " : ""}{(r.interests && r.interests.length ? r.interests.join(" · ") + "  " : "")}{(r.at || "").slice(0, 10)}
+                          {(r.interests && r.interests.length ? r.interests.join(" · ") + "  " : "")}{(r.at || "").slice(0, 10)}
                         </span>
                       </div>
                     ))}
