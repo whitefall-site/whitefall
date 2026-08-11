@@ -62,7 +62,7 @@ async function post(url, opts, ms = 5000) {
 }
 
 /* ——— Shopify: upsert the customer, tagged for the waitlist ——— */
-async function toShopify({ email, size, interests }) {
+async function toShopify({ email, interests }) {
   const shop = process.env.SHOPIFY_STORE.replace(/^https?:\/\//, "").replace(/\/+$/, "");
   const base = `https://${shop}/admin/api/2024-10`;
   const headers = {
@@ -71,11 +71,10 @@ async function toShopify({ email, size, interests }) {
   };
 
   const tags = ["waitlist", "fw26"];
-  if (size) tags.push(`size-${size}`);
   if (interests && interests.length) tags.push(...interests.map((i) => `wants-${i}`));
 
-  // Existing customer? Update rather than create, so a repeat signup or a
-  // later size selection enriches the same record instead of erroring.
+  // Existing customer? Update rather than create, so a repeat signup
+  // enriches the same record instead of erroring on a duplicate address.
   const found = await post(
     `${base}/customers/search.json?query=${encodeURIComponent("email:" + email)}`,
     { headers }
@@ -84,11 +83,7 @@ async function toShopify({ email, size, interests }) {
 
   if (existing) {
     const prior = (existing.tags || "").split(",").map((t) => t.trim()).filter(Boolean);
-    // Size is a correction — the newest answer replaces any earlier one.
-    const merged = [...new Set([
-      ...prior.filter((t) => !(size && /^size-/.test(t))),
-      ...tags,
-    ])];
+    const merged = [...new Set([...prior, ...tags])];
     const res = await post(`${base}/customers/${existing.id}.json`, {
       method: "PUT",
       headers,
@@ -114,10 +109,9 @@ async function toShopify({ email, size, interests }) {
 }
 
 /* Shared body for the owner notification. */
-function notifyText({ email, size, interests }) {
+function notifyText({ email, interests }) {
   return [
     `Email:  ${email}`,
-    `Size:   ${size || "—"}`,
     `Wants:  ${interests && interests.length ? interests.join(", ") : "general waitlist"}`,
     `Time:   ${new Date().toUTCString()}`,
   ].join("\n");
@@ -175,7 +169,7 @@ async function toResend(payload) {
 
 /* ——— Web3Forms: kept working for any key already configured ——— */
 async function toWeb3Forms(payload) {
-  const { email, size, interests, num } = payload;
+  const { email, interests } = payload;
   const res = await post("https://api.web3forms.com/submit", {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -184,7 +178,6 @@ async function toWeb3Forms(payload) {
       subject: notifySubject(payload),
       from_name: "Whitefall Waitlist",
       email,
-      size: size || "—",
       wants: interests && interests.length ? interests.join(", ") : "general waitlist",
     }),
   });
@@ -242,12 +235,11 @@ export default async function handler(req, res) {
   if (!validEmail(email)) {
     return res.status(400).json({ ok: false, error: "invalid_email" });
   }
-  const size = clean(body.size, 8) || null;
   const interests = Array.isArray(body.interests)
     ? body.interests.slice(0, 12).map((i) => clean(i, 60)).filter(Boolean)
     : [];
 
-  const payload = { email, size, interests };
+  const payload = { email, interests };
 
   // Store and notify are independent: a Shopify outage must not stop the
   // owner's email, and vice versa. Run both, report whatever succeeded.
@@ -278,7 +270,7 @@ export default async function handler(req, res) {
     // signup during a misconfiguration window isn't gone for good.
     console.warn(
       "WAITLIST_UNDELIVERED " +
-        JSON.stringify({ email, size, interests, at: new Date().toISOString() })
+        JSON.stringify({ email, interests, at: new Date().toISOString() })
     );
   }
 

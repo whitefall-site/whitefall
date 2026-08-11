@@ -66,7 +66,7 @@ direct), mobile-vs-desktop split, and how many visitors reach the waitlist.
 devices rather than a lab test:
 
 - **LCP** — how fast the hero logo paints
-- **INP** — responsiveness when tapping JOIN or a size button
+- **INP** — responsiveness when tapping JOIN or a nav link
 - **CLS** — layout jumping while loading
 
 CLS currently measures ~0.000 in testing, because the product image carries
@@ -112,7 +112,7 @@ office. Customers click BUY NOW on whitefall and land on your Shopify checkout.
    usually a cheap trial period to set everything up).
 2. Add a product: **Whitefall Crewneck** — price, description (use the site's
    spec line: contrast piping · 320 GSM · 80% cotton / 20% polyester · runs
-   tailored), and **six size variants** (XS–XXL).
+   tailored), and **five size variants** (S–XXL).
 3. On each variant: set the inventory count for that size and make sure
    **"Track quantity"** is ON and **"Continue selling when out of stock"** is
    OFF. This is what makes overselling impossible during the drop.
@@ -240,10 +240,9 @@ Do this while setting up the store — it adds about two minutes:
    | `SHOPIFY_ADMIN_TOKEN` | the `shpat_…` token |
 
 Every signup then becomes a Shopify customer, subscribed to email marketing and
-tagged `waitlist`, `fw26`, and `size-L`. Which means: the list lives with the business, Shopify Email can mail
-it for free, and you can filter "everyone on the waitlist who wears L" in two
-clicks. Signing up again or changing size updates the same customer rather than
-duplicating it, and size tags are replaced rather than stacked.
+tagged `waitlist` and `fw26`. Which means: the list lives with the business, Shopify Email can mail
+it for free, and the waitlist is one click away in Customers. Signing up again
+updates the same customer rather than duplicating it.
 
 ### Alternative: Resend (plain email notifications)
 
@@ -317,8 +316,6 @@ and link "Shop" to a Shopify/Stripe checkout.
   into the og/twitter tags at build time using Vercel's own environment
   variables, and follows a custom domain when you attach one. To force a
   specific URL, set `VITE_SITE_URL` in Vercel's environment variables.
-- **Waitlist sizes**: signups can tap their size — the owner panel (passcode 0623)
-  shows a size tally so you know how many of each size to produce.
 
 Note: the brand name is currently WHITEFALL throughout. If the final name changes,
 tell Claude and it's a one-command swap.
