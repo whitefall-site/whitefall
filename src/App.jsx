@@ -400,7 +400,7 @@ export default function App() {
     .toUpperCase();
 
   const shareSite = async () => {
-    const data = { title: "WHITEFALL", text: "FW26 is coming. The list shops first. UNSTOPPABLE MOMENTUM.", url: typeof location !== "undefined" ? location.href : "" };
+    const data = { title: "WHITEFALL", text: "FW26 is coming. The list shops first. FREEDOM TO FALL.", url: typeof location !== "undefined" ? location.href : "" };
     try {
       if (navigator.share) { await navigator.share(data); setShared(true); return; }
       await navigator.clipboard.writeText(data.url || data.text);
@@ -507,7 +507,7 @@ export default function App() {
       ls("10px");
       x.fillStyle = "#BFD3DB";
       x.font = "700 32px 'Space Mono', monospace";
-      x.fillText("UNSTOPPABLE MOMENTUM.", 540, 1752);
+      x.fillText("FREEDOM TO FALL.", 540, 1752);
       ls("6px");
       x.fillStyle = "#7E8590";
       x.font = "400 22px 'Space Mono', monospace";
@@ -737,7 +737,7 @@ export default function App() {
             <Wordmark size="clamp(30px, 8.2vw, 124px)" stroke="2.5px" spacing="0.08em" glow />
           </h1>
           <p className="hero-in hd2 slogan" style={{ ...anton, color: S.frost, fontSize: "clamp(16px, 2.6vw, 30px)", letterSpacing: "0.34em", margin: "14px 0 0" }}>
-            UNSTOPPABLE MOMENTUM.
+            FREEDOM TO FALL.
           </p>
           <div className="hero-in hd3" style={{ marginTop: 22, display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <a href="#waitlist" onClick={go("waitlist")} style={{ ...mono, background: S.snow, color: S.night, padding: "16px 32px", textDecoration: "none", fontSize: 13, letterSpacing: "0.1em", fontWeight: 700 }}>
@@ -759,7 +759,7 @@ export default function App() {
           {[0, 1].map((k) => (
             <div key={k} style={{ ...mono, display: "flex", gap: 52, paddingRight: 52, fontSize: 12, letterSpacing: "0.2em", color: S.ash, whiteSpace: "nowrap" }}>
               {Array.from({ length: 5 }).map((_, i) => (
-                <span key={i}>FW26 · COMING SOON <span style={{ color: S.frost }}>▲</span> UNSTOPPABLE MOMENTUM <span style={{ color: S.frost }}>▲</span> WHITEFALL — FW26</span>
+                <span key={i}>FW26 · COMING SOON <span style={{ color: S.frost }}>▲</span> FREEDOM TO FALL <span style={{ color: S.frost }}>▲</span> WHITEFALL — FW26</span>
               ))}
             </div>
           ))}
@@ -786,7 +786,7 @@ export default function App() {
             </h2>
           ))}
           <h2 className="rv" style={{ ...anton, color: S.frost, fontSize: "clamp(28px, 5.2vw, 70px)", lineHeight: 1, letterSpacing: "0.05em", margin: 0, textShadow: "0 0 40px rgba(191,211,219,.2)" }}>
-            UNSTOPPABLE MOMENTUM.
+            FREEDOM TO FALL.
           </h2>
           <div className="stagger" style={{ display: "flex", gap: 44, marginTop: "7vw", flexWrap: "wrap" }}>
             {[["01", "LIMITED, NUMBERED RUNS"], ["02", "HEAVYWEIGHT, LUXURY FINISH"], ["03", "FEAR, USED AS FUEL"]].map(([n, l]) => (
@@ -1053,7 +1053,7 @@ export default function App() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 28, marginBottom: 44 }}>
             <div>
               <div><Wordmark size="20px" stroke="1.2px" spacing="0.14em" /></div>
-              <div style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.16em", marginTop: 6 }}>UNSTOPPABLE MOMENTUM.</div>
+              <div style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.16em", marginTop: 6 }}>FREEDOM TO FALL.</div>
             </div>
             <div style={{ display: "flex", gap: 26, flexWrap: "wrap" }}>
               {[["Instagram", IG], ["Support", "#support"], ["FW26", "#fw26"], ["Waitlist", "#waitlist"]].map(([t, h]) => (
@@ -1119,7 +1119,7 @@ export default function App() {
             <button onClick={() => setPopupDone(true)} aria-label="Close"
               style={{ ...mono, position: "absolute", top: 12, right: 14, background: "none", border: "none", color: S.ash, fontSize: 14, cursor: "pointer" }}>✕</button>
             <div style={{ marginBottom: 12 }}><Wordmark size="21px" stroke="1.2px" glow /></div>
-            <p style={{ ...mono, color: S.frost, fontSize: 10, letterSpacing: "0.28em", margin: "0 0 10px" }}>UNSTOPPABLE MOMENTUM.</p>
+            <p style={{ ...mono, color: S.frost, fontSize: 10, letterSpacing: "0.28em", margin: "0 0 10px" }}>FREEDOM TO FALL.</p>
             {popupJoined ? (
               <div>
                 <h2 style={{ ...anton, fontSize: "clamp(22px, 4.6vw, 30px)", margin: "0 0 4px", lineHeight: 1.05 }}>THANK YOU.</h2>
