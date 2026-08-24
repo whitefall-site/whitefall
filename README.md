@@ -135,16 +135,32 @@ office. Customers click BUY NOW on whitefall and land on your Shopify checkout.
 
 Vercel → your project → Settings → Environment Variables:
 
+The product link (`a1xduc-bf.myshopify.com/products/whitefall-crewneck`) and
+price ($69.99) are already baked into `src/App.jsx` — **nothing needs setting
+for BUY NOW to work.** It appears by itself when the countdown reaches zero.
+
+These env vars only exist to override that without a code edit:
+
 | Variable | Set it to | Effect |
 |---|---|---|
-| `VITE_CREWNECK_URL` | the Shopify product link | BUY NOW appears (once drop is live) |
-| `VITE_CREWNECK_PRICE` | e.g. `$120` | price shows on the product feature |
-| `VITE_DROP_LIVE` | `1` | forces the shop live before the countdown date |
-| `VITE_CREWNECK_SOLDOUT` | `1` | flips to SOLD OUT + restock-notify state |
+| `VITE_CREWNECK_PRICE` | e.g. `$74.99` | change the displayed price |
+| `VITE_CREWNECK_URL` | a different product link | point BUY NOW elsewhere |
+| `VITE_DROP_LIVE` | `1` | force the shop live before the countdown date |
+| `VITE_CREWNECK_SOLDOUT` | `1` | flip to SOLD OUT + notify state |
 
-After adding or changing any of these: **Deployments → Redeploy**. The change
-is live in about a minute. Before the URL is set, the site shows GET NOTIFIED
-(waitlist) instead — so there's no broken state at any point.
+After adding or changing any of these: **Deployments → Redeploy**.
+
+### Three things that must be true before BUY NOW works
+
+The link is wired, but Shopify has to be open for business:
+
+1. **Storefront password off** — Online Store → Preferences. New stores are
+   password-protected by default; while it is on, every buyer hits a password
+   wall.
+2. **Product published to the Online Store channel** — on the product page,
+   under Publishing. If it isn't, the product URL does not resolve publicly.
+3. **Inventory above zero** — every variant is DENY (correct: it prevents
+   overselling), so a size at 0 simply cannot be bought.
 
 ### The early-access play ("the list shops first" — for real)
 

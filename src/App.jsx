@@ -33,20 +33,26 @@ const PIECES = [
 
 /* ——— SHOP CONFIG — the switch that turns the store on ———
    The site is the storefront; Shopify is the engine behind it (payments,
-   inventory, shipping, taxes, refunds). Everything here is controlled from
-   Vercel → Settings → Environment Variables → Redeploy. No code edits:
+   inventory, shipping, taxes, refunds).
 
-     VITE_CREWNECK_URL      the Shopify product link — BUY NOW appears once
-                            this is set AND the drop is live
-     VITE_CREWNECK_PRICE    display price, e.g. "$120"
-     VITE_CREWNECK_SOLDOUT  set to 1 → SOLD OUT state + restock-notify CTA
+   The product link and price are public information, not secrets, so they
+   live here as defaults — no Vercel variable is needed for BUY NOW to work.
+   Each can still be overridden from Vercel → Settings → Environment
+   Variables → Redeploy, which is the easy way to change a price:
+
+     VITE_CREWNECK_URL      override the product link below
+     VITE_CREWNECK_PRICE    override the displayed price
+     VITE_CREWNECK_SOLDOUT  set to 1 → SOLD OUT state + notify CTA
      VITE_DROP_LIVE         set to 1 → go live before the countdown date
 
-   Full owner runbook in README → "Shopify — the commerce engine". */
+   BUY NOW still only appears once the drop is live, so setting these early
+   is safe. Full owner runbook in README → "Shopify — the commerce engine". */
 const SHOP = {
   crewneck: {
-    price: import.meta.env.VITE_CREWNECK_PRICE || "",
-    checkoutUrl: import.meta.env.VITE_CREWNECK_URL || "",
+    price: import.meta.env.VITE_CREWNECK_PRICE || "$69.99",
+    checkoutUrl:
+      import.meta.env.VITE_CREWNECK_URL ||
+      "https://a1xduc-bf.myshopify.com/products/whitefall-crewneck",
     soldOut: import.meta.env.VITE_CREWNECK_SOLDOUT === "1",
   },
 };
