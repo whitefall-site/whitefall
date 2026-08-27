@@ -118,12 +118,14 @@ office. Customers click BUY NOW on whitefall and land on your Shopify checkout.
    OFF. This is what makes overselling impossible during the drop.
 4. Settings → **Payments**: activate Shopify Payments (needs ID + bank account
    — this is where the money lands).
-5. Settings → **Shipping**: set your rates — domestic first; add international
-   zones when you're ready. For worldwide selling, look at Settings → Markets.
-   The site's FAQ promises "duties calculated at checkout" — if your plan
-   doesn't support collecting duties, soften that FAQ line (ask Claude).
+5. Settings → **Shipping**: set your US rates. The site's FAQ now says US-only
+   shipping, so that matches. Before adding international zones (Settings →
+   Markets), update the "Where do you ship?" FAQ — and only promise duties at
+   checkout if Shopify is actually collecting them, or buyers get surprise
+   customs bills.
 6. Settings → **Policies**: set the 30-day return policy so it matches what
-   the site's FAQ promises. Shopify's order emails cover the "tracking link
+   the site's FAQ promises. The FAQ says you send return *instructions*, not a
+   prepaid label — decide who pays return shipping and say so there. Shopify's order emails cover the "tracking link
    within 24 hours" promise automatically when you fulfill orders.
 7. Copy the **product page link** (Sales channels → view product) — that's the
    link the site's BUY NOW button will use.

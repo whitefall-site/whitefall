@@ -346,10 +346,10 @@ function PieceShop({ shopId, fit, onNotify }) {
 const FAQS = [
   { q: "When does FW26 drop?", a: "The date isn't public yet. The waitlist gets it first — the exact date and time, plus access one hour before anyone else. Join below; it's free and it's the only way to know before it happens." },
   { q: "Where's my order?", a: "Every order gets a tracking link by email within 24 hours of shipping. Can't find it? Email us your order number, or DM us on Instagram — we respond within one business day." },
-  { q: "What's your return policy?", a: "30 days, no questions. Unworn, tags on, full refund to your original payment method. Start a return by emailing us your order number — we send the label, you drop it off." },
+  { q: "What's your return policy?", a: "30 days, no questions. Unworn, tags on, full refund to your original payment method. Email us your order number and we'll send you return instructions." },
   { q: "How does sizing run?", a: "It varies piece to piece — some are cut boxy and oversized, others tailored and slim. Always read the description on the specific product you're interested in: every piece lists its own fit notes and exact garment measurements there." },
   { q: "Will pieces restock?", a: "Rarely, and never guaranteed. Runs are small and numbered by design — when a piece sells out, don't count on seeing it again. If a restock ever happens, the waitlist hears first." },
-  { q: "Do you ship worldwide?", a: "Yes. Duties are calculated at checkout so there are no surprise fees at your door." },
+  { q: "Where do you ship?", a: "The United States for now. International is on the list — join the waitlist and you'll hear the moment it opens up." },
 ];
 
 /* Brand support inbox — published on the site on purpose. Keep this a brand
@@ -825,7 +825,7 @@ export default function App() {
             FREEDOM TO FALL.
           </h2>
           <div className="stagger" style={{ display: "flex", gap: 44, marginTop: "7vw", flexWrap: "wrap" }}>
-            {[["01", "LIMITED, NUMBERED RUNS"], ["02", "HEAVYWEIGHT, LUXURY FINISH"], ["03", "FEAR, USED AS FUEL"]].map(([n, l]) => (
+            {[["01", "LIMITED, NUMBERED RUNS"], ["02", "HEAVYWEIGHT, LUXURY FINISH"]].map(([n, l]) => (
               <div key={n} style={{ borderLeft: `2px solid ${S.frost}`, paddingLeft: 16 }}>
                 <div style={{ ...anton, fontSize: 30, color: S.snow }}>{n}</div>
                 <div style={{ ...mono, fontSize: 10, letterSpacing: "0.18em", color: S.ash, marginTop: 4 }}>{l}</div>
@@ -1108,7 +1108,6 @@ export default function App() {
           <div style={{ borderTop: `1px solid ${S.line}`, paddingTop: 22, display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
             <span style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.14em" }}>© 2026 WHITEFALL. ALL RIGHTS RESERVED.</span>
             <span style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.14em" }}>
-              MADE SCARCE. WORN LOUD. ▲{" "}
               <button onClick={() => { setOwnerOpen(true); if (ownerUnlocked) loadList(); }}
                 aria-label="Owner login"
                 style={{ ...mono, background: "none", border: "none", color: "rgba(126,133,144,.45)", fontSize: 10, letterSpacing: "0.14em", cursor: "pointer", padding: 0, marginLeft: 10 }}>
