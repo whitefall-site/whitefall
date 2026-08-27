@@ -228,16 +228,40 @@ const mono = { fontFamily: "'Space Mono', monospace" };
 const IG = "https://instagram.com/whitefall26";
 
 // ——— DROP DATE (placeholder — change this one line when the real date is locked) ———
-const DROP_DATE = new Date("2026-10-01T12:00:00-04:00").getTime();
+/* Empty until the date is locked. While it is empty the site says the date is
+   unannounced instead of counting down to a guess, and BUY NOW stays hidden.
+
+   To start the countdown, either put an ISO date here or set VITE_DROP_DATE in
+   Vercel — e.g. "2026-11-14T12:00:00-05:00" (note -05:00 for EST after Nov 2,
+   -04:00 for EDT before it). The shop then turns itself on at that moment, so
+   nobody has to be at a keyboard. */
+const DROP_DATE_RAW = import.meta.env.VITE_DROP_DATE || "";
+const parsedDrop = DROP_DATE_RAW ? new Date(DROP_DATE_RAW).getTime() : NaN;
+const DROP_DATE = Number.isFinite(parsedDrop) ? parsedDrop : null;
 
 /* Self-contained so its once-a-second tick re-renders only these tiles,
    not the whole page */
 function Countdown() {
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
+    if (DROP_DATE == null) return;
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
+
+  if (DROP_DATE == null) {
+    return (
+      <div>
+        <div style={{ ...anton, fontSize: "clamp(26px, 4.4vw, 40px)", color: S.snow, letterSpacing: "0.04em", lineHeight: 1.1 }}>
+          DATE TO BE ANNOUNCED
+        </div>
+        <div style={{ ...mono, fontSize: 10, letterSpacing: "0.18em", color: S.frost, marginTop: 8 }}>
+          THE LIST HEARS FIRST ▲
+        </div>
+      </div>
+    );
+  }
+
   const diff = Math.max(0, DROP_DATE - now);
   const cd = {
     d: Math.floor(diff / 86400000),
@@ -266,16 +290,21 @@ function Countdown() {
    Checks the clock on a slow tick so the flip happens without a reload. */
 function PieceShop({ shopId, fit, onNotify }) {
   const cfg = SHOP[shopId] || {};
-  const [live, setLive] = useState(FORCE_DROP_LIVE || Date.now() >= DROP_DATE);
+  // With no date set, the shop stays shut unless deliberately forced live.
+  const [live, setLive] = useState(
+    FORCE_DROP_LIVE || (DROP_DATE != null && Date.now() >= DROP_DATE)
+  );
   useEffect(() => {
-    if (live) return;
+    if (live || DROP_DATE == null) return;
     const t = setInterval(() => {
       if (Date.now() >= DROP_DATE) { setLive(true); clearInterval(t); }
     }, 15000);
     return () => clearInterval(t);
   }, [live]);
   const buyable = live && cfg.checkoutUrl && !cfg.soldOut;
-  const dropDay = new Date(DROP_DATE).toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase();
+  const dropDay = DROP_DATE == null
+    ? null
+    : new Date(DROP_DATE).toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase();
   const chip = { ...mono, fontSize: 10, letterSpacing: "0.14em", padding: "6px 10px" };
   return (
     <div>
@@ -305,7 +334,8 @@ function PieceShop({ shopId, fit, onNotify }) {
       )}
       {!live && !cfg.soldOut && (
         <p style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.16em", margin: "14px 0 0" }}>
-          DROPS {dropDay} · WAITLIST GETS EARLY ACCESS
+          {dropDay ? `DROPS ${dropDay} · ` : "DATE ANNOUNCED TO THE LIST FIRST · "}
+          WAITLIST GETS EARLY ACCESS
         </p>
       )}
     </div>
@@ -314,7 +344,7 @@ function PieceShop({ shopId, fit, onNotify }) {
 
 
 const FAQS = [
-  { q: "When does FW26 drop?", a: "October 2026. Waitlist members get the exact date, time, and access one hour before anyone else. Join below — it's free and it's the only way in early." },
+  { q: "When does FW26 drop?", a: "The date isn't public yet. The waitlist gets it first — the exact date and time, plus access one hour before anyone else. Join below; it's free and it's the only way to know before it happens." },
   { q: "Where's my order?", a: "Every order gets a tracking link by email within 24 hours of shipping. Can't find it? Email us your order number, or DM us on Instagram — we respond within one business day." },
   { q: "What's your return policy?", a: "30 days, no questions. Unworn, tags on, full refund to your original payment method. Start a return by emailing us your order number — we send the label, you drop it off." },
   { q: "How does sizing run?", a: "It varies piece to piece — some are cut boxy and oversized, others tailored and slim. Always read the description on the specific product you're interested in: every piece lists its own fit notes and exact garment measurements there." },

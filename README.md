@@ -29,7 +29,7 @@ Done and live:
 
 **The commerce plan (decided):** the site is the storefront; **Shopify is the
 engine** behind it — payments, inventory that can't oversell, shipping labels,
-taxes, refunds. The October drop is the **Whitefall Crewneck only**; pieces
+taxes, refunds. The drop is the **Whitefall Crewneck only**; pieces
 02–04 sit in a NEXT UP section until their first looks are ready. The whole
 shop turns on and off from Vercel environment variables — no code edits on
 drop day. Full instructions: "Shopify — the commerce engine" below.
@@ -143,12 +143,32 @@ These env vars only exist to override that without a code edit:
 
 | Variable | Set it to | Effect |
 |---|---|---|
+| `VITE_DROP_DATE` | e.g. `2026-11-14T12:00:00-05:00` | starts the countdown and auto-opens the shop at that moment |
 | `VITE_CREWNECK_PRICE` | e.g. `$74.99` | change the displayed price |
 | `VITE_CREWNECK_URL` | a different product link | point BUY NOW elsewhere |
 | `VITE_DROP_LIVE` | `1` | force the shop live before the countdown date |
 | `VITE_CREWNECK_SOLDOUT` | `1` | flip to SOLD OUT + notify state |
 
 After adding or changing any of these: **Deployments → Redeploy**.
+
+### The drop date
+
+**No date is set right now.** While `VITE_DROP_DATE` is empty the site shows
+"DATE TO BE ANNOUNCED · THE LIST HEARS FIRST" instead of a countdown, and the
+shop stays shut — the point being that a public countdown to a date that later
+slips costs more credibility than having no countdown at all.
+
+Set `VITE_DROP_DATE` (Vercel → Environment Variables → Redeploy) the moment the
+date is locked. Format is ISO with a timezone offset:
+
+    2026-11-14T12:00:00-05:00
+
+Use `-05:00` for Eastern winter (EST) and `-04:00` for Eastern summer (EDT);
+US clocks fall back on Nov 1, 2026. An unparseable value falls back to the
+"to be announced" state rather than breaking the page.
+
+Once set, the countdown runs and the shop turns itself on at that exact moment
+— nobody needs to be at a keyboard.
 
 ### Three things that must be true before BUY NOW works
 
@@ -302,7 +322,7 @@ so don't put anything sensitive behind it.)
 - FAQ answers → the `FAQS` array
 - Contact categories → the `TOPICS` array
 - Passcode → `OWNER_CODE`
-- Drop countdown date → the `DROP_DATE` line (placeholder: Oct 1, 2026, noon ET)
+- Drop date → `DROP_DATE_RAW` in `src/App.jsx`, or `VITE_DROP_DATE` in Vercel
 - Slogan/copy → search the text you want to change
 
 ### Adding a product photo
