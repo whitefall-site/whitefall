@@ -840,7 +840,7 @@ export default function App() {
         <div style={{ maxWidth: 1400, margin: "0 auto" }}>
           <div className="rv-l" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 12, marginBottom: 12 }}>
             <h2 style={{ ...anton, fontSize: "clamp(40px,7vw,96px)", margin: 0, lineHeight: 1 }}>
-              FW26 <span style={{ color: S.frost }}>—</span> THE DROP
+              FW26
             </h2>
             <span style={{ ...mono, fontSize: 12, color: S.ash, letterSpacing: "0.18em" }}>FALL / WINTER 2026 · FOUR PIECES</span>
           </div>
@@ -863,7 +863,6 @@ export default function App() {
                 <div>
                   <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 10 }}>
                     <span style={{ ...mono, fontSize: 11, color: S.frost, letterSpacing: "0.16em" }}>{p.n}</span>
-                    <span style={{ ...mono, fontSize: 9, fontWeight: 700, letterSpacing: "0.16em", color: S.night, background: S.frost, padding: "4px 9px" }}>THE DROP</span>
                   </div>
                   <h3 style={{ ...anton, fontSize: "clamp(26px, 4.2vw, 54px)", letterSpacing: "0.02em", margin: "0 0 14px", lineHeight: 1.05 }}>{p.name}</h3>
                   <p style={{ ...mono, fontSize: 11, color: S.ash, letterSpacing: "0.14em", lineHeight: 1.9, margin: "0 0 16px" }}>{p.cat}</p>
