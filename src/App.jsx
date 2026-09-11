@@ -49,7 +49,7 @@ const PIECES = [
    is safe. Full owner runbook in README → "Shopify — the commerce engine". */
 const SHOP = {
   crewneck: {
-    price: import.meta.env.VITE_CREWNECK_PRICE || "$70",
+    price: import.meta.env.VITE_CREWNECK_PRICE || "$69.99",
     checkoutUrl:
       import.meta.env.VITE_CREWNECK_URL ||
       "https://a1xduc-bf.myshopify.com/products/whitefall-crewneck",

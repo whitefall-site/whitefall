@@ -138,7 +138,7 @@ office. Customers click BUY NOW on whitefall and land on your Shopify checkout.
 Vercel → your project → Settings → Environment Variables:
 
 The product link (`a1xduc-bf.myshopify.com/products/whitefall-crewneck`) and
-price ($70) are already baked into `src/App.jsx` — **nothing needs setting
+price ($69.99) are already baked into `src/App.jsx` — **nothing needs setting
 for BUY NOW to work.** It appears by itself when the countdown reaches zero.
 
 These env vars only exist to override that without a code edit:
@@ -146,7 +146,7 @@ These env vars only exist to override that without a code edit:
 | Variable | Set it to | Effect |
 |---|---|---|
 | `VITE_DROP_DATE` | e.g. `2026-11-14T12:00:00-05:00` | starts the countdown and auto-opens the shop at that moment |
-| `VITE_CREWNECK_PRICE` | e.g. `$75` | change the displayed price (must match Shopify) |
+| `VITE_CREWNECK_PRICE` | e.g. `$74.99` | change the displayed price (must match Shopify) |
 | `VITE_CREWNECK_URL` | a different product link | point BUY NOW elsewhere |
 | `VITE_DROP_LIVE` | `1` | force the shop live before the countdown date |
 | `VITE_CREWNECK_SOLDOUT` | `1` | flip to SOLD OUT + notify state |
