@@ -23,6 +23,15 @@ const PIECES = [
     fit: "RUNS TAILORED",
     shot: "/fw26-01-crewneck.jpg",
     webp: true, // fw26-01-crewneck.webp + fw26-01-crewneck-480.webp exist in public/
+    // extra angles: add paths here and the tap-to-zoom view becomes a swipeable gallery
+    more: [],
+    // the DETAILS tab under the piece — one plain fact per line
+    details: [
+      "OUTLINED MOUNTAIN LOGO ACROSS THE BACK",
+      "WHITE CONTRAST PIPING ALONG SLEEVES AND BODY",
+      "320 GSM · 80% COTTON / 20% POLYESTER",
+      "RUNS TAILORED · S – XXL",
+    ],
     alt: "Whitefall Crewneck in black, back view — outlined mountain logo across the shoulders with white contrast piping along the sleeves and body.",
     dropping: true,
     shop: "crewneck",
@@ -147,6 +156,43 @@ body { margin: 0; }
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
+/* footer */
+.foot-cols { display: flex; gap: 56px; flex-wrap: wrap; }
+.foot-link {
+  font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: #7E8590; text-decoration: none; background: none; border: 0; padding: 0; cursor: pointer;
+  transition: color .2s ease;
+}
+.foot-link:hover, .foot-link:focus-visible { color: #BFD3DB; }
+@media (max-width: 480px) { .foot-cols { gap: 36px; } }
+/* product info tabs */
+.pinfo { margin-top: 28px; max-width: 440px; border-bottom: 1px solid rgba(237,236,232,.12); }
+.pinfo details { border-top: 1px solid rgba(237,236,232,.12); }
+.pinfo summary {
+  list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 0; font-family: 'Space Mono', monospace; font-size: 11px; letter-spacing: 0.18em; color: #EDECE8;
+}
+.pinfo summary::-webkit-details-marker { display: none; }
+.pinfo summary:hover, .pinfo summary:focus-visible { color: #BFD3DB; }
+.pinfo-plus { color: #BFD3DB; font-size: 15px; transition: transform .3s ease; }
+.pinfo details[open] .pinfo-plus { transform: rotate(45deg); }
+/* tap-to-zoom photo */
+.shot-btn { display: block; position: relative; padding: 0; border: 0; background: none; cursor: zoom-in; width: 100%; }
+.shot-btn:focus-visible { outline: 1px solid #BFD3DB; outline-offset: 4px; }
+.shot-hint {
+  position: absolute; right: 10px; bottom: 10px; font-family: 'Space Mono', monospace; font-size: 10px;
+  letter-spacing: 0.14em; color: #05070D; background: rgba(237,236,232,.88); padding: 5px 8px;
+}
+.zoom-strip {
+  display: flex; height: 100%; overflow-x: auto; scroll-snap-type: x mandatory;
+  scrollbar-width: none; overscroll-behavior: contain;
+}
+.zoom-strip::-webkit-scrollbar { display: none; }
+.zoom-slide {
+  flex: 0 0 100%; scroll-snap-align: center; display: flex; align-items: center; justify-content: center;
+  padding: 56px 16px 40px; box-sizing: border-box;
+}
+.zoom-slide img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; display: block; }
 /* featured piece — photo beside the details, stacked on narrow screens */
 .piece-feature {
   display: grid; grid-template-columns: minmax(0, 480px) 1fr;
@@ -158,7 +204,7 @@ body { margin: 0; }
 }
 @media (max-width: 760px) {
   .piece-feature { grid-template-columns: 1fr; gap: 20px; padding: 26px 0; }
-  .piece-shot { max-width: 440px; margin: 0 auto; }
+  .piece-shot, .shot-btn { max-width: 440px; margin: 0 auto; }
 }
 .tease { transition: transform .5s cubic-bezier(.16,.8,.24,1), border-color .4s ease; }
 .tease:hover { transform: translateY(-8px); border-color: rgba(191,211,219,.5) !important; }
@@ -383,14 +429,41 @@ function PieceShop({ shopId, fit, onNotify }) {
   );
 }
 
+/* Same facts as the FAQ, cut down to lines — keep the two in step. */
+const SHIPPING_FACTS = [
+  "UNITED STATES ONLY, FOR NOW",
+  "TRACKING LINK BY EMAIL WITHIN 24 HOURS OF SHIPPING",
+];
+const RETURN_FACTS = [
+  "30 DAYS, NO QUESTIONS",
+  "UNWORN, TAGS ON — FULL REFUND",
+  "EMAIL YOUR ORDER NUMBER, WE SEND INSTRUCTIONS",
+];
+
+/* DETAILS / SHIPPING / RETURNS under a piece. Native <details>, so it works
+   with the keyboard and screen readers with no extra code. */
+function ProductInfo({ details = [] }) {
+  const tabs = [["DETAILS", details], ["SHIPPING", SHIPPING_FACTS], ["RETURNS", RETURN_FACTS]]
+    .filter(([, items]) => items.length);
+  return (
+    <div className="pinfo">
+      {tabs.map(([title, items]) => (
+        <details key={title}>
+          <summary>{title}<span aria-hidden className="pinfo-plus">+</span></summary>
+          <div style={{ padding: "2px 0 16px" }}><SpecList items={items} /></div>
+        </details>
+      ))}
+    </div>
+  );
+}
 
 const FAQS = [
-  { q: "When does FW26 drop?", a: "The date isn't public yet. The waitlist gets it first — the exact date and time, plus access one hour before anyone else. Join below; it's free and it's the only way to know before it happens." },
-  { q: "Where's my order?", a: "Every order gets a tracking link by email within 24 hours of shipping. Can't find it? Email us your order number, or DM us on Instagram — we respond within one business day." },
-  { q: "What's your return policy?", a: "30 days, no questions. Unworn, tags on, full refund to your original payment method. Email us your order number and we'll send you return instructions." },
-  { q: "How does sizing run?", a: "It varies piece to piece — some are cut boxy and oversized, others tailored and slim. Always read the description on the specific product you're interested in: every piece lists its own fit notes and exact garment measurements there." },
-  { q: "Will pieces restock?", a: "Rarely, and never guaranteed. Runs are small and numbered by design — when a piece sells out, don't count on seeing it again. If a restock ever happens, the waitlist hears first." },
-  { q: "Where do you ship?", a: "The United States for now. International is on the list — join the waitlist and you'll hear the moment it opens up." },
+  { id: "drop", q: "When does FW26 drop?", a: "The date isn't public yet. The waitlist gets it first — the exact date and time, plus access one hour before anyone else. Join below; it's free and it's the only way to know before it happens." },
+  { id: "tracking", q: "Where's my order?", a: "Every order gets a tracking link by email within 24 hours of shipping. Can't find it? Email us your order number, or DM us on Instagram — we respond within one business day." },
+  { id: "returns", q: "What's your return policy?", a: "30 days, no questions. Unworn, tags on, full refund to your original payment method. Email us your order number and we'll send you return instructions." },
+  { id: "sizing", q: "How does sizing run?", a: "It varies piece to piece — some are cut boxy and oversized, others tailored and slim. Every piece lists its fit under DETAILS. Want exact measurements for a size? Email us or DM us on Instagram and we'll send them." },
+  { id: "restocks", q: "Will pieces restock?", a: "Rarely, and never guaranteed. Runs are small and numbered by design — when a piece sells out, don't count on seeing it again. If a restock ever happens, the waitlist hears first." },
+  { id: "shipping", q: "Where do you ship?", a: "The United States for now. International is on the list — join the waitlist and you'll hear the moment it opens up." },
 ];
 
 /* Brand support inbox — published on the site on purpose. Keep this a brand
@@ -503,6 +576,13 @@ export default function App() {
   const [waitlistInView, setWaitlistInView] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [joinedAt, setJoinedAt] = useState(() => (visitor.joinedAt ? new Date(visitor.joinedAt) : null));
+  const [zoom, setZoom] = useState(null); // { name, alt, images } while the photo viewer is open
+  const [zoomAt, setZoomAt] = useState(0);
+  const stripRef = useRef(null);
+  const stepZoom = (dir) => {
+    const s = stripRef.current;
+    if (s) s.scrollBy({ left: dir * s.clientWidth, behavior: "smooth" });
+  };
   const [cardOpen, setCardOpen] = useState(false);
   const [cardUrl, setCardUrl] = useState(null);
   const [cardBusy, setCardBusy] = useState(false);
@@ -671,15 +751,30 @@ export default function App() {
   // Escape closes the top-most open overlay
   useEffect(() => {
     const onKey = (e) => {
+      if (zoom && (e.key === "ArrowRight" || e.key === "ArrowLeft")) {
+        e.preventDefault();
+        stepZoom(e.key === "ArrowRight" ? 1 : -1);
+        return;
+      }
       if (e.key !== "Escape") return;
-      if (ownerOpen) setOwnerOpen(false);
+      if (zoom) setZoom(null);
+      else if (ownerOpen) setOwnerOpen(false);
       else if (cardOpen) setCardOpen(false);
       else if (privacyOpen) setPrivacyOpen(false);
       else if (popup && !popupDone) setPopupDone(true);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [ownerOpen, cardOpen, privacyOpen, popup, popupDone]);
+  }, [zoom, ownerOpen, cardOpen, privacyOpen, popup, popupDone]);
+
+  // photo viewer: freeze the page behind it, start on the first image
+  useEffect(() => {
+    if (!zoom) return;
+    setZoomAt(0);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [zoom]);
 
   // closing the ask (not the thank-you) means "not now" — respect it for a week
   useEffect(() => {
@@ -807,6 +902,13 @@ export default function App() {
     e.preventDefault();
     const el = document.getElementById(id);
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  // footer help links: open that FAQ answer and bring it into view
+  const openFaq = (id) => (e) => {
+    const i = FAQS.findIndex((f) => f.id === id);
+    if (i < 0) return;
+    setOpen(i);
+    go(`faq-${id}`)(e);
   };
 
   return (
@@ -957,13 +1059,19 @@ export default function App() {
             {PIECES.filter((p) => p.dropping).map((p) => (p.shot ? (
               /* photographed piece \u2014 full feature treatment */
               <div key={p.n} className="piece-feature" style={{ borderBottom: `1px solid ${S.line}` }}>
-                {/* WebP (~75% lighter) for browsers that take it, the JPG for the rest */}
-                <picture>
-                  {p.webp && <source type="image/webp"
-                    srcSet={`${p.shot.replace(/\.jpg$/, "-480.webp")} 480w, ${p.shot.replace(/\.jpg$/, ".webp")} 880w`}
-                    sizes="(max-width: 760px) min(440px, 100vw), 480px" />}
-                  <img src={p.shot} alt={p.alt} className="piece-shot" width="880" height="1407" loading="lazy" decoding="async" />
-                </picture>
+                <button type="button" className="shot-btn" aria-label={`View ${p.name} photo full screen`}
+                  onClick={() => setZoom({ name: p.name, alt: p.alt, images: [p.webp ? p.shot.replace(/\.jpg$/, ".webp") : p.shot, ...(p.more || [])] })}>
+                  {/* WebP (~75% lighter) for browsers that take it, the JPG for the rest */}
+                  <picture>
+                    {p.webp && <source type="image/webp"
+                      srcSet={`${p.shot.replace(/\.jpg$/, "-480.webp")} 480w, ${p.shot.replace(/\.jpg$/, ".webp")} 880w`}
+                      sizes="(max-width: 760px) min(440px, 100vw), 480px" />}
+                    <img src={p.shot} alt={p.alt} className="piece-shot" width="880" height="1407" loading="lazy" decoding="async" />
+                  </picture>
+                  <span className="shot-hint" aria-hidden>
+                    {(p.more || []).length ? `1 / ${1 + p.more.length}` : "+ ZOOM"}
+                  </span>
+                </button>
                 <div>
                   <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 10 }}>
                     <span style={{ ...mono, fontSize: 11, color: S.frost, letterSpacing: "0.16em" }}>{p.n}</span>
@@ -971,6 +1079,7 @@ export default function App() {
                   <h3 style={{ ...anton, fontSize: "clamp(26px, 4.2vw, 54px)", letterSpacing: "0.02em", margin: "0 0 14px", lineHeight: 1.05 }}>{p.name}</h3>
                   <p style={{ ...mono, fontSize: 11, color: S.ash, letterSpacing: "0.14em", lineHeight: 1.9, margin: "0 0 16px" }}>{p.cat}</p>
                   <PieceShop shopId={p.shop} fit={p.fit} onNotify={go("waitlist")} />
+                  <ProductInfo details={p.details} />
                 </div>
               </div>
             ) : (
@@ -1098,7 +1207,7 @@ export default function App() {
               onMouseLeave={(e) => (e.currentTarget.style.borderColor = S.line)}>
               <div style={{ ...mono, fontSize: 10, letterSpacing: "0.18em", color: S.frost, marginBottom: 12 }}>SIZE & FIT</div>
               <div style={{ ...anton, fontSize: 22, marginBottom: 8 }}>FIT GUIDE</div>
-              <div style={{ color: S.ash, fontSize: 14, lineHeight: 1.6 }}>Every piece is cut differently — boxy, tailored, oversized. Check the description on the product you want: each one lists its own fit and exact measurements.</div>
+              <div style={{ color: S.ash, fontSize: 14, lineHeight: 1.6 }}>Every piece is cut differently — boxy, tailored, oversized. Each one lists its fit under DETAILS. Exact measurements on request.</div>
             </a>
           </div>
 
@@ -1161,7 +1270,7 @@ export default function App() {
           {/* FAQ accordion */}
           <div className="rv" style={{ border: `1px solid ${S.line}`, borderBottom: "none" }}>
             {FAQS.map((f, i) => (
-              <div key={i} style={{ borderBottom: `1px solid ${S.line}`, background: open === i ? S.panel : "transparent", transition: "background .3s ease" }}>
+              <div key={f.id} id={`faq-${f.id}`} style={{ borderBottom: `1px solid ${S.line}`, background: open === i ? S.panel : "transparent", transition: "background .3s ease", scrollMarginTop: 80 }}>
                 <button
                   onClick={() => setOpen(open === i ? null : i)}
                   aria-expanded={open === i}
@@ -1191,23 +1300,46 @@ export default function App() {
               <div><Wordmark size="20px" stroke="1.2px" spacing="0.14em" /></div>
               <div style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.16em", marginTop: 6 }}>FREEDOM TO FALL.</div>
             </div>
-            <div style={{ display: "flex", gap: 26, flexWrap: "wrap" }}>
-              {[["Instagram", IG], ["Support", "#support"], ["FW26", "#fw26"], ["Waitlist", "#waitlist"]].map(([t, h]) => (
-                <a key={t} href={h} onClick={h.startsWith("#") ? go(h.slice(1)) : undefined} target={h.startsWith("http") ? "_blank" : undefined} rel={h.startsWith("http") ? "noopener noreferrer" : undefined}
-                  style={{ ...mono, color: S.ash, fontSize: 11, letterSpacing: "0.14em", textDecoration: "none", textTransform: "uppercase" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = S.frost)}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = S.ash)}
-                >{t}</a>
+            {/* link columns — plain words, one job each */}
+            <nav aria-label="Footer" className="foot-cols">
+              {[
+                ["SHOP", [
+                  { t: "FW26", href: "#fw26", onClick: go("fw26") },
+                  { t: "Waitlist", href: "#waitlist", onClick: go("waitlist") },
+                ]],
+                ["HELP", [
+                  { t: "Shipping", href: "#faq-shipping", onClick: openFaq("shipping") },
+                  { t: "Returns", href: "#faq-returns", onClick: openFaq("returns") },
+                  { t: "Sizing", href: "#faq-sizing", onClick: openFaq("sizing") },
+                  { t: "Contact", href: `mailto:${SUPPORT_EMAIL}` },
+                  { t: "Privacy", onClick: () => setPrivacyOpen(true) },
+                ]],
+                ["FOLLOW", [
+                  { t: "Instagram", href: IG, external: true },
+                ]],
+              ].map(([head, links]) => (
+                <div key={head}>
+                  <div style={{ ...mono, fontSize: 10, color: S.frost, letterSpacing: "0.2em", marginBottom: 14 }}>{head}</div>
+                  <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+                    {links.map((l) => (
+                      <li key={l.t}>
+                        {l.href ? (
+                          <a href={l.href} onClick={l.onClick} className="foot-link"
+                            {...(l.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{l.t}</a>
+                        ) : (
+                          <button type="button" onClick={l.onClick} className="foot-link">{l.t}</button>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               ))}
-              <button onClick={() => setPrivacyOpen(true)}
-                style={{ ...mono, background: "none", border: "none", color: S.ash, fontSize: 11, letterSpacing: "0.14em", cursor: "pointer", textTransform: "uppercase", padding: 0 }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = S.frost)}
-                onMouseLeave={(e) => (e.currentTarget.style.color = S.ash)}
-              >Privacy</button>
-            </div>
+            </nav>
           </div>
           <div style={{ borderTop: `1px solid ${S.line}`, paddingTop: 22, display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-            <span style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.14em" }}>© 2026 WHITEFALL. ALL RIGHTS RESERVED.</span>
+            <span style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.14em", display: "flex", flexWrap: "wrap", columnGap: 14, rowGap: 6 }}>
+              {["© 2026 WHITEFALL", "US SHIPPING", "30-DAY RETURNS"].map((t) => <span key={t} style={{ whiteSpace: "nowrap" }}>{t}</span>)}
+            </span>
             <span style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.14em" }}>
               <button onClick={() => { setOwnerOpen(true); if (ownerUnlocked) loadList(); }}
                 aria-label="Owner login"
@@ -1310,6 +1442,36 @@ export default function App() {
             </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* ——— PHOTO VIEWER — full screen, swipe between angles ——— */}
+      {zoom && (
+        <div role="dialog" aria-modal="true" aria-label={`${zoom.name} photos`}
+          style={{ position: "fixed", inset: 0, zIndex: 97, background: S.night }}>
+          <div className="zoom-strip" ref={stripRef}
+            onScroll={(e) => setZoomAt(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))}>
+            {zoom.images.map((src, i) => (
+              <div key={src} className="zoom-slide" onClick={(e) => { if (e.target === e.currentTarget) setZoom(null); }}>
+                <img src={src} alt={i === 0 ? zoom.alt : `${zoom.name}, view ${i + 1}`} />
+              </div>
+            ))}
+          </div>
+          {zoom.images.length > 1 && [["‹", -1, { left: 8 }], ["›", 1, { right: 8 }]].map(([glyph, dir, side]) => (
+            <button key={dir} onClick={() => stepZoom(dir)} aria-label={dir < 0 ? "Previous photo" : "Next photo"}
+              style={{ ...mono, position: "absolute", top: "50%", transform: "translateY(-50%)", ...side, background: "rgba(5,7,13,.6)", border: `1px solid ${S.line}`, color: S.snow, fontSize: 22, width: 44, height: 44, cursor: "pointer" }}>
+              {glyph}
+            </button>
+          ))}
+          {zoom.images.length > 1 && (
+            <div style={{ ...mono, position: "absolute", left: 0, right: 0, bottom: 14, textAlign: "center", fontSize: 11, letterSpacing: "0.18em", color: S.ash, pointerEvents: "none" }}>
+              {zoomAt + 1} / {zoom.images.length} · SWIPE
+            </div>
+          )}
+          <button onClick={() => setZoom(null)} aria-label="Close" autoFocus
+            style={{ ...mono, position: "absolute", top: 12, right: 12, background: "none", border: `1px solid ${S.line}`, color: S.snow, fontSize: 11, letterSpacing: "0.14em", padding: "10px 14px", cursor: "pointer" }}>
+            CLOSE ✕
+          </button>
         </div>
       )}
 
