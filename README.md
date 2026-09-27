@@ -36,6 +36,11 @@ Done and live:
   after "MAYBE LATER". The mobile join bar hides while the form is on screen
   and for a week after it's closed. A signup that failed to deliver is not
   remembered, so that visitor sees the form again.
+- Footer has SHOP / HELP / FOLLOW columns; Shipping, Returns and Sizing open
+  the matching FAQ answer.
+- Icons: `favicon-32.png` (browser tab), `apple-touch-icon.png` (iPhone home
+  screen) and `icon-192/512.png` + `site.webmanifest` (Android) — the mark on
+  midnight, so it never shows as white lines on a white tab.
 - `public/og-image.png` (the picture shown when the link is shared) was
   redrawn with the real fonts and the current tagline, FREEDOM TO FALL.
   Platforms cache share images — paste the link into
@@ -357,6 +362,16 @@ stacks on phones. Pieces without one stay as text rows. Also update the `width`
 and `height` on the `piece-shot` image in the FW26 section if the new photo has
 a different aspect ratio — those attributes reserve space so the page doesn't
 jump while the image loads.
+
+Every photographed piece gets tap-to-zoom (full screen, Escape or tap outside
+to close). To add more angles, list them in the piece's `more` array —
+`more: ["/fw26-01-crewneck-front.jpg", "/fw26-01-crewneck-detail.jpg"]` — and
+the viewer becomes a swipeable gallery with arrows and a 1 / 3 counter.
+
+The DETAILS tab under a piece comes from its `details` array (one plain fact
+per line). SHIPPING and RETURNS are shared by every piece and live in
+`SHIPPING_FACTS` / `RETURN_FACTS` — if a policy changes, update those and the
+matching answer in `FAQS` together.
 
 Optional, for speed: also put two WebP copies next to the JPG —
 `fw26-02-hoodie.webp` (full size) and `fw26-02-hoodie-480.webp` (480px wide) —
