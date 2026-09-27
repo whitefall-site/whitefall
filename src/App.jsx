@@ -22,6 +22,7 @@ const PIECES = [
     cat: "CONTRAST PIPING · 320 GSM · 80% COTTON / 20% POLYESTER",
     fit: "RUNS TAILORED",
     shot: "/fw26-01-crewneck.jpg",
+    webp: true, // fw26-01-crewneck.webp + fw26-01-crewneck-480.webp exist in public/
     alt: "Whitefall Crewneck in black, back view — outlined mountain logo across the shoulders with white contrast piping along the sleeves and body.",
     dropping: true,
     shop: "crewneck",
@@ -77,22 +78,27 @@ const SpecList = ({ items, center = false }) => (
 
 /* The logo standing in as the letter A inside the wordmark */
 const MarkA = ({ h = "0.78em", glow = false }) => (
-  <img src={LOGO_GLYPH} alt="A" style={{
+  <img src={LOGO_GLYPH} alt="" style={{
     height: h, width: "auto", display: "inline-block",
     verticalAlign: "baseline", margin: "0 0.05em",
     filter: glow ? "drop-shadow(0 0 22px rgba(191,211,219,.55))" : "none",
   }} />
 );
 
-/* Hollow, broadened wordmark — outlined letterforms matching the logo's line art */
+/* Hollow, broadened wordmark — outlined letterforms matching the logo's line art.
+   Screen readers and search engines get the plain word; the visual split
+   (WHITEF + logo + LL) is hidden from them so it isn't read as "whitef ll". */
 const Wordmark = ({ size, stroke, glow = false, spacing = "0.1em" }) => (
-  <span style={{
-    fontFamily: "'Syncopate', sans-serif", fontWeight: 700,
-    fontSize: size, letterSpacing: spacing, whiteSpace: "nowrap",
-    color: "transparent", WebkitTextStroke: `${stroke} #EDECE8`,
-  }}>
-    WHITEF<MarkA h="0.74em" glow={glow} />LL
-  </span>
+  <>
+    <span className="sr-only">WHITEFALL</span>
+    <span aria-hidden="true" style={{
+      fontFamily: "'Syncopate', sans-serif", fontWeight: 700,
+      fontSize: size, letterSpacing: spacing, whiteSpace: "nowrap",
+      color: "transparent", WebkitTextStroke: `${stroke} #EDECE8`,
+    }}>
+      WHITEF<MarkA h="0.74em" glow={glow} />LL
+    </span>
+  </>
 );
 
 const CSS = `
@@ -137,10 +143,14 @@ body { margin: 0; }
 .stagger.in > *:nth-child(4) { transition-delay: .35s; }
 .stagger.in > *:nth-child(5) { transition-delay: .45s; }
 .stagger.in > *:nth-child(6) { transition-delay: .55s; }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
 /* featured piece — photo beside the details, stacked on narrow screens */
 .piece-feature {
-  display: grid; grid-template-columns: minmax(0, 360px) 1fr;
-  gap: 36px; align-items: center; padding: 34px 0;
+  display: grid; grid-template-columns: minmax(0, 480px) 1fr;
+  gap: 48px; align-items: end; padding: 34px 0;
 }
 .piece-shot {
   width: 100%; height: auto; display: block;
@@ -174,7 +184,8 @@ a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid 
   .slogan { letter-spacing: 0.2em !important; }
 }
 @media (min-width: 641px) { .ig-short { display: none; } }
-.join-bar { display: none; }
+.join-bar { display: none; transition: transform .35s ease, opacity .35s ease; }
+.join-bar-away { transform: translateY(110%); opacity: 0; pointer-events: none; }
 @media (max-width: 640px) {
   .join-bar { display: flex !important; }
   footer { padding-bottom: 104px !important; }
@@ -231,6 +242,19 @@ const fetchT = (url, opts = {}, ms = 10000) => {
   return fetch(url, { ...opts, signal: ctl.signal }).finally(() => clearTimeout(t));
 };
 
+/* —— visitor memory (this browser only): { joinedAt, popupDismissedAt,
+      barDismissedAt }. Every access is guarded — private windows and
+      blocked storage simply behave like a first visit. —— */
+const VISITOR_KEY = "whitefall-visitor";
+const readVisitor = () => {
+  try { return JSON.parse(localStorage.getItem(VISITOR_KEY) || "{}") || {}; } catch (e) { return {}; }
+};
+const writeVisitor = (patch) => {
+  try { localStorage.setItem(VISITOR_KEY, JSON.stringify({ ...readVisitor(), ...patch })); } catch (e) { /* blocked */ }
+};
+const WEEK = 7 * 24 * 60 * 60 * 1000;
+const recent = (ts) => typeof ts === "number" && Date.now() - ts < WEEK;
+
 const S = {
   snow: "#EDECE8",
   frost: "#BFD3DB",
@@ -269,7 +293,7 @@ function Countdown() {
   if (DROP_DATE == null) {
     return (
       <div>
-        <div style={{ ...anton, fontSize: "clamp(26px, 4.4vw, 40px)", color: S.snow, letterSpacing: "0.04em", lineHeight: 1.1 }}>
+        <div style={{ ...anton, fontSize: "clamp(20px, 2.6vw, 28px)", color: S.snow, letterSpacing: "0.06em", lineHeight: 1.1 }}>
           DATE TO BE ANNOUNCED
         </div>
         <div style={{ ...mono, fontSize: 10, letterSpacing: "0.18em", color: S.frost, marginTop: 8 }}>
@@ -336,7 +360,7 @@ function PieceShop({ shopId, fit, onNotify }) {
       {cfg.soldOut ? (
         <button onClick={onNotify}
           style={{ ...mono, background: "none", border: "1px solid rgba(191,211,219,.4)", color: S.frost, padding: "15px 26px", fontSize: 12, letterSpacing: "0.1em", cursor: "pointer" }}>
-          JOIN THE LIST — RESTOCKS HEARD HERE FIRST ▲
+          GET RESTOCK ALERTS ▲
         </button>
       ) : buyable ? (
         <a href={cfg.checkoutUrl} target="_blank" rel="noopener noreferrer"
@@ -346,13 +370,13 @@ function PieceShop({ shopId, fit, onNotify }) {
       ) : (
         <button onClick={onNotify}
           style={{ ...mono, background: S.snow, color: S.night, border: "none", padding: "16px 28px", fontSize: 13, fontWeight: 700, letterSpacing: "0.1em", cursor: "pointer" }}>
-          GET NOTIFIED — THE LIST SHOPS FIRST ▲
+          GET NOTIFIED ▲
         </button>
       )}
-      {!live && !cfg.soldOut && (
+      {/* with no date, the countdown block above already says "TBA" */}
+      {!live && !cfg.soldOut && dropDay && (
         <p style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.16em", margin: "14px 0 0" }}>
-          {dropDay ? `DROPS ${dropDay} · ` : "DATE ANNOUNCED TO THE LIST FIRST · "}
-          WAITLIST GETS EARLY ACCESS
+          DROPS {dropDay} · LIST SHOPS AN HOUR EARLY
         </p>
       )}
     </div>
@@ -426,12 +450,47 @@ export default function App() {
   const heroRef = useParallax((y) => `translateX(-50%) translateY(${y * 0.22}px)`);
   const poolRef = useParallax((y) => `translate(-50%, 0) translateY(${y * 0.16}px)`);
   const markRef = useParallax((y) => `translateY(calc(-50% + ${(y - 1400) * 0.08}px)) rotate(6deg)`);
+  /* What this browser remembers about the visitor, read once on load:
+     people who already joined see "you're on the list" instead of the form,
+     and anyone who closed the popup or bar isn't asked again for a week. */
+  const [visitor] = useState(readVisitor);
   useEffect(() => {
-    const t = setTimeout(() => setPopup(true), 1600);
-    return () => clearTimeout(t);
+    const v = readVisitor();
+    if (v.joinedAt || recent(v.popupDismissedAt)) return;
+    /* Ask once they've shown interest (scrolled past most of the hero) or
+       after 12 seconds — never on arrival, and never while they're already
+       looking at the waitlist form. */
+    let fired = false;
+    const fire = () => {
+      if (fired) return;
+      const w = document.getElementById("waitlist");
+      if (w) {
+        const r = w.getBoundingClientRect();
+        if (r.top < window.innerHeight && r.bottom > 0) return;
+      }
+      fired = true;
+      setPopup(true);
+      stop();
+    };
+    /* Decide only once scrolling settles: a tap on "JOIN THE WAITLIST"
+       smooth-scrolls past the trigger point on its way to the form, and
+       that visitor must not be interrupted mid-glide. */
+    let settle, scrolling = false, timeUp = false;
+    const onScroll = () => {
+      scrolling = true;
+      clearTimeout(settle);
+      settle = setTimeout(() => {
+        scrolling = false;
+        if (timeUp || window.scrollY > window.innerHeight * 0.6) fire();
+      }, 450);
+    };
+    const t = setTimeout(() => { timeUp = true; if (!scrolling) fire(); }, 12000);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    const stop = () => { clearTimeout(t); clearTimeout(settle); window.removeEventListener("scroll", onScroll); };
+    return stop;
   }, []);
   const [email, setEmail] = useState("");
-  const [joined, setJoined] = useState(false);
+  const [joined, setJoined] = useState(() => !!visitor.joinedAt);
   const [open, setOpen] = useState(null);
   const [topic, setTopic] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -440,9 +499,10 @@ export default function App() {
   const [popupJoined, setPopupJoined] = useState(false);
   const [relayFailed, setRelayFailed] = useState(false);
   const [shared, setShared] = useState(false);
-  const [barDismissed, setBarDismissed] = useState(false);
+  const [barDismissed, setBarDismissed] = useState(() => recent(visitor.barDismissedAt));
+  const [waitlistInView, setWaitlistInView] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
-  const [joinedAt, setJoinedAt] = useState(null);
+  const [joinedAt, setJoinedAt] = useState(() => (visitor.joinedAt ? new Date(visitor.joinedAt) : null));
   const [cardOpen, setCardOpen] = useState(false);
   const [cardUrl, setCardUrl] = useState(null);
   const [cardBusy, setCardBusy] = useState(false);
@@ -621,6 +681,20 @@ export default function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, [ownerOpen, cardOpen, privacyOpen, popup, popupDone]);
 
+  // closing the ask (not the thank-you) means "not now" — respect it for a week
+  useEffect(() => {
+    if (popupDone && !popupJoined) writeVisitor({ popupDismissedAt: Date.now() });
+  }, [popupDone, popupJoined]);
+
+  // the mobile join bar steps aside while the real form is on screen
+  useEffect(() => {
+    const w = document.getElementById("waitlist");
+    if (!w || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(([e]) => setWaitlistInView(e.isIntersecting), { threshold: 0.15 });
+    io.observe(w);
+    return () => io.disconnect();
+  }, []);
+
   const mergeRow = (rows, row) => {
     const hit = rows.find((r) => r.email === row.email);
     if (hit) {
@@ -654,6 +728,7 @@ export default function App() {
         await window.storage.set(key, JSON.stringify({ ...row, interests: [...new Set([...prior, ...interests])] }), true);
         setStoreMode("live");
         setJoinedAt(new Date());
+        writeVisitor({ joinedAt: new Date().toISOString() });
       } else {
         // Deployed: one call to our own endpoint, which delivers the signup.
         // Going through our own origin means ad blockers have no third-party
@@ -668,6 +743,9 @@ export default function App() {
           const rj = rs.ok ? await rs.json().catch(() => null) : null;
           setRelayFailed(!(rj && rj.stored));
           if (rj && !rj.stored) console.error("waitlist not delivered — no provider configured");
+          // only remember the join once it truly landed, so a failed signup
+          // shows the form again next visit instead of a false "you're in"
+          if (rj && rj.stored) writeVisitor({ joinedAt: new Date().toISOString() });
         } catch (e) {
           console.error("signup endpoint unreachable", e);
           setRelayFailed(true);
@@ -879,7 +957,13 @@ export default function App() {
             {PIECES.filter((p) => p.dropping).map((p) => (p.shot ? (
               /* photographed piece \u2014 full feature treatment */
               <div key={p.n} className="piece-feature" style={{ borderBottom: `1px solid ${S.line}` }}>
-                <img src={p.shot} alt={p.alt} className="piece-shot" width="880" height="1407" loading="lazy" decoding="async" />
+                {/* WebP (~75% lighter) for browsers that take it, the JPG for the rest */}
+                <picture>
+                  {p.webp && <source type="image/webp"
+                    srcSet={`${p.shot.replace(/\.jpg$/, "-480.webp")} 480w, ${p.shot.replace(/\.jpg$/, ".webp")} 880w`}
+                    sizes="(max-width: 760px) min(440px, 100vw), 480px" />}
+                  <img src={p.shot} alt={p.alt} className="piece-shot" width="880" height="1407" loading="lazy" decoding="async" />
+                </picture>
                 <div>
                   <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 10 }}>
                     <span style={{ ...mono, fontSize: 11, color: S.frost, letterSpacing: "0.16em" }}>{p.n}</span>
@@ -911,10 +995,10 @@ export default function App() {
             </div>
             <div style={{ borderTop: `1px solid ${S.line}` }}>
               {PIECES.filter((p) => !p.dropping).map((p) => (
-                <div key={p.n} style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 14, padding: "26px 0", borderBottom: `1px solid ${S.line}`, flexWrap: "wrap" }}>
+                <div key={p.n} style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 14, padding: "18px 0", borderBottom: `1px solid ${S.line}`, flexWrap: "wrap" }}>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 18, flexWrap: "wrap" }}>
                     <span style={{ ...mono, fontSize: 11, color: S.frost, letterSpacing: "0.16em" }}>{p.n}</span>
-                    <span style={{ ...anton, fontSize: "clamp(22px, 3.6vw, 46px)", letterSpacing: "0.02em" }}>{p.name}</span>
+                    <span style={{ ...anton, fontSize: "clamp(18px, 2.2vw, 26px)", letterSpacing: "0.04em", color: S.ash }}>{p.name}</span>
                   </div>
                   <div style={{ display: "flex", gap: 16, alignItems: "baseline", flexWrap: "wrap" }}>
                     <span style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.14em" }}>{p.cat}</span>
@@ -990,7 +1074,7 @@ export default function App() {
       <section id="support" style={{ padding: "7vw 22px 8vw", background: S.steel, borderTop: `1px solid ${S.line}` }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
           <p className="rv" style={{ ...mono, color: S.frost, fontSize: 12, letterSpacing: "0.28em", margin: "0 0 14px" }}>SUPPORT — WE ANSWER FAST</p>
-          <h2 className="rv" style={{ ...anton, fontSize: "clamp(34px,6vw,80px)", margin: "0 0 40px" }}>NEED SOMETHING?</h2>
+          <h2 className="rv" style={{ ...anton, fontSize: "clamp(28px,4vw,48px)", margin: "0 0 32px" }}>NEED SOMETHING?</h2>
 
           {/* three fast lanes */}
           <div className="stagger" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16, marginBottom: 56 }}>
@@ -1137,7 +1221,7 @@ export default function App() {
 
       {/* ——— STICKY MOBILE JOIN BAR ——— */}
       {!joined && !barDismissed && (
-        <div className="join-bar" style={{
+        <div className={"join-bar" + (waitlistInView ? " join-bar-away" : "")} aria-hidden={waitlistInView || undefined} style={{
           position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 55,
           alignItems: "center", justifyContent: "space-between", gap: 10,
           background: "rgba(5,7,13,.92)", backdropFilter: "blur(12px)",
@@ -1151,7 +1235,7 @@ export default function App() {
               style={{ ...mono, background: S.snow, color: S.night, border: "none", padding: "13px 20px", fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", cursor: "pointer" }}>
               JOIN ▲
             </button>
-            <button onClick={() => setBarDismissed(true)} aria-label="Dismiss"
+            <button onClick={() => { setBarDismissed(true); writeVisitor({ barDismissedAt: Date.now() }); }} aria-label="Dismiss"
               style={{ ...mono, background: "none", border: "none", color: S.ash, fontSize: 13, cursor: "pointer", padding: "6px" }}>✕</button>
           </div>
         </div>
@@ -1199,8 +1283,7 @@ export default function App() {
               </div>
             ) : (
             <div>
-            <h2 style={{ ...anton, fontSize: "clamp(26px, 5vw, 36px)", margin: "0 0 8px", lineHeight: 1.05 }}>THE LIST SHOPS FIRST</h2>
-            <p style={{ ...mono, color: S.frost, fontSize: 10, letterSpacing: "0.18em", margin: "0 0 12px" }}>ONE HOUR BEFORE ANYONE ELSE.</p>
+            <h2 style={{ ...anton, fontSize: "clamp(26px, 5vw, 36px)", margin: "0 0 14px", lineHeight: 1.05 }}>THE LIST SHOPS FIRST</h2>
             <div style={{ margin: "0 0 22px" }}>
               <SpecList center items={["SMALL RUNS", "LIST GETS THE DATE FIRST", "LIST SHOPS ONE HOUR EARLY"]} />
             </div>
