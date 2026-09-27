@@ -58,6 +58,23 @@ const SHOP = {
 };
 const FORCE_DROP_LIVE = import.meta.env.VITE_DROP_LIVE === "1";
 
+/* The manifesto is hidden, not deleted — flip to true to bring it back.
+   The house voice is now closer to a shipping notice than a poem: facts
+   stacked in a list, the product doing the persuading. */
+const SHOW_MANIFESTO = false;
+
+/* Stacked facts, no prose. One line per thing that is true. */
+const SpecList = ({ items, center = false }) => (
+  <ul style={{
+    ...mono, listStyle: "none", margin: 0, padding: 0,
+    display: "flex", flexDirection: "column", gap: 8,
+    fontSize: 12, letterSpacing: "0.16em", lineHeight: 1.5,
+    color: S.ash, textAlign: center ? "center" : "left",
+  }}>
+    {items.map((item, i) => <li key={i}>{item}</li>)}
+  </ul>
+);
+
 /* The logo standing in as the letter A inside the wordmark */
 const MarkA = ({ h = "0.78em", glow = false }) => (
   <img src={LOGO_GLYPH} alt="A" style={{
@@ -730,7 +747,7 @@ export default function App() {
           <span className="nav-word"><Wordmark size="15px" stroke="1px" spacing="0.14em" /></span>
         </a>
         <nav className="nav-links" style={{ display: "flex", alignItems: "center", gap: 24 }}>
-          {[["FW26", "#fw26"], ["Manifesto", "#manifesto"], ["Support", "#support"]].map(([t, h]) => (
+          {[["FW26", "#fw26"], ...(SHOW_MANIFESTO ? [["Manifesto", "#manifesto"]] : []), ["Support", "#support"]].map(([t, h]) => (
             <a key={t} href={h} onClick={go(h.slice(1))}
               style={{ color: S.ash, textDecoration: "none", fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 600 }}
               onMouseEnter={(e) => (e.currentTarget.style.color = S.frost)}
@@ -802,7 +819,8 @@ export default function App() {
         </div>
       </div>
 
-      {/* ——— MANIFESTO ——— */}
+      {/* ——— MANIFESTO (hidden — see SHOW_MANIFESTO) ——— */}
+      {SHOW_MANIFESTO && (
       <section id="manifesto" style={{ padding: "9vw 22px", background: S.night, position: "relative", overflow: "hidden" }}>
         {/* giant watermark logo drifting on scroll */}
         <img src={LOGO} alt="" aria-hidden ref={markRef} style={{
@@ -834,6 +852,7 @@ export default function App() {
           </div>
         </div>
       </section>
+      )}
 
       {/* ——— FW26 COMING SOON ——— */}
       <section id="fw26" style={{ padding: "7vw 22px 6vw", background: S.steel, borderTop: `1px solid ${S.line}` }}>
@@ -844,11 +863,12 @@ export default function App() {
             </h2>
             <span style={{ ...mono, fontSize: 12, color: S.ash, letterSpacing: "0.18em" }}>FALL / WINTER 2026 · FOUR PIECES</span>
           </div>
-          <p className="rv" style={{ color: S.ash, maxWidth: 560, lineHeight: 1.7, margin: "0 0 28px" }}>
-            The Whitefall Crewneck leads the collection. Previews and first looks drop on{" "}
-            <a href={IG} target="_blank" rel="noopener noreferrer" style={{ color: S.frost, textDecoration: "none", borderBottom: `1px solid rgba(191,211,219,.4)` }}>@whitefall26</a>
-            {" "}— the waitlist gets the date first, and shops first.
-          </p>
+          <div className="rv" style={{ margin: "0 0 28px" }}>
+            <SpecList items={[
+              "WHITEFALL CREWNECK — FIRST PIECE",
+              <>FIRST LOOKS ON <a href={IG} target="_blank" rel="noopener noreferrer" style={{ color: S.frost, textDecoration: "none", borderBottom: `1px solid rgba(191,211,219,.4)` }}>@WHITEFALL26</a></>,
+            ]} />
+          </div>
 
           {/* drop countdown */}
           <div className="rv" style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", margin: "0 0 44px" }}>
@@ -885,12 +905,10 @@ export default function App() {
 
           {/* the rest of the collection — teased, not yet revealed */}
           <div className="rv" style={{ marginTop: 54 }}>
-            <p style={{ ...mono, color: S.frost, fontSize: 11, letterSpacing: "0.24em", margin: "0 0 6px" }}>NEXT UP</p>
-            <p style={{ color: S.ash, fontSize: 14, lineHeight: 1.6, margin: "0 0 18px", maxWidth: 520 }}>
-              Three more pieces complete FW26. First looks land on the waitlist and{" "}
-              <a href={IG} target="_blank" rel="noopener noreferrer" style={{ color: S.frost, textDecoration: "none" }}>@whitefall26</a>
-              {" "}as each one is ready.
-            </p>
+            <p style={{ ...mono, color: S.frost, fontSize: 11, letterSpacing: "0.24em", margin: "0 0 10px" }}>NEXT UP</p>
+            <div style={{ margin: "0 0 18px" }}>
+              <SpecList items={["THREE PIECES TO COME", "FIRST LOOKS AS EACH IS READY"]} />
+            </div>
             <div style={{ borderTop: `1px solid ${S.line}` }}>
               {PIECES.filter((p) => !p.dropping).map((p) => (
                 <div key={p.n} style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 14, padding: "26px 0", borderBottom: `1px solid ${S.line}`, flexWrap: "wrap" }}>
@@ -915,10 +933,9 @@ export default function App() {
         <div className="rv-scale" style={{ position: "relative" }}>
           <img src={LOGO} alt="" aria-hidden className="signal" style={{ width: 90, margin: "0 auto 22px", display: "block" }} />
           <h2 style={{ ...anton, fontSize: "clamp(34px,6.5vw,88px)", margin: "0 0 16px" }}>THE LIST SHOPS FIRST</h2>
-          <p style={{ color: S.ash, maxWidth: 480, margin: "0 auto 30px", lineHeight: 1.7 }}>
-            Runs are small and numbered by design. The list gets the drop date before
-            anyone else, and shops an hour early.
-          </p>
+          <div style={{ maxWidth: 340, margin: "0 auto 30px" }}>
+            <SpecList center items={["SMALL RUNS", "LIST GETS THE DATE FIRST", "LIST SHOPS ONE HOUR EARLY"]} />
+          </div>
           {joined ? (
             <div>
               <div style={{ ...anton, fontSize: "clamp(40px, 8vw, 76px)", lineHeight: 1.05, color: S.snow, textShadow: "0 0 60px rgba(191,211,219,.35)", margin: "0 0 10px" }}>
@@ -1184,10 +1201,9 @@ export default function App() {
             <div>
             <h2 style={{ ...anton, fontSize: "clamp(26px, 5vw, 36px)", margin: "0 0 8px", lineHeight: 1.05 }}>THE LIST SHOPS FIRST</h2>
             <p style={{ ...mono, color: S.frost, fontSize: 10, letterSpacing: "0.18em", margin: "0 0 12px" }}>ONE HOUR BEFORE ANYONE ELSE.</p>
-            <p style={{ color: S.ash, fontSize: 14, lineHeight: 1.65, margin: "0 0 22px" }}>
-              Runs are small and numbered by design. The list gets the drop date first
-              and shops an hour early.
-            </p>
+            <div style={{ margin: "0 0 22px" }}>
+              <SpecList center items={["SMALL RUNS", "LIST GETS THE DATE FIRST", "LIST SHOPS ONE HOUR EARLY"]} />
+            </div>
             <div className="form-row" style={{ display: "flex", justifyContent: "center", flexWrap: "wrap" }}>
               <input
                 type="email" value={email} placeholder="EMAIL ADDRESS" aria-label="Email address"
