@@ -26,6 +26,20 @@ Done and live:
   topic emails. Swap it for `support@yourdomain` once a custom domain is live.
 - Full signup path verified end-to-end in a browser against mocked live
   services: signup delivered, owner email sent, member card generated.
+- Fonts are self-hosted (the `@fontsource/*` packages, imported in
+  `src/main.jsx`) — no request to Google, so nothing to block or stall.
+- The site remembers each visitor in their own browser (`whitefall-visitor`
+  in localStorage — nothing leaves the device). Someone who has joined sees
+  "YOU'RE ON THE LIST" on return and is never asked again; the popup waits
+  until the visitor scrolls past the hero or stays 12 seconds, never
+  interrupts someone already heading to the form, and stays away for a week
+  after "MAYBE LATER". The mobile join bar hides while the form is on screen
+  and for a week after it's closed. A signup that failed to deliver is not
+  remembered, so that visitor sees the form again.
+- `public/og-image.png` (the picture shown when the link is shared) was
+  redrawn with the real fonts and the current tagline, FREEDOM TO FALL.
+  Platforms cache share images — paste the link into
+  developers.facebook.com/tools/debug and hit "Scrape Again" to refresh it.
 
 **The commerce plan (decided):** the site is the storefront; **Shopify is the
 engine** behind it — payments, inventory that can't oversell, shipping labels,
@@ -343,6 +357,13 @@ stacks on phones. Pieces without one stay as text rows. Also update the `width`
 and `height` on the `piece-shot` image in the FW26 section if the new photo has
 a different aspect ratio — those attributes reserve space so the page doesn't
 jump while the image loads.
+
+Optional, for speed: also put two WebP copies next to the JPG —
+`fw26-02-hoodie.webp` (full size) and `fw26-02-hoodie-480.webp` (480px wide) —
+and add `webp: true` to the piece. Browsers then download roughly a quarter of
+the bytes (the crewneck went from 128 KB to 31 KB, or 14 KB on desktop). Leave
+`webp` off until both files exist, or the photo won't show. Claude can make
+the copies for you.
 
 When you outgrow this (real checkout, inventory), the natural next step is
 Shopify with this design as the storefront theme direction, or keep this site
