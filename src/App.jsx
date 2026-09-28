@@ -18,6 +18,7 @@ const PIECES = [
     n: "01",
     name: "WHITEFALL CREWNECK",
     cat: "FRENCH TERRY · CONTRAST PIPING · 320 GSM · 80% COTTON / 20% POLYESTER",
+    colorway: "BLACK / WHITE PIPING",
     fit: "RUNS TAILORED",
     shot: "/fw26-01-crewneck.jpg",
     webp: true, // fw26-01-crewneck.webp + fw26-01-crewneck-480.webp exist in public/
@@ -25,10 +26,11 @@ const PIECES = [
     more: [],
     // the DETAILS tab under the piece — one plain fact per line
     details: [
-      "OUTLINED MOUNTAIN LOGO ACROSS THE BACK",
-      "WHITE CONTRAST PIPING ALONG SLEEVES AND BODY",
+      // same facts as the Shopify description — keep the two in step
       "320 GSM FRENCH TERRY · 80% COTTON / 20% POLYESTER",
-      "RUNS TAILORED · S – XXL",
+      "MOUNTAIN SCREEN PRINT ACROSS THE BACK",
+      "EMBROIDERED CHEST LOCKUP",
+      "RAISED WHITE CONTRAST PIPING",
     ],
     alt: "Whitefall Crewneck in black, back view — outlined mountain logo across the shoulders with white contrast piping along the sleeves and body.",
     dropping: true,
@@ -65,6 +67,8 @@ const SHOP = {
   },
 };
 const FORCE_DROP_LIVE = import.meta.env.VITE_DROP_LIVE === "1";
+// matches the five Shopify variants
+const SIZES = ["S", "M", "L", "XL", "XXL"];
 
 /* The manifesto is hidden, not deleted — flip to true to bring it back.
    The house voice is now closer to a shipping notice than a poem: facts
@@ -138,6 +142,19 @@ body { margin: 0; }
 .stagger.in > *:nth-child(4) { transition-delay: .35s; }
 .stagger.in > *:nth-child(5) { transition-delay: .45s; }
 .stagger.in > *:nth-child(6) { transition-delay: .55s; }
+/* support contact rows */
+.contact-row {
+  display: grid; grid-template-columns: 80px 1fr auto; gap: 18px; align-items: baseline;
+  padding: 20px 0; border-bottom: 1px solid rgba(237,236,232,.12);
+}
+.contact-link {
+  font-family: 'Anton', sans-serif; font-size: clamp(20px, 2.6vw, 30px); letter-spacing: 0.03em;
+  color: #EDECE8; text-decoration: none; word-break: break-all; transition: color .2s ease;
+}
+.contact-link:hover, .contact-link:focus-visible { color: #BFD3DB; }
+@media (max-width: 640px) {
+  .contact-row { grid-template-columns: 1fr; gap: 6px; }
+}
 /* footer */
 .foot-cols { display: flex; gap: 56px; flex-wrap: wrap; }
 .foot-link {
@@ -380,11 +397,17 @@ function PieceShop({ shopId, fit, onNotify }) {
       {cfg.price && (
         <div style={{ ...mono, fontSize: 17, color: S.snow, letterSpacing: "0.08em", margin: "0 0 14px" }}>{cfg.price}</div>
       )}
-      <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 18 }}>
-        {fit && <span style={{ ...chip, color: S.frost, border: "1px solid rgba(191,211,219,.4)" }}>{fit}</span>}
-        <span style={{ ...chip, color: S.snow, border: `1px solid ${S.line}` }}>S – XXL</span>
-        {cfg.soldOut && <span style={{ ...chip, fontWeight: 700, color: S.night, background: S.snow }}>SOLD OUT</span>}
-      </div>
+      {/* size and fit read like a hang tag: label, then value */}
+      <dl style={{ ...mono, display: "grid", gridTemplateColumns: "auto 1fr", columnGap: 18, rowGap: 8, margin: "0 0 20px", fontSize: 11, letterSpacing: "0.16em" }}>
+        <dt style={{ color: S.ash }}>SIZES</dt>
+        <dd style={{ margin: 0, color: S.snow, display: "flex", gap: 14, flexWrap: "wrap" }}>
+          {SIZES.map((s) => <span key={s}>{s}</span>)}
+        </dd>
+        {fit && <><dt style={{ color: S.ash }}>FIT</dt><dd style={{ margin: 0, color: S.frost }}>{fit}</dd></>}
+      </dl>
+      {cfg.soldOut && (
+        <div style={{ marginBottom: 18 }}><span style={{ ...chip, fontWeight: 700, color: S.night, background: S.snow }}>SOLD OUT</span></div>
+      )}
       {cfg.soldOut ? (
         <button onClick={onNotify}
           style={{ ...mono, background: "none", border: "1px solid rgba(191,211,219,.4)", color: S.frost, padding: "15px 26px", fontSize: 12, letterSpacing: "0.1em", cursor: "pointer" }}>
@@ -443,7 +466,7 @@ const FAQS = [
   { id: "drop", q: "When does FW26 drop?", a: "The date isn't public yet. The waitlist gets it first — the exact date and time, plus access one hour before anyone else. Join below; it's free and it's the only way to know before it happens." },
   { id: "tracking", q: "Where's my order?", a: "Every order gets a tracking link by email within 24 hours of shipping. Can't find it? Email us your order number, or DM us on Instagram — we respond within one business day." },
   { id: "returns", q: "What's your return policy?", a: "30 days, no questions. Unworn, tags on, full refund to your original payment method. Email us your order number and we'll send you return instructions." },
-  { id: "sizing", q: "How does sizing run?", a: "It varies piece to piece — some are cut boxy and oversized, others tailored and slim. Every piece lists its fit under DETAILS. Want exact measurements for a size? Email us or DM us on Instagram and we'll send them." },
+  { id: "sizing", q: "How does sizing run?", a: "It varies piece to piece — some are cut boxy and oversized, others tailored and slim. Every piece lists its fit next to its sizes. Want exact measurements for a size? Email us or DM us on Instagram and we'll send them." },
   { id: "restocks", q: "Will pieces restock?", a: "Rarely, and never guaranteed. Runs are small and numbered by design — when a piece sells out, don't count on seeing it again. If a restock ever happens, the waitlist hears first." },
   { id: "shipping", q: "Where do you ship?", a: "The United States for now. International is on the list — join the waitlist and you'll hear the moment it opens up." },
 ];
@@ -452,52 +475,6 @@ const FAQS = [
    address, never a personal one. Waitlist delivery does NOT depend on it (see
    api/signup.js); this is purely the customer-facing contact route. */
 const SUPPORT_EMAIL = "whitefall26@gmail.com";
-
-/* One source of truth for a topic's pre-filled email: the same "what to
-   include" list drives both the on-page checklist and the email body. */
-const topicMailto = (t) => {
-  const lines = ["Hi Whitefall,", "", t.label + ".", ""];
-  for (const f of t.include) lines.push(f + ":");
-  lines.push("", "Thanks!");
-  return `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Whitefall — " + t.label)}&body=${encodeURIComponent(lines.join("\n"))}`;
-};
-
-/* Signups POST to this site's own /api/signup endpoint, which assigns the
-   and delivers the signup. Nothing about the delivery provider
-   lives in the browser — see api/signup.js and the README runbook. */
-
-const TOPICS = [
-  {
-    id: "order", n: "01", label: "I can't find my order",
-    help: "No stress — it happens. Check your inbox (and spam) for a confirmation from us first. Still nothing? DM us and we'll track it down.",
-    include: ["Name on the order", "Email used at checkout", "Order number (if you have it)"],
-  },
-  {
-    id: "shipping", n: "02", label: "Where's my package?",
-    help: "Tracking links go out within 24 hours of shipping. If yours hasn't moved in 3+ days, DM us and we'll chase the carrier for you.",
-    include: ["Order number", "Tracking number (if you have it)"],
-  },
-  {
-    id: "size", n: "03", label: "Wrong size / exchange",
-    help: "Free size exchanges within 30 days — unworn, tags on. DM us and we'll set the swap up.",
-    include: ["Order number", "Which piece", "Current size", "Size you need"],
-  },
-  {
-    id: "return", n: "04", label: "Return & refund",
-    help: "30 days, no questions asked. DM us your order number and we'll send a return label — refund lands back on your original payment method once it's scanned in.",
-    include: ["Order number", "Piece(s) you're returning"],
-  },
-  {
-    id: "drop", n: "05", label: "FW26 / waitlist question",
-    help: "Drop details go to the waitlist first — join it below if you haven't. Anything else about FW26, ask away.",
-    include: [],
-  },
-  {
-    id: "other", n: "06", label: "Something else",
-    help: "Collabs, wholesale, press, or anything that doesn't fit a box — DM us and a real person will get back to you within one business day.",
-    include: [],
-  },
-];
 
 export default function App() {
   useReveal();
@@ -547,7 +524,6 @@ export default function App() {
   const [email, setEmail] = useState("");
   const [joined, setJoined] = useState(() => !!visitor.joinedAt);
   const [open, setOpen] = useState(null);
-  const [topic, setTopic] = useState(null);
   const [saving, setSaving] = useState(false);
   const [popup, setPopup] = useState(false);
   const [popupDone, setPopupDone] = useState(false);
@@ -962,9 +938,6 @@ export default function App() {
               PREVIEW FW26
             </a>
           </div>
-          <p className="hero-in hd3" style={{ ...mono, color: S.ash, fontSize: 10, letterSpacing: "0.2em", margin: "18px 0 0" }}>
-            THE LIST GETS <span style={{ color: S.frost }}>A ONE HOUR HEAD START</span> — AND THE DROP DATE FIRST
-          </p>
         </div>
       </section>
 
@@ -1025,22 +998,15 @@ export default function App() {
             </h2>
             <span style={{ ...mono, fontSize: 12, color: S.ash, letterSpacing: "0.18em" }}>FALL / WINTER 2026 · FOUR PIECES</span>
           </div>
-          <div className="rv" style={{ margin: "0 0 28px" }}>
-            <SpecList items={[
-              "WHITEFALL CREWNECK — FIRST PIECE",
-              <>FIRST LOOKS ON <a href={IG} target="_blank" rel="noopener noreferrer" style={{ color: S.frost, textDecoration: "none", borderBottom: `1px solid rgba(191,211,219,.4)` }}>@WHITEFALL26</a></>,
-            ]} />
-          </div>
-
           {/* drop countdown */}
-          <div className="rv" style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", margin: "0 0 44px" }}>
+          <div className="rv" style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", margin: "22px 0 40px" }}>
             <Countdown />
           </div>
 
           <div className="stagger" style={{ borderTop: `1px solid ${S.line}` }}>
             {PIECES.filter((p) => p.dropping).map((p) => (p.shot ? (
               /* photographed piece \u2014 full feature treatment */
-              <div key={p.n} className="piece-feature" style={{ borderBottom: `1px solid ${S.line}` }}>
+              <div key={p.n} className="piece-feature">
                 <button type="button" className="shot-btn" aria-label={`View ${p.name} photo full screen`}
                   onClick={() => setZoom({ name: p.name, alt: p.alt, images: [p.webp ? p.shot.replace(/\.jpg$/, ".webp") : p.shot, ...(p.more || [])] })}>
                   {/* WebP (~75% lighter) for browsers that take it, the JPG for the rest */}
@@ -1059,7 +1025,7 @@ export default function App() {
                     <span style={{ ...mono, fontSize: 11, color: S.frost, letterSpacing: "0.16em" }}>{p.n}</span>
                   </div>
                   <h3 style={{ ...anton, fontSize: "clamp(26px, 4.2vw, 54px)", letterSpacing: "0.02em", margin: "0 0 14px", lineHeight: 1.05 }}>{p.name}</h3>
-                  <p style={{ ...mono, fontSize: 11, color: S.ash, letterSpacing: "0.14em", lineHeight: 1.9, margin: "0 0 16px" }}>{p.cat}</p>
+                  <p style={{ ...mono, fontSize: 11, color: S.ash, letterSpacing: "0.14em", lineHeight: 1.9, margin: "0 0 16px" }}>{p.colorway || p.cat}</p>
                   <PieceShop shopId={p.shop} fit={p.fit} onNotify={go("waitlist")} />
                   <ProductInfo details={p.details} />
                 </div>
@@ -1072,7 +1038,6 @@ export default function App() {
                 </div>
                 <div style={{ display: "flex", gap: 16, alignItems: "baseline", flexWrap: "wrap" }}>
                   <span style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.14em" }}>{p.cat}</span>
-                  <span style={{ ...mono, fontSize: 10, color: S.snow, letterSpacing: "0.14em", border: `1px solid ${S.line}`, padding: "6px 10px" }}>COMING SOON</span>
                 </div>
               </div>
             )))}
@@ -1080,10 +1045,7 @@ export default function App() {
 
           {/* the rest of the collection — teased, not yet revealed */}
           <div className="rv" style={{ marginTop: 54 }}>
-            <p style={{ ...mono, color: S.frost, fontSize: 11, letterSpacing: "0.24em", margin: "0 0 10px" }}>NEXT UP</p>
-            <div style={{ margin: "0 0 18px" }}>
-              <SpecList items={["THREE PIECES TO COME", "FIRST LOOKS AS EACH IS READY"]} />
-            </div>
+            <p style={{ ...mono, color: S.frost, fontSize: 11, letterSpacing: "0.24em", margin: "0 0 14px" }}>NEXT UP</p>
             <div style={{ borderTop: `1px solid ${S.line}` }}>
               {PIECES.filter((p) => !p.dropping).map((p) => (
                 <div key={p.n} style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 14, padding: "18px 0", borderBottom: `1px solid ${S.line}`, flexWrap: "wrap" }}>
@@ -1093,7 +1055,6 @@ export default function App() {
                   </div>
                   <div style={{ display: "flex", gap: 16, alignItems: "baseline", flexWrap: "wrap" }}>
                     <span style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.14em" }}>{p.cat}</span>
-                    <span style={{ ...mono, fontSize: 10, color: S.snow, letterSpacing: "0.14em", border: `1px solid ${S.line}`, padding: "6px 10px" }}>COMING SOON</span>
                   </div>
                 </div>
               ))}
@@ -1167,106 +1128,39 @@ export default function App() {
           <p className="rv" style={{ ...mono, color: S.frost, fontSize: 12, letterSpacing: "0.28em", margin: "0 0 14px" }}>SUPPORT — WE ANSWER FAST</p>
           <h2 className="rv" style={{ ...anton, fontSize: "clamp(28px,4vw,48px)", margin: "0 0 32px" }}>NEED SOMETHING?</h2>
 
-          {/* three fast lanes */}
-          <div className="stagger" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 16, marginBottom: 56 }}>
-            <a href={IG} target="_blank" rel="noopener noreferrer" style={{ background: S.panel, border: `1px solid ${S.line}`, padding: "26px 22px", textDecoration: "none", color: S.snow, transition: "border-color .3s ease" }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(191,211,219,.5)")}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = S.line)}>
-              <div style={{ ...mono, fontSize: 10, letterSpacing: "0.18em", color: S.frost, marginBottom: 12 }}>FASTEST — DM US</div>
-              <div style={{ ...anton, fontSize: 22, marginBottom: 8 }}>@WHITEFALL26</div>
-              <div style={{ color: S.ash, fontSize: 14, lineHeight: 1.6 }}>DM on Instagram for orders, sizing, and drop questions. Typical reply: under a few hours.</div>
-            </a>
-            <a href={`mailto:${SUPPORT_EMAIL}`} style={{ background: S.panel, border: `1px solid ${S.line}`, padding: "26px 22px", textDecoration: "none", color: S.snow, transition: "border-color .3s ease" }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(191,211,219,.5)")}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = S.line)}>
-              <div style={{ ...mono, fontSize: 10, letterSpacing: "0.18em", color: S.frost, marginBottom: 12 }}>ORDERS &amp; RETURNS</div>
-              <div style={{ ...anton, fontSize: 22, marginBottom: 8 }}>EMAIL SUPPORT</div>
-              <div style={{ ...mono, color: S.frost, fontSize: 12, letterSpacing: "0.04em", marginBottom: 8, wordBreak: "break-all" }}>{SUPPORT_EMAIL}</div>
-              <div style={{ color: S.ash, fontSize: 14, lineHeight: 1.6 }}>Include your order number. Replies within one business day.</div>
-            </a>
-            <a href="#fw26" onClick={go("fw26")} style={{ background: S.panel, border: `1px solid ${S.line}`, padding: "26px 22px", textDecoration: "none", color: S.snow, transition: "border-color .3s ease" }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(191,211,219,.5)")}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = S.line)}>
-              <div style={{ ...mono, fontSize: 10, letterSpacing: "0.18em", color: S.frost, marginBottom: 12 }}>SIZE & FIT</div>
-              <div style={{ ...anton, fontSize: 22, marginBottom: 8 }}>FIT GUIDE</div>
-              <div style={{ color: S.ash, fontSize: 14, lineHeight: 1.6 }}>Every piece is cut differently — boxy, tailored, oversized. Each one lists its fit under DETAILS. Exact measurements on request.</div>
-            </a>
-          </div>
-
-          {/* pick your problem — guided contact */}
-          <div className="rv" style={{ marginBottom: 48 }}>
-            <p style={{ ...mono, color: S.frost, fontSize: 11, letterSpacing: "0.22em", margin: "0 0 18px" }}>WHAT'S GOING ON? PICK ONE — WE'LL POINT YOU RIGHT.</p>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 10 }}>
-              {TOPICS.map((t) => (
-                <button key={t.id} onClick={() => setTopic(topic === t.id ? null : t.id)}
-                  aria-expanded={topic === t.id}
-                  style={{
-                    background: topic === t.id ? S.snow : S.panel,
-                    color: topic === t.id ? S.night : S.snow,
-                    border: `1px solid ${topic === t.id ? S.snow : S.line}`,
-                    padding: "18px 16px", cursor: "pointer", textAlign: "left",
-                    fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 600,
-                    letterSpacing: "0.01em", transition: "all .25s ease",
-                    display: "flex", alignItems: "center", gap: 10,
-                  }}
-                  onMouseEnter={(e) => { if (topic !== t.id) e.currentTarget.style.borderColor = "rgba(191,211,219,.5)"; }}
-                  onMouseLeave={(e) => { if (topic !== t.id) e.currentTarget.style.borderColor = S.line; }}
-                >
-                  <span aria-hidden style={{ ...mono, fontSize: 10, color: topic === t.id ? S.night : S.frost, letterSpacing: "0.1em" }}>{t.n}</span> {t.label}
-                </button>
-              ))}
-            </div>
-            {TOPICS.filter((t) => t.id === topic).map((t) => (
-              <div key={t.id} style={{ border: `1px solid rgba(191,211,219,.35)`, borderTop: `2px solid ${S.frost}`, background: S.panel, padding: "26px 24px", marginTop: 12 }}>
-                <h3 style={{ ...anton, fontSize: 20, margin: "0 0 10px", letterSpacing: "0.04em" }}>{t.label.toUpperCase()}</h3>
-                <p style={{ color: S.ash, fontSize: 15, lineHeight: 1.7, margin: "0 0 20px", maxWidth: 680 }}>{t.help}</p>
-                {t.include.length > 0 && (
-                  <div style={{ margin: "0 0 20px" }}>
-                    <p style={{ ...mono, fontSize: 10, color: S.frost, letterSpacing: "0.18em", margin: "0 0 10px" }}>WHAT WE'LL NEED:</p>
-                    <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 6 }}>
-                      {t.include.map((item) => (
-                        <li key={item} style={{ color: S.ash, fontSize: 14, lineHeight: 1.5, display: "flex", gap: 10 }}>
-                          <span aria-hidden style={{ color: S.frost }}>▲</span>{item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                  <a href={topicMailto(t)}
-                    style={{ ...mono, background: S.snow, color: S.night, padding: "14px 24px", textDecoration: "none", fontSize: 12, letterSpacing: "0.1em", fontWeight: 700 }}>
-                    EMAIL US — PRE-FILLED ▲
-                  </a>
-                  <a href={IG} target="_blank" rel="noopener noreferrer"
-                    style={{ ...mono, border: `1px solid ${S.line}`, color: S.snow, padding: "14px 24px", textDecoration: "none", fontSize: 12, letterSpacing: "0.1em" }}>
-                    OR DM @WHITEFALL26
-                  </a>
-                </div>
-                <p style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.12em", margin: "16px 0 0" }}>
-                  THE EMAIL OPENS WITH THE SUBJECT AND DETAILS ALREADY LAID OUT — JUST FILL THEM IN AND SEND.
-                </p>
+          {/* two ways to reach a person — nothing to pick through */}
+          <div className="rv" style={{ borderTop: `1px solid ${S.line}`, marginBottom: 48 }}>
+            {[
+              { label: "DM", value: "@WHITEFALL26", note: "FASTEST", href: IG, external: true },
+              { label: "EMAIL", value: SUPPORT_EMAIL, note: "ORDERS & RETURNS · INCLUDE YOUR ORDER NUMBER", href: `mailto:${SUPPORT_EMAIL}` },
+            ].map((c) => (
+              <div key={c.label} className="contact-row">
+                <span style={{ ...mono, fontSize: 10, letterSpacing: "0.22em", color: S.ash }}>{c.label}</span>
+                <a href={c.href} className="contact-link" {...(c.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{c.value}</a>
+                <span style={{ ...mono, fontSize: 10, letterSpacing: "0.16em", color: S.ash }}>{c.note}</span>
               </div>
             ))}
           </div>
 
-          {/* FAQ accordion */}
-          <div className="rv" style={{ border: `1px solid ${S.line}`, borderBottom: "none" }}>
+          {/* FAQ accordion — open rules, same as the contact rows above */}
+          <p className="rv" style={{ ...mono, fontSize: 10, letterSpacing: "0.22em", color: S.ash, margin: "0 0 12px" }}>FAQ</p>
+          <div className="rv" style={{ borderTop: `1px solid ${S.line}` }}>
             {FAQS.map((f, i) => (
-              <div key={f.id} id={`faq-${f.id}`} style={{ borderBottom: `1px solid ${S.line}`, background: open === i ? S.panel : "transparent", transition: "background .3s ease", scrollMarginTop: 80 }}>
+              <div key={f.id} id={`faq-${f.id}`} style={{ borderBottom: `1px solid ${S.line}`, scrollMarginTop: 80 }}>
                 <button
                   onClick={() => setOpen(open === i ? null : i)}
                   aria-expanded={open === i}
                   style={{
                     width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center",
                     background: "none", border: "none", color: S.snow, cursor: "pointer",
-                    padding: "20px 22px", textAlign: "left", gap: 16,
+                    padding: "20px 0", textAlign: "left", gap: 16,
                   }}
                 >
                   <span style={{ fontSize: 16, fontWeight: 600, letterSpacing: "0.01em" }}>{f.q}</span>
                   <span style={{ ...mono, color: S.frost, fontSize: 16, transform: open === i ? "rotate(45deg)" : "none", transition: "transform .3s ease", flexShrink: 0 }}>+</span>
                 </button>
                 <div style={{ maxHeight: open === i ? 600 : 0, overflow: "hidden", transition: "max-height .45s cubic-bezier(.16,.8,.24,1)" }}>
-                  <p style={{ color: S.ash, fontSize: 15, lineHeight: 1.7, margin: 0, padding: "0 22px 22px", maxWidth: 760 }}>{f.a}</p>
+                  <p style={{ color: S.ash, fontSize: 15, lineHeight: 1.7, margin: 0, padding: "0 0 22px", maxWidth: 760 }}>{f.a}</p>
                 </div>
               </div>
             ))}

@@ -22,8 +22,7 @@ Done and live:
 - Support runs on two live lanes: **whitefall26@gmail.com** (brand inbox) and
   Instagram DMs. No personal address appears anywhere on the site or in this
   repo. The address lives in one constant, `SUPPORT_EMAIL` in `src/App.jsx` —
-  change it there and every contact point follows, including the pre-filled
-  topic emails. Swap it for `support@yourdomain` once a custom domain is live.
+  change it there and every contact point follows. Swap it for `support@yourdomain` once a custom domain is live.
 - Full signup path verified end-to-end in a browser against mocked live
   services: signup delivered, owner email sent, member card generated.
 - Fonts are self-hosted (the `@fontsource/*` packages, imported in
@@ -341,7 +340,6 @@ so don't put anything sensitive behind it.)
 
 - FW26 lineup → the `PIECES` array (name, `cat` spec line, `fit` note)
 - FAQ answers → the `FAQS` array
-- Contact categories → the `TOPICS` array
 - Passcode → `OWNER_CODE`
 - Drop date → `DROP_DATE_RAW` in `src/App.jsx`, or `VITE_DROP_DATE` in Vercel
 - Slogan/copy → search the text you want to change
