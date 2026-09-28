@@ -10,8 +10,6 @@ import { useState, useEffect, useRef } from "react";
 
 const LOGO = "/logo.png";
 
-const LOGO_GLYPH = "/logo-glyph.png";
-
 /* FW26 lineup. The piece with `dropping: true` renders as THE DROP — full
    photo feature with the live shop states. The rest sit in NEXT UP as
    compact rows until their first look is ready. */
@@ -19,7 +17,7 @@ const PIECES = [
   {
     n: "01",
     name: "WHITEFALL CREWNECK",
-    cat: "CONTRAST PIPING · 320 GSM · 80% COTTON / 20% POLYESTER",
+    cat: "FRENCH TERRY · CONTRAST PIPING · 320 GSM · 80% COTTON / 20% POLYESTER",
     fit: "RUNS TAILORED",
     shot: "/fw26-01-crewneck.jpg",
     webp: true, // fw26-01-crewneck.webp + fw26-01-crewneck-480.webp exist in public/
@@ -29,7 +27,7 @@ const PIECES = [
     details: [
       "OUTLINED MOUNTAIN LOGO ACROSS THE BACK",
       "WHITE CONTRAST PIPING ALONG SLEEVES AND BODY",
-      "320 GSM · 80% COTTON / 20% POLYESTER",
+      "320 GSM FRENCH TERRY · 80% COTTON / 20% POLYESTER",
       "RUNS TAILORED · S – XXL",
     ],
     alt: "Whitefall Crewneck in black, back view — outlined mountain logo across the shoulders with white contrast piping along the sleeves and body.",
@@ -85,29 +83,17 @@ const SpecList = ({ items, center = false }) => (
   </ul>
 );
 
-/* The logo standing in as the letter A inside the wordmark */
-const MarkA = ({ h = "0.78em", glow = false }) => (
-  <img src={LOGO_GLYPH} alt="" style={{
-    height: h, width: "auto", display: "inline-block",
-    verticalAlign: "baseline", margin: "0 0.05em",
-    filter: glow ? "drop-shadow(0 0 22px rgba(191,211,219,.55))" : "none",
-  }} />
-);
-
-/* Hollow, broadened wordmark — outlined letterforms matching the logo's line art.
-   Screen readers and search engines get the plain word; the visual split
-   (WHITEF + logo + LL) is hidden from them so it isn't read as "whitef ll". */
+/* Hollow, broadened wordmark — outlined letterforms matching the logo's line
+   art. Plain letters throughout; the logo stands on its own elsewhere. */
 const Wordmark = ({ size, stroke, glow = false, spacing = "0.1em" }) => (
-  <>
-    <span className="sr-only">WHITEFALL</span>
-    <span aria-hidden="true" style={{
-      fontFamily: "'Syncopate', sans-serif", fontWeight: 700,
-      fontSize: size, letterSpacing: spacing, whiteSpace: "nowrap",
-      color: "transparent", WebkitTextStroke: `${stroke} #EDECE8`,
-    }}>
-      WHITEF<MarkA h="0.74em" glow={glow} />LL
-    </span>
-  </>
+  <span style={{
+    fontFamily: "'Syncopate', sans-serif", fontWeight: 700,
+    fontSize: size, letterSpacing: spacing, whiteSpace: "nowrap",
+    color: "transparent", WebkitTextStroke: `${stroke} #EDECE8`,
+    filter: glow ? "drop-shadow(0 0 18px rgba(191,211,219,.35))" : "none",
+  }}>
+    WHITEFALL
+  </span>
 );
 
 const CSS = `
@@ -152,10 +138,6 @@ body { margin: 0; }
 .stagger.in > *:nth-child(4) { transition-delay: .35s; }
 .stagger.in > *:nth-child(5) { transition-delay: .45s; }
 .stagger.in > *:nth-child(6) { transition-delay: .55s; }
-.sr-only {
-  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
-}
 /* footer */
 .foot-cols { display: flex; gap: 56px; flex-wrap: wrap; }
 .foot-link {
