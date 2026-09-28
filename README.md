@@ -130,8 +130,8 @@ office. Customers click BUY NOW on whitefall and land on your Shopify checkout.
 1. Go to shopify.com → start the **Basic** plan (monthly fee applies; there's
    usually a cheap trial period to set everything up).
 2. Add a product: **Whitefall Crewneck** — price, description (use the site's
-   spec line: contrast piping · 320 GSM · 80% cotton / 20% polyester · runs
-   tailored), and **five size variants** (S–XXL).
+   spec line: French terry · contrast piping · 320 GSM · 80% cotton / 20%
+   polyester · runs tailored), and **five size variants** (S–XXL).
 3. On each variant: set the inventory count for that size and make sure
    **"Track quantity"** is ON and **"Continue selling when out of stock"** is
    OFF. This is what makes overselling impossible during the drop.
