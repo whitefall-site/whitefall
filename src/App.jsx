@@ -240,7 +240,7 @@ a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid 
   .nav-links { gap: 14px !important; }
   .ig-full { display: none; }
   .hero-wrap { top: 11vh !important; top: 11svh !important; }
-  .hero-mark { width: min(64vw, 34svh) !important; }
+  .hero-mark { width: min(72vw, 38svh) !important; }
   .slogan { letter-spacing: 0.2em !important; }
 }
 @media (min-width: 641px) { .ig-short { display: none; } }
@@ -392,9 +392,11 @@ function Countdown() {
         <div style={{ ...anton, fontSize: "clamp(20px, 2.6vw, 28px)", color: S.snow, letterSpacing: "0.06em", lineHeight: 1.1 }}>
           DATE TO BE ANNOUNCED
         </div>
-        <div style={{ ...mono, fontSize: 10, letterSpacing: "0.18em", color: S.frost, marginTop: 8 }}>
-          THE LIST HEARS FIRST ▲
-        </div>
+        {/* every update goes out on Instagram first */}
+        <a href={IG} target="_blank" rel="noopener noreferrer"
+          style={{ ...mono, display: "inline-block", fontSize: 10, letterSpacing: "0.18em", color: S.frost, marginTop: 8, textDecoration: "none", borderBottom: "1px solid rgba(191,211,219,.4)", paddingBottom: 2 }}>
+          RELEASE DATES ON INSTAGRAM — @WHITEFALL26
+        </a>
       </div>
     );
   }
@@ -514,7 +516,7 @@ function ProductInfo({ details = [] }) {
 }
 
 const FAQS = [
-  { id: "drop", q: "When does FW26 drop?", a: "The date isn't public yet. The waitlist gets it first — the exact date and time, plus access one hour before anyone else. Join below; it's free and it's the only way to know before it happens." },
+  { id: "drop", q: "When does FW26 drop?", a: "Release dates and every update go up on Instagram — follow @whitefall26. The waitlist also gets an email when it drops, plus access one hour before anyone else." },
   { id: "tracking", q: "Where's my order?", a: "Every order gets a tracking link by email within 24 hours of shipping. Can't find it? Email us your order number, or DM us on Instagram — we respond within one business day." },
   { id: "returns", q: "What's your return policy?", a: "30 days, no questions. Unworn, tags on, full refund to your original payment method. Email us your order number and we'll send you return instructions." },
   { id: "sizing", q: "How does sizing run?", a: "It varies piece to piece — some are cut boxy and oversized, others tailored and slim. Every piece lists its fit next to its sizes. Want exact measurements for a size? Email us or DM us on Instagram and we'll send them." },
@@ -1121,7 +1123,7 @@ export default function App() {
           <img src={LOGO} alt="" aria-hidden className="signal" style={{ width: 90, margin: "0 auto 22px", display: "block" }} />
           <h2 style={{ ...anton, fontSize: "clamp(34px,6.5vw,88px)", margin: "0 0 16px" }}>THE LIST SHOPS FIRST</h2>
           <div style={{ maxWidth: 340, margin: "0 auto 30px" }}>
-            <SpecList center items={["SMALL RUNS", "LIST GETS THE DATE FIRST", "LIST SHOPS ONE HOUR EARLY"]} />
+            <SpecList center items={["SMALL RUNS", "DROP ALERTS BY EMAIL", "LIST SHOPS ONE HOUR EARLY"]} />
           </div>
           {joined ? (
             <div>
@@ -1344,7 +1346,7 @@ export default function App() {
             <div>
             <h2 style={{ ...anton, fontSize: "clamp(26px, 5vw, 36px)", margin: "0 0 14px", lineHeight: 1.05 }}>THE LIST SHOPS FIRST</h2>
             <div style={{ margin: "0 0 22px" }}>
-              <SpecList center items={["SMALL RUNS", "LIST GETS THE DATE FIRST", "LIST SHOPS ONE HOUR EARLY"]} />
+              <SpecList center items={["SMALL RUNS", "DROP ALERTS BY EMAIL", "LIST SHOPS ONE HOUR EARLY"]} />
             </div>
             <div className="form-row" style={{ display: "flex", justifyContent: "center", flexWrap: "wrap" }}>
               <input
