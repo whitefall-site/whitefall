@@ -1,5 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { LOGO_VIEWBOX, LOGO_OUTLINES, LOGO_FILL } from "./logoPaths.js";
+import { WORDMARK_VIEWBOX, WORDMARK_GLYPHS } from "./wordmarkPaths.js";
 
 /* ————————————————————————————————————————————————
    WHITEFALL (concept) — FW26 · midnight city
@@ -113,7 +114,6 @@ body { margin: 0; }
 @keyframes drift { from { background-position: 0 0; } to { background-position: 0 700px; } }
 @keyframes riseIn { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
 .hero-in { animation: riseIn 1.1s cubic-bezier(.16,.8,.24,1) both; }
-.hd1 { animation-delay: .15s; } .hd2 { animation-delay: .3s; } .hd3 { animation-delay: .5s; }
 .marquee-track { animation: marquee 26s linear infinite; }
 .signal { animation: signalPulse 4.5s ease-in-out infinite; }
 /* hero logo reveal: outlines trace on (driven from JS, see HeroMark), then
@@ -128,6 +128,19 @@ body { margin: 0; }
 }
 .mark-glow.on { opacity: .75; animation: glowPulse 4.5s ease-in-out 1.6s infinite; }
 @keyframes glowPulse { 0%, 100% { opacity: .75; } 50% { opacity: 1; } }
+/* hero wordmark: letters trace on (see HeroBanner), then the glow fades up */
+.hero-banner { position: relative; display: block; width: min(68vw, 1040px); margin: 0 auto; }
+.hero-banner svg { display: block; width: 100%; height: auto; overflow: visible; }
+.hero-banner path { fill: none; stroke: #EDECE8; stroke-linejoin: miter; }
+.banner-glow { position: absolute; inset: 0; filter: blur(10px); opacity: 0; transition: opacity 1.4s ease; will-change: opacity; }
+.banner-glow path { stroke: #BFD3DB; }
+.hero-banner.drawn .banner-glow { opacity: .55; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+/* hero timing around the drawing: kicker as the mark forms, buttons while the
+   letters finish, the slogan once the word is complete */
+.hd-kicker { animation-delay: .7s; }
+.hd-cta { animation-delay: 2.4s; }
+.hd-slogan { animation-delay: 3s; }
 /* the mark is smaller on phones, so the drawn line gets heavier to stay visible */
 @media (max-width: 640px) { .mark-line { stroke-width: 4; } }
 .snowfall {
@@ -327,6 +340,54 @@ function HeroMark() {
         {LOGO_OUTLINES.map((d, i) => <path key={i} className="mark-line" d={d} />)}
       </svg>
     </div>
+  );
+}
+
+/* The hero wordmark. Same technique as HeroMark: each letter's outline is
+   measured and traced on, left to right, starting while the mark is still
+   drawing; then a pre-blurred copy fades up as the glow (opacity only, so
+   phones don't repaint). The outline is kept about 2px on screen at any
+   width. Screen readers and search engines get the plain word. */
+function HeroBanner() {
+  const svgRef = useRef(null);
+  const glowRef = useRef(null);
+  const [drawn, setDrawn] = useState(false);
+  useLayoutEffect(() => {
+    const svg = svgRef.current;
+    const glyphs = [...svg.querySelectorAll("path")];
+    const all = [...glyphs, ...glowRef.current.querySelectorAll("path")];
+    const vbw = +WORDMARK_VIEWBOX.split(" ")[2];
+    const sizeStroke = () => {
+      const w = svg.getBoundingClientRect().width || 1;
+      const sw = (window.innerWidth < 640 ? 1.5 : 2.4) * (vbw / w);
+      all.forEach((p) => { p.style.strokeWidth = sw; });
+    };
+    sizeStroke();
+    window.addEventListener("resize", sizeStroke);
+    const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let anims = [], t;
+    if (reduce || !glyphs[0].getTotalLength || !glyphs[0].animate) setDrawn(true);
+    else {
+      anims = glyphs.map((path, i) => {
+        const len = path.getTotalLength();
+        path.style.strokeDasharray = `${len} ${len}`;
+        path.style.strokeDashoffset = `${len}`;
+        return path.animate(
+          [{ strokeDashoffset: `${len}` }, { strokeDashoffset: "0" }],
+          { duration: 1300, delay: 1000 + i * 110, easing: "cubic-bezier(.65,0,.35,1)", fill: "forwards" }
+        );
+      });
+      t = setTimeout(() => setDrawn(true), 2900);
+    }
+    return () => { window.removeEventListener("resize", sizeStroke); clearTimeout(t); anims.forEach((a) => a.cancel()); };
+  }, []);
+  const paths = WORDMARK_GLYPHS.map((d, i) => <path key={i} d={d} />);
+  return (
+    <span className={"hero-banner" + (drawn ? " drawn" : "")}>
+      <span className="sr-only">WHITEFALL</span>
+      <svg ref={glowRef} viewBox={WORDMARK_VIEWBOX} aria-hidden="true" className="banner-glow">{paths}</svg>
+      <svg ref={svgRef} viewBox={WORDMARK_VIEWBOX} aria-hidden="true" className="banner-lines">{paths}</svg>
+    </span>
   );
 }
 
@@ -974,16 +1035,16 @@ export default function App() {
 
         {/* headline block */}
         <div className="hero-copy" style={{ position: "absolute", left: 0, right: 0, padding: "0 22px", textAlign: "center", zIndex: 2 }}>
-          <p className="hero-in hd1" style={{ ...mono, color: S.frost, fontSize: 12, letterSpacing: "0.28em", margin: "0 0 10px" }}>
+          <p className="hero-in hd-kicker" style={{ ...mono, color: S.frost, fontSize: 12, letterSpacing: "0.28em", margin: "0 0 14px" }}>
             FALL / WINTER 2026
           </p>
-          <h1 className="hero-in hd2" style={{ margin: 0, lineHeight: 1, textShadow: "0 0 55px rgba(191,211,219,.2)" }}>
-            <Wordmark size="clamp(30px, 8.2vw, 124px)" stroke="2.5px" spacing="0.08em" glow />
+          <h1 style={{ margin: 0, lineHeight: 1 }}>
+            <HeroBanner />
           </h1>
-          <p className="hero-in hd2 slogan" style={{ ...anton, color: S.frost, fontSize: "clamp(16px, 2.6vw, 30px)", letterSpacing: "0.34em", margin: "14px 0 0" }}>
+          <p className="hero-in hd-slogan slogan" style={{ ...anton, color: S.frost, fontSize: "clamp(16px, 2.6vw, 30px)", letterSpacing: "0.34em", margin: "14px 0 0" }}>
             FREEDOM TO FALL.
           </p>
-          <div className="hero-in hd3" style={{ marginTop: 22, display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+          <div className="hero-in hd-cta" style={{ marginTop: 22, display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <a href="#waitlist" onClick={go("waitlist")} style={{ ...mono, background: S.snow, color: S.night, padding: "16px 32px", textDecoration: "none", fontSize: 13, letterSpacing: "0.1em", fontWeight: 700 }}>
               JOIN THE WAITLIST
             </a>
