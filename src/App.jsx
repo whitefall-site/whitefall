@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { LOGO_VIEWBOX, LOGO_OUTLINES, LOGO_FILL } from "./logoPaths.js";
 
 /* ————————————————————————————————————————————————
@@ -116,19 +116,20 @@ body { margin: 0; }
 .hd1 { animation-delay: .15s; } .hd2 { animation-delay: .3s; } .hd3 { animation-delay: .5s; }
 .marquee-track { animation: marquee 26s linear infinite; }
 .signal { animation: signalPulse 4.5s ease-in-out infinite; }
-/* hero logo reveal: outlines trace on, then the solid mark fades up */
-.mark-line {
-  fill: none; stroke: #EDECE8; stroke-width: 2; stroke-linejoin: round;
-  stroke-dasharray: 1; stroke-dashoffset: 1;
-  animation: markDraw 2.4s cubic-bezier(.65,0,.35,1) .2s forwards;
+/* hero logo reveal: outlines trace on (driven from JS, see HeroMark), then
+   the solid mark fades up. The glow is a pre-blurred copy of the logo that
+   only changes opacity, which phones can animate without repainting. */
+.mark-line { fill: none; stroke: #EDECE8; stroke-width: 2; stroke-linejoin: round; }
+.mark-fill { fill: #EDECE8; fill-rule: evenodd; opacity: 0; transition: opacity 1.3s ease; }
+.mark-draw.drawn .mark-fill { opacity: 1; }
+.mark-glow {
+  position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none;
+  filter: blur(22px); opacity: 0; transition: opacity 1.6s ease; will-change: opacity;
 }
-.mark-line:nth-of-type(3) { animation-delay: .45s; }
-.mark-line:nth-of-type(4) { animation-delay: .7s; }
-.mark-fill { fill: #EDECE8; fill-rule: evenodd; opacity: 0; animation: markFill 1.4s ease 2.3s forwards; }
+.mark-glow.on { opacity: .75; animation: glowPulse 4.5s ease-in-out 1.6s infinite; }
+@keyframes glowPulse { 0%, 100% { opacity: .75; } 50% { opacity: 1; } }
 /* the mark is smaller on phones, so the drawn line gets heavier to stay visible */
-@media (max-width: 640px) { .mark-line { stroke-width: 4.5; } }
-@keyframes markDraw { to { stroke-dashoffset: 0; } }
-@keyframes markFill { to { opacity: 1; } }
+@media (max-width: 640px) { .mark-line { stroke-width: 4; } }
 .snowfall {
   background-image:
     radial-gradient(1.5px 1.5px at 12% 18%, rgba(237,236,232,.5) 50%, transparent 51%),
@@ -239,7 +240,7 @@ a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid 
   .nav-links { gap: 14px !important; }
   .ig-full { display: none; }
   .hero-wrap { top: 11vh !important; top: 11svh !important; }
-  .hero-mark { width: 40vw !important; }
+  .hero-mark { width: min(64vw, 34svh) !important; }
   .slogan { letter-spacing: 0.2em !important; }
 }
 @media (min-width: 641px) { .ig-short { display: none; } }
@@ -259,7 +260,6 @@ a:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid 
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
   .rv, .rv-l, .rv-scale, .stagger > * { opacity: 1 !important; transform: none !important; }
-  .mark-line, .mark-fill { animation-delay: 0s !important; }
 }
 `;
 
@@ -292,6 +292,42 @@ function useParallax(toTransform) {
     return () => { window.removeEventListener("scroll", onScroll); if (raf != null) cancelAnimationFrame(raf); };
   }, []);
   return ref;
+}
+
+/* The hero logo. Each outline is measured and traced on with the Web
+   Animations API (works the same in Safari and Chrome), then the solid mark
+   fades up and the glow starts pulsing. Set up before first paint so the
+   lines never flash in fully drawn. Reduced motion, or a browser without the
+   API, gets the finished mark straight away. */
+function HeroMark() {
+  const svgRef = useRef(null);
+  const [drawn, setDrawn] = useState(false);
+  useLayoutEffect(() => {
+    const lines = [...svgRef.current.querySelectorAll(".mark-line")];
+    const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce || !lines.length || !lines[0].getTotalLength || !lines[0].animate) { setDrawn(true); return; }
+    const anims = lines.map((path, i) => {
+      const len = path.getTotalLength();
+      path.style.strokeDasharray = `${len} ${len}`;
+      path.style.strokeDashoffset = `${len}`;
+      return path.animate(
+        [{ strokeDashoffset: `${len}` }, { strokeDashoffset: "0" }],
+        { duration: 2100, delay: 200 + i * 250, easing: "cubic-bezier(.65,0,.35,1)", fill: "forwards" }
+      );
+    });
+    const t = setTimeout(() => setDrawn(true), 2300);
+    return () => { clearTimeout(t); anims.forEach((a) => a.cancel()); };
+  }, []);
+  return (
+    <div className="hero-mark" style={{ position: "relative", width: "min(52vw, 400px)" }}>
+      <img src={LOGO} alt="" aria-hidden className={"mark-glow" + (drawn ? " on" : "")} />
+      <svg ref={svgRef} viewBox={LOGO_VIEWBOX} aria-hidden="true" className={"mark-draw" + (drawn ? " drawn" : "")}
+        style={{ position: "relative", width: "100%", height: "auto", display: "block", overflow: "visible" }}>
+        <path className="mark-fill" d={LOGO_FILL} />
+        {LOGO_OUTLINES.map((d, i) => <path key={i} className="mark-line" d={d} />)}
+      </svg>
+    </div>
+  );
 }
 
 /* —— fetch with a deadline, so a stalled network call can never leave the
@@ -927,13 +963,9 @@ export default function App() {
           position: "absolute", left: "50%",
           transform: "translateX(-50%) translateY(0px)",
           textAlign: "center", pointerEvents: "none",
+          willChange: "transform", // own layer: the parallax moves it without repainting the drawing
         }}>
-          {/* the mark draws itself line by line, then fills in */}
-          <svg viewBox={LOGO_VIEWBOX} aria-hidden="true" className="signal hero-mark mark-draw"
-            style={{ width: "min(52vw, 400px)", height: "auto", display: "block", overflow: "visible" }}>
-            <path className="mark-fill" d={LOGO_FILL} />
-            {LOGO_OUTLINES.map((d, i) => <path key={i} className="mark-line" pathLength="1" d={d} />)}
-          </svg>
+          <HeroMark />
         </div>
         {/* soft glow pooling beneath the logo */}
         <div aria-hidden ref={poolRef} style={{ position: "absolute", left: "50%", top: "44vh", width: "70vw", height: "30vh", transform: "translate(-50%, 0) translateY(0px)", background: "radial-gradient(50% 50% at 50% 50%, rgba(191,211,219,.07), transparent 70%)", pointerEvents: "none" }} />
