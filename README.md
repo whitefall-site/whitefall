@@ -15,8 +15,10 @@ Done and live:
 - Member numbers were removed: they needed a shared counter, every free
   counter service tried proved unreliable, and a headline promise of "your
   number, locked for life" cannot rest on something that can silently fail or
-  hand two people the same number. The waitlist now promises **a one hour head
-  start**, which needs no shared state and can always be honoured.
+  hand two people the same number. The waitlist now promises **a drop alert
+  by email**, which needs no shared state and can always be honoured. (An
+  earlier one-hour head start was dropped too — release dates and updates go
+  out on Instagram, @whitefall26.)
 - Share-card URLs now fill themselves in at build time from Vercel's domain —
   nothing to edit by hand, and they follow a custom domain automatically.
 - Support runs on two live lanes: **whitefall26@gmail.com** (brand inbox) and
@@ -203,12 +205,12 @@ The link is wired, but Shopify has to be open for business:
 3. **Inventory above zero** — every variant is DENY (correct: it prevents
    overselling), so a size at 0 simply cannot be bought.
 
-### The early-access play ("the list shops first" — for real)
+### Drop day
 
-One hour before you set `VITE_CREWNECK_URL` publicly, email the product link to
-the waitlist (every signup is in your inbox) and/or post it to IG Close
-Friends. The list literally shops before the public button exists. Then flip
-the env var and the shop is open to everyone.
+Post the release on Instagram (that's where the site sends people for dates),
+then email the product link to the waitlist — every signup is in your inbox —
+when the shop opens. The site no longer promises the list an early hour, so
+open it to everyone at the same time.
 
 ### When it sells out
 
