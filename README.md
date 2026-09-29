@@ -174,7 +174,8 @@ After adding or changing any of these: **Deployments → Redeploy**.
 ### The drop date
 
 **No date is set right now.** While `VITE_DROP_DATE` is empty the site shows
-"DATE TO BE ANNOUNCED · THE LIST HEARS FIRST" instead of a countdown, and the
+"DATE TO BE ANNOUNCED · RELEASE DATES ON INSTAGRAM" (linking @whitefall26,
+where every update is posted) instead of a countdown, and the
 shop stays shut — the point being that a public countdown to a date that later
 slips costs more credibility than having no countdown at all.
 
