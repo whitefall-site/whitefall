@@ -480,7 +480,7 @@ function PieceShop({ shopId, fit, onNotify }) {
       {/* with no date, the countdown block above already says "TBA" */}
       {!live && !cfg.soldOut && dropDay && (
         <p style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.16em", margin: "14px 0 0" }}>
-          DROPS {dropDay} · LIST SHOPS AN HOUR EARLY
+          DROPS {dropDay} · UPDATES ON @WHITEFALL26
         </p>
       )}
     </div>
@@ -516,7 +516,7 @@ function ProductInfo({ details = [] }) {
 }
 
 const FAQS = [
-  { id: "drop", q: "When does FW26 drop?", a: "Release dates and every update go up on Instagram — follow @whitefall26. The waitlist also gets an email when it drops, plus access one hour before anyone else." },
+  { id: "drop", q: "When does FW26 drop?", a: "Release dates and every update go up on Instagram — follow @whitefall26. Join the waitlist and you'll also get an email when it drops." },
   { id: "tracking", q: "Where's my order?", a: "Every order gets a tracking link by email within 24 hours of shipping. Can't find it? Email us your order number, or DM us on Instagram — we respond within one business day." },
   { id: "returns", q: "What's your return policy?", a: "30 days, no questions. Unworn, tags on, full refund to your original payment method. Email us your order number and we'll send you return instructions." },
   { id: "sizing", q: "How does sizing run?", a: "It varies piece to piece — some are cut boxy and oversized, others tailored and slim. Every piece lists its fit next to its sizes. Want exact measurements for a size? Email us or DM us on Instagram and we'll send them." },
@@ -604,7 +604,7 @@ export default function App() {
     .toUpperCase();
 
   const shareSite = async () => {
-    const data = { title: "WHITEFALL", text: "FW26 is coming. The list shops first. FREEDOM TO FALL.", url: typeof location !== "undefined" ? location.href : "" };
+    const data = { title: "WHITEFALL", text: "FW26 is coming. FREEDOM TO FALL.", url: typeof location !== "undefined" ? location.href : "" };
     try {
       if (navigator.share) { await navigator.share(data); setShared(true); return; }
       await navigator.clipboard.writeText(data.url || data.text);
@@ -652,7 +652,7 @@ export default function App() {
       ls("10px");
       x.fillStyle = "#7E8590";
       x.font = "400 24px 'Space Mono', monospace";
-      x.fillText("FW26  ·  THE LIST SHOPS FIRST", 540, 268);
+      x.fillText("FW26  ·  FREEDOM TO FALL", 540, 268);
       x.strokeStyle = "rgba(237,236,232,.16)"; x.lineWidth = 1;
       x.beginPath(); x.moveTo(150, 320); x.lineTo(930, 320); x.stroke();
 
@@ -660,7 +660,7 @@ export default function App() {
       ls("12px");
       x.fillStyle = "#BFD3DB";
       x.font = "700 34px 'Space Mono', monospace";
-      x.fillText("EARLY ACCESS GRANTED", 540, 560);
+      x.fillText("ON THE LIST", 540, 560);
 
       /* ——— the hero: the drop this pass is for ——— */
       ls("2px");
@@ -674,7 +674,7 @@ export default function App() {
       ls("8px");
       x.fillStyle = "#7E8590";
       x.font = "400 30px 'Space Mono', monospace";
-      x.fillText("THE LIST SHOPS ONE HOUR EARLY", 540, 1010);
+      x.fillText("DROP ALERTS BY EMAIL", 540, 1010);
 
       /* ——— join date: the personal detail, and the earliness signal ——— */
       ls("10px");
@@ -691,7 +691,7 @@ export default function App() {
       x.strokeStyle = "rgba(237,236,232,.16)"; x.lineWidth = 1;
       x.beginPath(); x.moveTo(150, rowY - 80); x.lineTo(930, rowY - 80); x.stroke();
       const cells = [
-        ["ACCESS", "EARLY"],
+        ["ALERTS", "EMAIL"],
         ["DROP", "FW26"],
         ["STATUS", "CONFIRMED"],
       ];
@@ -1121,9 +1121,9 @@ export default function App() {
         <div className="snowfall" style={{ position: "absolute", inset: 0, opacity: 0.4, pointerEvents: "none" }} aria-hidden />
         <div className="rv-scale" style={{ position: "relative" }}>
           <img src={LOGO} alt="" aria-hidden className="signal" style={{ width: 90, margin: "0 auto 22px", display: "block" }} />
-          <h2 style={{ ...anton, fontSize: "clamp(34px,6.5vw,88px)", margin: "0 0 16px" }}>THE LIST SHOPS FIRST</h2>
+          <h2 style={{ ...anton, fontSize: "clamp(34px,6.5vw,88px)", margin: "0 0 16px" }}>JOIN THE LIST</h2>
           <div style={{ maxWidth: 340, margin: "0 auto 30px" }}>
-            <SpecList center items={["SMALL RUNS", "DROP ALERTS BY EMAIL", "LIST SHOPS ONE HOUR EARLY"]} />
+            <SpecList center items={["SMALL RUNS", "DROP ALERTS BY EMAIL", "UPDATES ON @WHITEFALL26"]} />
           </div>
           {joined ? (
             <div>
@@ -1131,7 +1131,7 @@ export default function App() {
                 YOU'RE ON THE LIST
               </div>
               <p style={{ ...mono, color: S.frost, fontSize: 12, letterSpacing: "0.2em", margin: "0 0 20px" }}>
-                ▲ EARLY ACCESS CONFIRMED — WATCH YOUR INBOX
+                ▲ WE'LL EMAIL YOU WHEN IT DROPS
               </p>
               {relayFailed && (
                 <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("FW26 waitlist signup")}&body=${encodeURIComponent("Add me to the FW26 waitlist: " + email.trim().toLowerCase())}`}
@@ -1289,7 +1289,7 @@ export default function App() {
           borderTop: "1px solid rgba(191,211,219,.25)", padding: "12px 14px",
         }}>
           <span style={{ ...mono, fontSize: 10, letterSpacing: "0.12em", color: S.ash, lineHeight: 1.4 }}>
-            FW26 — THE LIST<br />SHOPS FIRST
+            FW26 — DROP<br />ALERTS BY EMAIL
           </span>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button onClick={(e) => { go("waitlist")(e); }}
@@ -1323,7 +1323,7 @@ export default function App() {
                   YOU'RE ON THE LIST
                 </div>
                 <p style={{ ...mono, fontSize: 10, color: S.frost, letterSpacing: "0.18em", margin: "0 0 14px" }}>
-                  EARLY ACCESS CONFIRMED ▲
+                  WE'LL EMAIL YOU WHEN IT DROPS ▲
                 </p>
                 {relayFailed && (
                   <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("FW26 waitlist signup")}&body=${encodeURIComponent("Add me to the FW26 waitlist: " + email.trim().toLowerCase())}`}
@@ -1344,9 +1344,9 @@ export default function App() {
               </div>
             ) : (
             <div>
-            <h2 style={{ ...anton, fontSize: "clamp(26px, 5vw, 36px)", margin: "0 0 14px", lineHeight: 1.05 }}>THE LIST SHOPS FIRST</h2>
+            <h2 style={{ ...anton, fontSize: "clamp(26px, 5vw, 36px)", margin: "0 0 14px", lineHeight: 1.05 }}>JOIN THE LIST</h2>
             <div style={{ margin: "0 0 22px" }}>
-              <SpecList center items={["SMALL RUNS", "DROP ALERTS BY EMAIL", "LIST SHOPS ONE HOUR EARLY"]} />
+              <SpecList center items={["SMALL RUNS", "DROP ALERTS BY EMAIL", "UPDATES ON @WHITEFALL26"]} />
             </div>
             <div className="form-row" style={{ display: "flex", justifyContent: "center", flexWrap: "wrap" }}>
               <input

@@ -26,8 +26,8 @@
    and every free counter service tried turned out to be unreliable — which
    meant the site's headline promise ("your number, locked for life") rested on
    something that could silently fail or, worse, hand two people the same
-   number. The waitlist now promises early access, which needs no shared state
-   and can always be honoured. */
+   number. The waitlist now promises a drop alert by email, which needs no
+   shared state and can always be honoured. */
 
 const clean = (v, max = 200) => String(v == null ? "" : v).trim().slice(0, max);
 const validEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
