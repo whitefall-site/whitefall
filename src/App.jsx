@@ -79,7 +79,11 @@ const SHOP = {
   },
 };
 const checkoutLink = (variantId) => `https://${SHOP_DOMAIN}/cart/${variantId}:1`;
-const FORCE_DROP_LIVE = import.meta.env.VITE_DROP_LIVE === "1";
+/* OPEN_SHOP_NOW — true puts BUY NOW on the live site immediately, ignoring the
+   drop date. Opened Oct 28 2026 so the owner can walk the real checkout flow;
+   set back to false to hide it again until the drop date below. */
+const OPEN_SHOP_NOW = true;
+const FORCE_DROP_LIVE = OPEN_SHOP_NOW || import.meta.env.VITE_DROP_LIVE === "1";
 // matches the five Shopify variants
 const SIZES = ["S", "M", "L", "XL", "XXL"];
 
@@ -466,15 +470,13 @@ const anton = { fontFamily: "'Anton', sans-serif" };
 const mono = { fontFamily: "'Space Mono', monospace" };
 const IG = "https://instagram.com/whitefall26";
 
-// ——— DROP DATE (placeholder — change this one line when the real date is locked) ———
-/* Empty until the date is locked. While it is empty the site says the date is
-   unannounced instead of counting down to a guess, and BUY NOW stays hidden.
+// ——— DROP DATE ———
+/* FW26 drops Wed Nov 4 2026 at 10:00 AM Central. The countdown runs to this
+   moment and the shop turns itself on then, so nobody has to be at a keyboard.
 
-   To start the countdown, either put an ISO date here or set VITE_DROP_DATE in
-   Vercel — e.g. "2026-11-14T12:00:00-05:00" (note -05:00 for EST after Nov 2,
-   -04:00 for EDT before it). The shop then turns itself on at that moment, so
-   nobody has to be at a keyboard. */
-const DROP_DATE_RAW = import.meta.env.VITE_DROP_DATE || "";
+   Written with the Central offset: -06:00 (CST) after Nov 1 2026, -05:00 (CDT)
+   before it. VITE_DROP_DATE in Vercel overrides this if it is set. */
+const DROP_DATE_RAW = import.meta.env.VITE_DROP_DATE || "2026-11-04T10:00:00-06:00";
 const parsedDrop = DROP_DATE_RAW ? new Date(DROP_DATE_RAW).getTime() : NaN;
 const DROP_DATE = Number.isFinite(parsedDrop) ? parsedDrop : null;
 
