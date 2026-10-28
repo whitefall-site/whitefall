@@ -43,34 +43,54 @@ const PIECES = [
   { n: "04", name: "FREEFALL DOWN PUFFER", cat: "700-FILL DOWN · STORM SHELL" },
 ];
 
-/* ——— SHOP CONFIG — the switch that turns the store on ———
-   The site is the storefront; Shopify is the engine behind it (payments,
-   inventory, shipping, taxes, refunds).
+/* ——— SHOP CONFIG — the site is the storefront, Shopify is the checkout ———
+   The buyer picks a size HERE and BUY NOW drops them straight onto Shopify's
+   checkout with that size already in the bag — Shopify's own store pages are
+   skipped entirely. (It's a "cart permalink": /cart/<variant id>:1.)
+   Payments, inventory that can't oversell, shipping, taxes and refunds all
+   stay on Shopify.
 
-   The product link and price are public information, not secrets, so they
-   live here as defaults — no Vercel variable is needed for BUY NOW to work.
-   Each can still be overridden from Vercel → Settings → Environment
-   Variables → Redeploy, which is the easy way to change a price:
+   The variant IDs are the five sizes of the Whitefall Crewneck in Shopify —
+   public numbers, not secrets. If a size is ever deleted and re-added in
+   Shopify it gets a new ID and must be updated here (Shopify admin → the
+   product → tap the size → the number at the end of the page address).
 
-     VITE_CREWNECK_URL      override the product link below
-     VITE_CREWNECK_PRICE    override the displayed price
-     VITE_CREWNECK_SOLDOUT  set to 1 → SOLD OUT state + notify CTA
+   Optional overrides — Vercel → Settings → Environment Variables → Redeploy:
+     VITE_CREWNECK_PRICE    override the displayed price (must match Shopify)
+     VITE_CREWNECK_SOLDOUT  set to 1 → force SOLD OUT (normally automatic —
+                            /api/stock reads live stock from Shopify)
      VITE_DROP_LIVE         set to 1 → go live before the countdown date
 
-   BUY NOW still only appears once the drop is live, so setting these early
-   is safe. Full owner runbook in README → "Shopify — the commerce engine". */
+   BUY NOW only appears once the drop is live, so none of this shows early.
+   Full owner runbook in README → "Shopify — the commerce engine". */
+const SHOP_DOMAIN = "a1xduc-bf.myshopify.com";
 const SHOP = {
   crewneck: {
     price: import.meta.env.VITE_CREWNECK_PRICE || "$69.99",
-    checkoutUrl:
-      import.meta.env.VITE_CREWNECK_URL ||
-      "https://a1xduc-bf.myshopify.com/products/whitefall-crewneck",
+    handle: "whitefall-crewneck",
+    variants: {
+      S: "62147684041074",
+      M: "62232232853874",
+      L: "62232232886642",
+      XL: "62232232919410",
+      XXL: "62232232952178",
+    },
     soldOut: import.meta.env.VITE_CREWNECK_SOLDOUT === "1",
   },
 };
+const checkoutLink = (variantId) => `https://${SHOP_DOMAIN}/cart/${variantId}:1`;
 const FORCE_DROP_LIVE = import.meta.env.VITE_DROP_LIVE === "1";
 // matches the five Shopify variants
 const SIZES = ["S", "M", "L", "XL", "XXL"];
+
+/* Rehearse the drop before it happens. On a Vercel PREVIEW link (the one each
+   GitHub branch / pull request gets — never the live site), add ?shop-preview
+   to the address and the shop opens exactly as it will on drop day. The live
+   site ignores it, so nobody can open the shop early. */
+const SHOP_PREVIEW = (() => {
+  if (typeof __VERCEL_ENV__ !== "undefined" && __VERCEL_ENV__ === "production") return false;
+  try { return new URLSearchParams(window.location.search).has("shop-preview"); } catch (e) { return false; }
+})();
 
 /* The manifesto is hidden, not deleted — flip to true to bring it back.
    The house voice is now closer to a shipping notice than a poem: facts
@@ -203,6 +223,27 @@ body { margin: 0; }
 .pinfo summary:hover, .pinfo summary:focus-visible { color: #BFD3DB; }
 .pinfo-plus { color: #BFD3DB; font-size: 15px; transition: transform .3s ease; }
 .pinfo details[open] .pinfo-plus { transform: rotate(45deg); }
+/* live shop: size picker + buy button. Chips are 44px tall — a thumb target */
+.size-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.size-chip {
+  font-family: 'Space Mono', monospace; font-size: 12px; letter-spacing: 0.1em;
+  min-width: 48px; height: 44px; padding: 0 12px; box-sizing: border-box;
+  background: none; color: #EDECE8; border: 1px solid rgba(237,236,232,.28); cursor: pointer;
+  transition: background .2s ease, color .2s ease, border-color .2s ease;
+}
+.size-chip:hover:not(:disabled) { border-color: #BFD3DB; }
+.size-chip.on { background: #EDECE8; color: #05070D; border-color: #EDECE8; }
+.size-chip:disabled { color: #7E8590; border-color: rgba(237,236,232,.1); text-decoration: line-through; cursor: not-allowed; }
+.buy-btn {
+  display: inline-block; box-sizing: border-box; text-align: center; text-decoration: none; cursor: pointer;
+  font-family: 'Space Mono', monospace; font-size: 14px; font-weight: 700; letter-spacing: 0.1em;
+  padding: 16px 34px; background: #EDECE8; color: #05070D; border: 1px solid #EDECE8;
+}
+.buy-btn.wait { background: none; color: #7E8590; border-color: rgba(237,236,232,.2); }
+@media (max-width: 480px) {
+  .size-chip { flex: 1 1 0; min-width: 0; padding: 0; }
+  .buy-btn { display: block; width: 100%; }
+}
 /* tap-to-zoom photo */
 .shot-btn { display: block; position: relative; padding: 0; border: 0; background: none; cursor: zoom-in; width: 100%; }
 .shot-btn:focus-visible { outline: 1px solid #BFD3DB; outline-offset: 4px; }
@@ -485,14 +526,41 @@ function Countdown() {
   );
 }
 
+/* Live per-size stock from Shopify, via this site's /api/stock (cached at
+   Vercel's edge for ~15s, so a drop rush never hammers Shopify). Polled every
+   30s while the page is open, so sizes grey out as they sell.
+   null = unknown — store still password-locked, local dev, or the check
+   failed — and then every size stays tappable: Shopify's checkout has the
+   final say on stock either way. A failed poll keeps the last good answer. */
+function useStock(handle, enabled) {
+  const [stock, setStock] = useState(null);
+  useEffect(() => {
+    if (!enabled || !handle) return;
+    let alive = true;
+    const load = () => {
+      if (document.hidden) return;
+      fetchT(`/api/stock?handle=${encodeURIComponent(handle)}`, {}, 6000)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => { if (alive && d && d.ok) setStock(d); })
+        .catch(() => { /* keep the last answer */ });
+    };
+    load();
+    const t = setInterval(load, 30000);
+    document.addEventListener("visibilitychange", load);
+    return () => { alive = false; clearInterval(t); document.removeEventListener("visibilitychange", load); };
+  }, [handle, enabled]);
+  return stock;
+}
+
 /* The shop states for a dropping piece: GET NOTIFIED before the drop,
-   BUY NOW once live and configured, SOLD OUT when the run is gone.
-   Checks the clock on a slow tick so the flip happens without a reload. */
+   size picker + BUY NOW once live, SOLD OUT when the run is gone (flips by
+   itself from live stock). Checks the clock on a slow tick so the drop
+   opens without a reload. */
 function PieceShop({ shopId, fit, onNotify }) {
   const cfg = SHOP[shopId] || {};
   // With no date set, the shop stays shut unless deliberately forced live.
   const [live, setLive] = useState(
-    FORCE_DROP_LIVE || (DROP_DATE != null && Date.now() >= DROP_DATE)
+    FORCE_DROP_LIVE || SHOP_PREVIEW || (DROP_DATE != null && Date.now() >= DROP_DATE)
   );
   useEffect(() => {
     if (live || DROP_DATE == null) return;
@@ -501,37 +569,80 @@ function PieceShop({ shopId, fit, onNotify }) {
     }, 15000);
     return () => clearInterval(t);
   }, [live]);
-  const buyable = live && cfg.checkoutUrl && !cfg.soldOut;
+  const stock = useStock(cfg.handle, live);
+  const [size, setSize] = useState(null);
+  const chipsRef = useRef(null);
+  const variantOf = (s) => (cfg.variants || {})[s];
+  const sizeOpen = (s) => Boolean(variantOf(s)) && !(stock && stock.variants && stock.variants[variantOf(s)] === false);
+  const soldOut = cfg.soldOut || Boolean(live && stock && stock.available === false);
+  const buyable = live && !soldOut && Boolean(cfg.variants);
+  // a picked size that sells out while the page is open gets un-picked
+  useEffect(() => { if (size && !sizeOpen(size)) setSize(null); }, [stock]);
+  const pointToSizes = () => {
+    const first = chipsRef.current && chipsRef.current.querySelector(".size-chip:not(:disabled)");
+    if (first) first.focus();
+  };
   const dropDay = DROP_DATE == null
     ? null
     : new Date(DROP_DATE).toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase();
   const chip = { ...mono, fontSize: 10, letterSpacing: "0.14em", padding: "6px 10px" };
   return (
     <div>
+      {SHOP_PREVIEW && (
+        <p style={{ ...mono, fontSize: 10, letterSpacing: "0.16em", color: S.night, background: S.frost, display: "inline-block", padding: "5px 8px", margin: "0 0 14px" }}>
+          PREVIEW LINK — SHOP FORCED OPEN. THE LIVE SITE IS UNCHANGED.
+        </p>
+      )}
       {cfg.price && (
         <div style={{ ...mono, fontSize: 17, color: S.snow, letterSpacing: "0.08em", margin: "0 0 14px" }}>{cfg.price}</div>
       )}
-      {/* size and fit read like a hang tag: label, then value */}
-      <dl style={{ ...mono, display: "grid", gridTemplateColumns: "auto 1fr", columnGap: 18, rowGap: 8, margin: "0 0 20px", fontSize: 11, letterSpacing: "0.16em" }}>
-        <dt style={{ color: S.ash }}>SIZES</dt>
-        <dd style={{ margin: 0, color: S.snow, display: "flex", gap: 14, flexWrap: "wrap" }}>
-          {SIZES.map((s) => <span key={s}>{s}</span>)}
-        </dd>
+      {/* size and fit read like a hang tag: label, then value. Once the shop
+          is open the sizes become the picker. */}
+      <dl style={{ ...mono, display: "grid", gridTemplateColumns: "auto 1fr", columnGap: 18, rowGap: buyable ? 14 : 8, alignItems: "center", margin: "0 0 20px", fontSize: 11, letterSpacing: "0.16em" }}>
+        <dt style={{ color: S.ash }}>{buyable ? "SIZE" : "SIZES"}</dt>
+        {buyable ? (
+          <dd style={{ margin: 0 }}>
+            <div ref={chipsRef} className="size-row" role="group" aria-label="Choose a size">
+              {SIZES.map((s) => {
+                const open = sizeOpen(s);
+                return (
+                  <button key={s} type="button" disabled={!open} aria-pressed={size === s}
+                    aria-label={open ? `Size ${s}` : `Size ${s}, sold out`}
+                    className={"size-chip" + (size === s ? " on" : "")} onClick={() => setSize(s)}>
+                    {s}
+                  </button>
+                );
+              })}
+            </div>
+          </dd>
+        ) : (
+          <dd style={{ margin: 0, color: S.snow, display: "flex", gap: 14, flexWrap: "wrap" }}>
+            {SIZES.map((s) => <span key={s}>{s}</span>)}
+          </dd>
+        )}
         {fit && <><dt style={{ color: S.ash }}>FIT</dt><dd style={{ margin: 0, color: S.frost }}>{fit}</dd></>}
       </dl>
-      {cfg.soldOut && (
+      {soldOut && (
         <div style={{ marginBottom: 18 }}><span style={{ ...chip, fontWeight: 700, color: S.night, background: S.snow }}>SOLD OUT</span></div>
       )}
-      {cfg.soldOut ? (
+      {soldOut ? (
         <button onClick={onNotify}
           style={{ ...mono, background: "none", border: "1px solid rgba(191,211,219,.4)", color: S.frost, padding: "15px 26px", fontSize: 12, letterSpacing: "0.1em", cursor: "pointer" }}>
           GET RESTOCK ALERTS ▲
         </button>
       ) : buyable ? (
-        <a href={cfg.checkoutUrl} target="_blank" rel="noopener noreferrer"
-          style={{ ...mono, display: "inline-block", background: S.snow, color: S.night, padding: "16px 34px", textDecoration: "none", fontSize: 14, fontWeight: 700, letterSpacing: "0.1em" }}>
-          BUY NOW ▲
-        </a>
+        <>
+          {/* same tab on purpose: on a phone, checkout opening in a new tab
+              strands the buyer. One piece per checkout. */}
+          {size ? (
+            <a href={checkoutLink(variantOf(size))} className="buy-btn">BUY NOW — {size} ▲</a>
+          ) : (
+            <button type="button" className="buy-btn wait" onClick={pointToSizes}>SELECT A SIZE</button>
+          )}
+          <p style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.16em", margin: "14px 0 0" }}>
+            CHECKOUT BY SHOPIFY · US SHIPPING ONLY
+          </p>
+        </>
       ) : (
         <button onClick={onNotify}
           style={{ ...mono, background: S.snow, color: S.night, border: "none", padding: "16px 28px", fontSize: 13, fontWeight: 700, letterSpacing: "0.1em", cursor: "pointer" }}>

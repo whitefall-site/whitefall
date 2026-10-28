@@ -16,6 +16,11 @@ const siteUrl = (() => {
 })();
 
 export default defineConfig({
+  /* "production" on the live site, "preview" on branch / pull-request links.
+     The ?shop-preview rehearsal switch in App.jsx only works off production. */
+  define: {
+    __VERCEL_ENV__: JSON.stringify(process.env.VERCEL_ENV || ""),
+  },
   plugins: [
     react(),
     {

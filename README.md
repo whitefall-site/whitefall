@@ -52,7 +52,8 @@ engine** behind it — payments, inventory that can't oversell, shipping labels,
 taxes, refunds. The drop is the **Whitefall Crewneck only**; pieces
 02–04 sit in a NEXT UP section until their first looks are ready. The whole
 shop turns on and off from Vercel environment variables — no code edits on
-drop day. Full instructions: "Shopify — the commerce engine" below.
+drop day. Buyers pick a size here and go straight to Shopify checkout. Full
+instructions: "Shopify — the commerce engine" below.
 
 **Owner steps before launch:**
 
@@ -122,106 +123,130 @@ Or without GitHub: `npx vercel` in this folder and follow the prompts.
 
 ## Shopify — the commerce engine (owner runbook)
 
-The site stays the face of the brand; Shopify handles the money. This split is
-how the big streetwear brands run: a distinctive front, a bulletproof back
-office. Customers click BUY NOW on whitefall and land on your Shopify checkout.
+The site stays the face of the brand; Shopify handles the money. Buyers pick a
+size **on whitefall**, tap BUY NOW, and land **straight on Shopify checkout**
+with that size already in the bag — Shopify's own store pages are never seen.
+(Technically a "cart permalink": `a1xduc-bf.myshopify.com/cart/<size id>:1`.)
 
-### One-time setup (~1 hour)
+What's wired in the code:
 
-1. Go to shopify.com → start the **Basic** plan (monthly fee applies; there's
-   usually a cheap trial period to set everything up).
-2. Add a product: **Whitefall Crewneck** — price, description (use the site's
-   spec line: French terry · contrast piping · 320 GSM · 80% cotton / 20%
-   polyester · runs tailored), and **five size variants** (S–XXL).
-3. On each variant: set the inventory count for that size and make sure
-   **"Track quantity"** is ON and **"Continue selling when out of stock"** is
-   OFF. This is what makes overselling impossible during the drop.
-4. Settings → **Payments**: activate Shopify Payments (needs ID + bank account
-   — this is where the money lands).
-5. Settings → **Shipping**: set your US rates. The site's FAQ now says US-only
-   shipping, so that matches. Before adding international zones (Settings →
-   Markets), update the "Where do you ship?" FAQ — and only promise duties at
-   checkout if Shopify is actually collecting them, or buyers get surprise
-   customs bills.
-6. Settings → **Policies**: set the 30-day return policy so it matches what
-   the site's FAQ promises. The FAQ says you send return *instructions*, not a
-   prepaid label — decide who pays return shipping and say so there. Shopify's order emails cover the "tracking link
-   within 24 hours" promise automatically when you fulfill orders.
-7. Copy the **product page link** (Sales channels → view product) — that's the
-   link the site's BUY NOW button will use.
-8. While you're in here, create the Admin API token that also powers the
-   waitlist — see "The waitlist" section below. Two minutes, and it means no
-   separate email service to sign up for.
+- **Size picker** — appears in place of the plain size list once the drop is
+  live. The five Shopify size IDs live in `src/App.jsx` → `SHOP` config.
+- **Live stock** — `api/stock.js` reads Shopify's public product data so
+  sold-out sizes cross themselves out and the piece flips to **SOLD OUT on its
+  own** when the last one sells. Cached 15s at Vercel's edge. No keys needed.
+- **One piece per checkout**, opened in the same tab (new tabs strand phone
+  buyers).
+- **Rehearsal switch** — see "Rehearse the drop" below.
 
-### Drop day (no code — Vercel dashboard only)
+### Already done in Shopify (Oct 2026)
 
-Vercel → your project → Settings → Environment Variables:
+- Whitefall Crewneck, $69.99, sizes S–XXL with SKUs `WHF-CN-001-S…XXL`
+- Every size: track quantity ON, "continue selling when out of stock" OFF
+  (DENY), stock 0 — **nothing can be bought until you enter stock**
+- Storefront password ON — a second lock: checkout links can't get past it
+- Shipping (US): Standard $8 · Standard free at $70+ · Express $15
 
-The product link (`a1xduc-bf.myshopify.com/products/whitefall-crewneck`) and
-price ($69.99) are already baked into `src/App.jsx` — **nothing needs setting
-for BUY NOW to work.** It appears by itself when the countdown reaches zero.
+### Still yours to do in Shopify (phone is fine)
 
-These env vars only exist to override that without a code edit:
+1. **Payments** — Settings → Payments: make sure Shopify Payments is active
+   (ID + bank account). Without it, checkout can't take a card.
+2. **Policies** — Settings → Policies. Paste these so the checkout footer links
+   match the site's FAQ word for word:
+
+   **Refund policy**
+   > 30 days, no questions. You have 30 days from the day your order arrives
+   > to send back any Whitefall piece. Pieces must be unworn, with tags on.
+   > Approved returns are refunded in full to your original payment method. To
+   > start a return, email whitefall26@gmail.com with your order number and
+   > we'll send you return instructions. Questions? Email us or DM
+   > @whitefall26 on Instagram — we respond within one business day.
+
+   **Shipping policy**
+   > United States only, for now. Shipping options and costs are shown at
+   > checkout before you pay. Every order gets a tracking link by email within
+   > 24 hours of shipping. Can't find it? Email whitefall26@gmail.com with your
+   > order number, or DM @whitefall26 on Instagram — we respond within one
+   > business day.
+
+   Still open: who pays return shipping. Decide, then add one line.
+3. **Brand email** — Settings → General → store contact email is currently
+   your personal Gmail; buyers see it on order emails. Switch it to
+   whitefall26@gmail.com to match the site.
+4. **Checkout look** — Settings → Checkout → Customize. Upload the dark logo
+   (`checkout-logo.png`, midnight on transparent — the white site logo
+   disappears on checkout's white background), set buttons to `#05070D`.
+5. **Free-shipping line** — the crewneck is $69.99 and free shipping starts at
+   $70.00, so one crewneck pays $8. Intentional? If not: Settings → Shipping
+   → General profile → the free rate → change the minimum to $69.99.
+
+### Rehearse the drop (before drop day)
+
+Every GitHub branch / pull request gets its own Vercel **preview** link. Add
+`?shop-preview` to the end of that link and the shop opens exactly as it will
+on drop day — size picker, BUY NOW, the lot — with a blue PREVIEW banner.
+**The live site ignores `?shop-preview`**, so nobody can open the shop early.
+
+Test order, start to finish:
+
+1. In Safari, open `a1xduc-bf.myshopify.com` and enter the store password
+   once (Online Store → Preferences shows it) — that lets *your* phone past the
+   lock.
+2. Shopify → Products → Whitefall Crewneck → set size **S** to 1.
+3. Preview link + `?shop-preview` → S → BUY NOW → pay with your own card.
+4. Shopify → Orders → refund it in full (Shopify keeps the small card fee),
+   then set S back to 0.
+
+### Drop day (about 2 minutes)
+
+At the drop moment, in this order:
+
+1. **Stock in** — Products → Whitefall Crewneck → enter each size's count.
+2. **Password off** — Online Store → Preferences → Password protection → off.
+3. **Site** — if `VITE_DROP_DATE` is set, the site opens itself at that exact
+   second. If not, set `VITE_DROP_LIVE=1` in Vercel → Redeploy.
+
+Do 1 and 2 at drop time, not the night before: once both are done, anyone
+holding a checkout link can buy.
+
+### Vercel switches (optional — no code edits)
 
 | Variable | Set it to | Effect |
 |---|---|---|
-| `VITE_DROP_DATE` | e.g. `2026-11-14T12:00:00-05:00` | starts the countdown and auto-opens the shop at that moment |
-| `VITE_CREWNECK_PRICE` | e.g. `$74.99` | change the displayed price (must match Shopify) |
-| `VITE_CREWNECK_URL` | a different product link | point BUY NOW elsewhere |
-| `VITE_DROP_LIVE` | `1` | force the shop live before the countdown date |
-| `VITE_CREWNECK_SOLDOUT` | `1` | flip to SOLD OUT + notify state |
+| `VITE_DROP_DATE` | e.g. `2026-11-14T12:00:00-06:00` | starts the countdown and auto-opens the shop at that moment |
+| `VITE_DROP_LIVE` | `1` | force the shop live now |
+| `VITE_CREWNECK_PRICE` | e.g. `$74.99` | change the displayed price (change it in Shopify too) |
+| `VITE_CREWNECK_SOLDOUT` | `1` | force SOLD OUT (normally automatic) |
 
 After adding or changing any of these: **Deployments → Redeploy**.
 
 ### The drop date
 
 **No date is set right now.** While `VITE_DROP_DATE` is empty the site shows
-"DATE TO BE ANNOUNCED · RELEASE DATES ON INSTAGRAM" (linking @whitefall26,
-where every update is posted) instead of a countdown, and the
-shop stays shut — the point being that a public countdown to a date that later
-slips costs more credibility than having no countdown at all.
+"DATE TO BE ANNOUNCED · RELEASE DATES ON INSTAGRAM" instead of a countdown,
+and the shop stays shut — a public countdown to a date that later slips costs
+more credibility than no countdown at all.
 
-Set `VITE_DROP_DATE` (Vercel → Environment Variables → Redeploy) the moment the
-date is locked. Format is ISO with a timezone offset:
-
-    2026-11-14T12:00:00-05:00
-
-Use `-05:00` for Eastern winter (EST) and `-04:00` for Eastern summer (EDT);
-US clocks fall back on Nov 1, 2026. An unparseable value falls back to the
-"to be announced" state rather than breaking the page.
-
-Once set, the countdown runs and the shop turns itself on at that exact moment
-— nobody needs to be at a keyboard.
-
-### Three things that must be true before BUY NOW works
-
-The link is wired, but Shopify has to be open for business:
-
-1. **Storefront password off** — Online Store → Preferences. New stores are
-   password-protected by default; while it is on, every buyer hits a password
-   wall.
-2. **Product published to the Online Store channel** — on the product page,
-   under Publishing. If it isn't, the product URL does not resolve publicly.
-3. **Inventory above zero** — every variant is DENY (correct: it prevents
-   overselling), so a size at 0 simply cannot be bought.
-
-### Drop day
-
-Post the release on Instagram (that's where the site sends people for dates),
-then email the product link to the waitlist — every signup is in your inbox —
-when the shop opens. The site no longer promises the list an early hour, so
-open it to everyone at the same time.
+Format is ISO with a timezone offset. Central time: `-05:00` until Nov 1,
+2026, `-06:00` after (clocks fall back Nov 1). An unparseable value falls back
+to "to be announced" rather than breaking the page.
 
 ### When it sells out
 
-Set `VITE_CREWNECK_SOLDOUT=1` → Redeploy. The site shows SOLD OUT with a
-"restocks heard here first" waitlist CTA — sold out becomes another reason to
-join the list.
+Automatic: the last size selling flips the piece to SOLD OUT with a "restock
+alerts" button within about 30 seconds. `VITE_CREWNECK_SOLDOUT=1` is only a
+manual override.
 
 ### After the drop
 
-Orders, refunds, shipping labels, and customer emails all live in the Shopify
-admin (their mobile app is good). The site needs nothing from you day-to-day.
+Orders, refunds, shipping labels and customer emails all live in the Shopify
+admin (the mobile app is good). The site needs nothing from you day-to-day.
+
+### If a size ID ever changes
+
+Deleting and re-adding a size in Shopify gives it a new ID. Update the number
+in `src/App.jsx` → `SHOP.crewneck.variants` (Shopify admin → the product →
+tap the size → the number at the end of the page address).
 
 ## The waitlist — where signups go
 
