@@ -84,7 +84,7 @@ const checkoutLink = (variantId) => `https://${SHOP_DOMAIN}/cart/${variantId}:1`
    false → the shop stays hidden until the drop date below, then opens itself.
    Selling also needs the Whitefall Crewneck set to Active in Shopify — it is
    kept as Draft while closed, so nothing can be bought even by direct link. */
-const OPEN_SHOP_NOW = true;
+const OPEN_SHOP_NOW = false;
 const FORCE_DROP_LIVE = OPEN_SHOP_NOW || import.meta.env.VITE_DROP_LIVE === "1";
 // matches the five Shopify variants
 const SIZES = ["S", "M", "L", "XL", "XXL"];
