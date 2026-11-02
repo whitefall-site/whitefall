@@ -394,6 +394,17 @@ to close). To add more angles, list them in the piece's `more` array —
 `more: ["/fw26-01-crewneck-front.jpg", "/fw26-01-crewneck-detail.jpg"]` — and
 the viewer becomes a swipeable gallery with arrows and a 1 / 3 counter.
 
+### The lookbook
+
+The LOOKBOOK section (after FW26, linked in the nav and footer) is the shoot.
+Frames live in `public/lookbook/` as three files each — `fw26-lb-NN-600.webp`
+(the grid), `fw26-lb-NN.webp` (full screen) and `fw26-lb-NN.jpg` (fallback),
+all cropped to 2:3 portrait. The order and alt text come from the `LOOKBOOK`
+list near the top of `App.jsx`; reorder that list to reorder the grid. Tapping
+a frame opens the full-screen viewer on that frame and swipes through all of
+them. The grid is 2 columns on phones, 3 on tablets, 4 on wide screens, so a
+multiple of 12 frames fills every row evenly.
+
 The DETAILS tab under a piece comes from its `details` array (one plain fact
 per line). SHIPPING and RETURNS are shared by every piece and live in
 `SHIPPING_FACTS` / `RETURN_FACTS` — if a policy changes, update those and the

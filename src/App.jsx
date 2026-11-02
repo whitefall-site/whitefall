@@ -22,10 +22,14 @@ const PIECES = [
     cat: "FRENCH TERRY · CONTRAST PIPING · 320 GSM · 80% COTTON / 20% POLYESTER",
     colorway: "BLACK / WHITE PIPING",
     fit: "RUNS TAILORED",
-    shot: "/fw26-01-crewneck.jpg",
-    webp: true, // fw26-01-crewneck.webp + fw26-01-crewneck-480.webp exist in public/
+    shot: "/fw26-01-crewneck-back.jpg",
+    webp: true, // fw26-01-crewneck-back.webp + fw26-01-crewneck-back-480.webp exist in public/
     // extra angles: add paths here and the tap-to-zoom view becomes a swipeable gallery
-    more: [],
+    more: [
+      "/lookbook/fw26-lb-06.webp", // front — chest lockup
+      "/lookbook/fw26-lb-03.webp", // the fit, oversized
+      "/lookbook/fw26-lb-04.webp", // piping catching light at night
+    ],
     // the DETAILS tab under the piece — one plain fact per line
     details: [
       // same facts as the Shopify description — keep the two in step
@@ -34,7 +38,7 @@ const PIECES = [
       "EMBROIDERED CHEST LOCKUP",
       "RAISED WHITE CONTRAST PIPING",
     ],
-    alt: "Whitefall Crewneck in black, back view — outlined mountain logo across the shoulders with white contrast piping along the sleeves and body.",
+    alt: "Whitefall Crewneck in black, back view — outlined mountain A screen print across the shoulders with white contrast piping along the sleeves and body.",
     dropping: true,
     shop: "crewneck",
   },
@@ -42,6 +46,24 @@ const PIECES = [
   { n: "03", name: "MOMENTUM ATHLETIC SHIRT", cat: "PERFORMANCE KNIT · BUILT TO TRAIN" },
   { n: "04", name: "FREEFALL DOWN PUFFER", cat: "700-FILL DOWN · STORM SHELL" },
 ];
+
+/* FW26 lookbook — the shoot. Each entry is a base path in public/lookbook/:
+   <base>-600.webp (grid), <base>.webp (full screen), <base>.jpg (fallback).
+   Order alternates night and studio frames so neighbours never match. */
+const LOOKBOOK = [
+  ["fw26-lb-01", "Four people in Whitefall crewnecks around a fire table at night, flames lighting the chest lockups."],
+  ["fw26-lb-02", "Back of the Whitefall Crewneck in the studio — mountain A screen print across the shoulders, piping down the sleeves."],
+  ["fw26-lb-03", "Arms stretched wide in an oversized Whitefall Crewneck, grinning."],
+  ["fw26-lb-04", "Low angle at night — two people on a stone planter, the crewnecks' piping and back logo catching the light."],
+  ["fw26-lb-05", "Whitefall Crewneck at night, basketball under one arm, chest lockup in focus."],
+  ["fw26-lb-06", "Two guys in Whitefall crewnecks, one carrying the other, both chest lockups showing."],
+  ["fw26-lb-07", "Smiling over the shoulder in the Whitefall Crewneck against a pale studio wall."],
+  ["fw26-lb-08", "Six friends in Whitefall crewnecks pointing at the camera at night, piping lit by the flash."],
+  ["fw26-lb-09", "Back view at night beside a skateboard, the mountain A bright across the crewneck."],
+  ["fw26-lb-10", "Pointing at the camera in the Whitefall Crewneck, chain over the collar."],
+  ["fw26-lb-11", "Hand on chin, looking up, in the Whitefall Crewneck."],
+  ["fw26-lb-12", "Back of the Whitefall Crewneck — mountain A logo and contrast piping."],
+].map(([base, alt]) => ({ base: `/lookbook/${base}`, alt }));
 
 /* ——— SHOP CONFIG — the site is the storefront, Shopify is the checkout ———
    The buyer picks a size HERE and BUY NOW drops them straight onto Shopify's
@@ -280,6 +302,14 @@ body { margin: 0; }
   .piece-feature { grid-template-columns: 1fr; gap: 20px; padding: 26px 0; }
   .piece-shot, .shot-btn { max-width: 440px; margin: 0 auto; }
 }
+/* lookbook — 2 / 3 / 4 columns of 2:3 frames */
+.lb-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+@media (min-width: 760px) { .lb-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; } }
+@media (min-width: 1100px) { .lb-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; } }
+.lb-tile { display: block; padding: 0; border: 1px solid rgba(237,236,232,.08); background: #0E131E; cursor: zoom-in; overflow: hidden; aspect-ratio: 2 / 3; }
+.lb-tile img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .7s cubic-bezier(.16,.8,.24,1), opacity .4s ease; }
+.lb-tile:hover img { transform: scale(1.04); }
+.lb-tile:focus-visible { outline: 1px solid #BFD3DB; outline-offset: 3px; }
 .tease { transition: transform .5s cubic-bezier(.16,.8,.24,1), border-color .4s ease; }
 .tease:hover { transform: translateY(-8px); border-color: rgba(191,211,219,.5) !important; }
 .tease:hover .tease-logo { opacity: .3; transform: scale(1.08) rotate(-2deg); }
@@ -763,7 +793,7 @@ export default function App() {
   const [waitlistInView, setWaitlistInView] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [joinedAt, setJoinedAt] = useState(() => (visitor.joinedAt ? new Date(visitor.joinedAt) : null));
-  const [zoom, setZoom] = useState(null); // { name, alt, images } while the photo viewer is open
+  const [zoom, setZoom] = useState(null); // { name, alt, alts?, images, start? } while the photo viewer is open
   const [zoomAt, setZoomAt] = useState(0);
   const stripRef = useRef(null);
   const stepZoom = (dir) => {
@@ -954,10 +984,17 @@ export default function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, [zoom, ownerOpen, cardOpen, privacyOpen, popup, popupDone]);
 
-  // photo viewer: freeze the page behind it, start on the first image
+  // photo viewer: open on the tapped image (first by default) before it paints
+  useLayoutEffect(() => {
+    if (!zoom) return;
+    const start = zoom.start || 0;
+    const s = stripRef.current;
+    if (s) s.scrollLeft = start * s.clientWidth;
+    setZoomAt(start);
+  }, [zoom]);
+  // …and freeze the page behind it
   useEffect(() => {
     if (!zoom) return;
-    setZoomAt(0);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = prev; };
@@ -1114,7 +1151,7 @@ export default function App() {
           <span className="nav-word"><Wordmark size="15px" stroke="1px" spacing="0.14em" /></span>
         </a>
         <nav className="nav-links" style={{ display: "flex", alignItems: "center", gap: 24 }}>
-          {[["FW26", "#fw26"], ...(SHOW_MANIFESTO ? [["Manifesto", "#manifesto"]] : []), ["Support", "#support"]].map(([t, h]) => (
+          {[["FW26", "#fw26"], ["Lookbook", "#lookbook"], ...(SHOW_MANIFESTO ? [["Manifesto", "#manifesto"]] : []), ["Support", "#support"]].map(([t, h]) => (
             <a key={t} href={h} onClick={go(h.slice(1))}
               style={{ color: S.ash, textDecoration: "none", fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 600 }}
               onMouseEnter={(e) => (e.currentTarget.style.color = S.frost)}
@@ -1243,7 +1280,7 @@ export default function App() {
                     {p.webp && <source type="image/webp"
                       srcSet={`${p.shot.replace(/\.jpg$/, "-480.webp")} 480w, ${p.shot.replace(/\.jpg$/, ".webp")} 880w`}
                       sizes="(max-width: 760px) min(440px, 100vw), 480px" />}
-                    <img src={p.shot} alt={p.alt} className="piece-shot" width="880" height="1407" loading="lazy" decoding="async" />
+                    <img src={p.shot} alt={p.alt} className="piece-shot" width="880" height="1320" loading="lazy" decoding="async" />
                   </picture>
                   <span className="shot-hint" aria-hidden>
                     {(p.more || []).length ? `1 / ${1 + p.more.length}` : "+ ZOOM"}
@@ -1292,8 +1329,32 @@ export default function App() {
         </div>
       </section>
 
+      {/* ——— LOOKBOOK — the FW26 shoot; tap any frame to swipe through all of them ——— */}
+      <section id="lookbook" style={{ padding: "7vw 22px 6vw", background: S.night, borderTop: `1px solid ${S.line}` }}>
+        <div style={{ maxWidth: 1400, margin: "0 auto" }}>
+          <div className="rv-l" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 12, marginBottom: 28 }}>
+            <h2 style={{ ...anton, fontSize: "clamp(40px,7vw,96px)", margin: 0, lineHeight: 1 }}>
+              LOOKBOOK
+            </h2>
+            <span style={{ ...mono, fontSize: 12, color: S.ash, letterSpacing: "0.18em" }}>FW26 · {LOOKBOOK.length} FRAMES</span>
+          </div>
+          <div className="lb-grid">
+            {LOOKBOOK.map((f, i) => (
+              <button key={f.base} type="button" className="lb-tile" aria-label={`Open lookbook photo ${i + 1} of ${LOOKBOOK.length} full screen`}
+                onClick={() => setZoom({ name: "FW26 LOOKBOOK", alt: f.alt, alts: LOOKBOOK.map((x) => x.alt), images: LOOKBOOK.map((x) => `${x.base}.webp`), start: i })}>
+                <picture>
+                  <source type="image/webp" srcSet={`${f.base}-600.webp 600w, ${f.base}.webp 1200w`}
+                    sizes="(max-width: 759px) 50vw, (max-width: 1099px) 33vw, 340px" />
+                  <img src={`${f.base}.jpg`} alt={f.alt} width="1200" height="1800" loading="lazy" decoding="async" />
+                </picture>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ——— WAITLIST ——— */}
-      <section id="waitlist" style={{ padding: "6vw 22px 7vw", background: S.night, textAlign: "center", position: "relative", overflow: "hidden" }}>
+      <section id="waitlist" style={{ padding: "6vw 22px 7vw", background: S.night, textAlign: "center", position: "relative", overflow: "hidden", borderTop: `1px solid ${S.line}` }}>
         <div className="snowfall" style={{ position: "absolute", inset: 0, opacity: 0.4, pointerEvents: "none" }} aria-hidden />
         <div className="rv-scale" style={{ position: "relative" }}>
           <img src={LOGO} alt="" aria-hidden className="signal" style={{ width: 90, margin: "0 auto 22px", display: "block" }} />
@@ -1410,6 +1471,7 @@ export default function App() {
               {[
                 ["SHOP", [
                   { t: "FW26", href: "#fw26", onClick: go("fw26") },
+                  { t: "Lookbook", href: "#lookbook", onClick: go("lookbook") },
                   { t: "Waitlist", href: "#waitlist", onClick: go("waitlist") },
                 ]],
                 ["HELP", [
@@ -1558,7 +1620,7 @@ export default function App() {
             onScroll={(e) => setZoomAt(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))}>
             {zoom.images.map((src, i) => (
               <div key={src} className="zoom-slide" onClick={(e) => { if (e.target === e.currentTarget) setZoom(null); }}>
-                <img src={src} alt={i === 0 ? zoom.alt : `${zoom.name}, view ${i + 1}`} />
+                <img src={src} alt={zoom.alts ? zoom.alts[i] : i === 0 ? zoom.alt : `${zoom.name}, view ${i + 1}`} />
               </div>
             ))}
           </div>
