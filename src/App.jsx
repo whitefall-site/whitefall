@@ -31,6 +31,8 @@ const PIECES = [
       "/fw26-01-crewneck-4.webp", // the fit, oversized
       "/fw26-01-crewneck-5.webp", // four backs at night, piping lit
     ],
+    // size the model has on in each photo — same order as shot + more; null = no tag
+    wears: ["XL", "L", "L", "XXL", null],
     // the DETAILS tab under the piece — one plain fact per line
     details: [
       // same facts as the Shopify description — keep the two in step
@@ -279,6 +281,10 @@ body { margin: 0; }
 .shot-hint {
   position: absolute; right: 10px; bottom: 10px; font-family: 'Space Mono', monospace; font-size: 10px;
   letter-spacing: 0.14em; color: #05070D; background: rgba(237,236,232,.88); padding: 5px 8px;
+}
+.shot-size {
+  position: absolute; left: 10px; bottom: 10px; font-family: 'Space Mono', monospace; font-size: 10px;
+  letter-spacing: 0.14em; color: #EDECE8; background: rgba(5,7,13,.72); border: 1px solid rgba(191,211,219,.28); padding: 4px 8px;
 }
 .zoom-strip {
   display: flex; height: 100%; overflow-x: auto; scroll-snap-type: x mandatory;
@@ -1275,7 +1281,7 @@ export default function App() {
               /* photographed piece \u2014 full feature treatment */
               <div key={p.n} className="piece-feature">
                 <button type="button" className="shot-btn" aria-label={`View ${p.name} photo full screen`}
-                  onClick={() => setZoom({ name: p.name, alt: p.alt, images: [p.webp ? p.shot.replace(/\.jpg$/, ".webp") : p.shot, ...(p.more || [])] })}>
+                  onClick={() => setZoom({ name: p.name, alt: p.alt, wears: p.wears, images: [p.webp ? p.shot.replace(/\.jpg$/, ".webp") : p.shot, ...(p.more || [])] })}>
                   {/* WebP (~75% lighter) for browsers that take it, the JPG for the rest */}
                   <picture>
                     {p.webp && <source type="image/webp"
@@ -1283,6 +1289,7 @@ export default function App() {
                       sizes="(max-width: 760px) min(440px, 100vw), 480px" />}
                     <img src={p.shot} alt={p.alt} className="piece-shot" width="880" height="1320" loading="lazy" decoding="async" />
                   </picture>
+                  {p.wears && p.wears[0] && <span className="shot-size">MODEL WEARS {p.wears[0]}</span>}
                   <span className="shot-hint" aria-hidden>
                     {(p.more || []).length ? `1 / ${1 + p.more.length}` : "+ ZOOM"}
                   </span>
@@ -1631,6 +1638,12 @@ export default function App() {
               {glyph}
             </button>
           ))}
+          {zoom.wears && zoom.wears[zoomAt] && (
+            <div aria-live="polite"
+              style={{ ...mono, position: "absolute", top: 12, left: 12, border: `1px solid ${S.line}`, background: "rgba(5,7,13,.6)", color: S.snow, fontSize: 11, letterSpacing: "0.14em", padding: "10px 14px", pointerEvents: "none" }}>
+              MODEL WEARS {zoom.wears[zoomAt]}
+            </div>
+          )}
           {zoom.images.length > 1 && (
             <div style={{ ...mono, position: "absolute", left: 0, right: 0, bottom: 14, textAlign: "center", fontSize: 11, letterSpacing: "0.18em", color: S.ash, pointerEvents: "none" }}>
               {zoomAt + 1} / {zoom.images.length} · SWIPE
