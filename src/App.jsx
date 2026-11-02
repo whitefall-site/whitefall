@@ -22,13 +22,14 @@ const PIECES = [
     cat: "FRENCH TERRY · CONTRAST PIPING · 320 GSM · 80% COTTON / 20% POLYESTER",
     colorway: "BLACK / WHITE PIPING",
     fit: "RUNS TAILORED",
-    shot: "/fw26-01-crewneck-front.jpg",
-    webp: true, // fw26-01-crewneck-front.webp + fw26-01-crewneck-front-480.webp exist in public/
+    shot: "/fw26-01-crewneck-1.jpg",
+    webp: true, // fw26-01-crewneck-1.webp + fw26-01-crewneck-1-480.webp exist in public/
     // extra angles: add paths here and the tap-to-zoom view becomes a swipeable gallery
     more: [
-      "/lookbook/fw26-lb-12.webp", // back — mountain A print
-      "/lookbook/fw26-lb-03.webp", // the fit, oversized
-      "/lookbook/fw26-lb-04.webp", // piping catching light at night
+      "/fw26-01-crewneck-2.webp", // front close-up — chest lockup
+      "/fw26-01-crewneck-3.webp", // over the shoulder
+      "/fw26-01-crewneck-4.webp", // the fit, oversized
+      "/fw26-01-crewneck-5.webp", // four backs at night, piping lit
     ],
     // the DETAILS tab under the piece — one plain fact per line
     details: [
@@ -38,7 +39,7 @@ const PIECES = [
       "EMBROIDERED CHEST LOCKUP",
       "RAISED WHITE CONTRAST PIPING",
     ],
-    alt: "Whitefall Crewneck in black at night, front view — embroidered WHITEFALL / FOUNDING MEMBER chest lockup and white contrast piping, basketball under one arm.",
+    alt: "Whitefall Crewneck in black, back view — outlined mountain A screen print across the shoulders with contrast piping along the sleeves and body.",
     dropping: true,
     shop: "crewneck",
   },
