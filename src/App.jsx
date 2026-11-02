@@ -503,12 +503,12 @@ const mono = { fontFamily: "'Space Mono', monospace" };
 const IG = "https://instagram.com/whitefall26";
 
 // ——— DROP DATE ———
-/* FW26 drops Wed Nov 4 2026 at 10:00 AM Central. The countdown runs to this
+/* FW26 drops Wed Nov 4 2026 at 7:00 PM Central. The countdown runs to this
    moment and the shop turns itself on then, so nobody has to be at a keyboard.
 
    Written with the Central offset: -06:00 (CST) after Nov 1 2026, -05:00 (CDT)
    before it. VITE_DROP_DATE in Vercel overrides this if it is set. */
-const DROP_DATE_RAW = import.meta.env.VITE_DROP_DATE || "2026-11-04T10:00:00-06:00";
+const DROP_DATE_RAW = import.meta.env.VITE_DROP_DATE || "2026-11-04T19:00:00-06:00";
 const parsedDrop = DROP_DATE_RAW ? new Date(DROP_DATE_RAW).getTime() : NaN;
 const DROP_DATE = Number.isFinite(parsedDrop) ? parsedDrop : null;
 
