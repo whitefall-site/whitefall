@@ -50,7 +50,7 @@ Done and live:
 **The commerce plan (decided):** the site is the storefront; **Shopify is the
 engine** behind it — payments, inventory that can't oversell, shipping labels,
 taxes, refunds. The founding run is **one piece only — the Founding Member
-Crewneck** (still titled "Whitefall Crewneck" in Shopify). A NEXT UP section
+Crewneck** (same title in Shopify; handle `whitefall-crewneck`). A NEXT UP section
 appears automatically if more pieces are ever added to `PIECES`. The whole
 shop turns on and off from Vercel environment variables — no code edits on
 drop day. Buyers pick a size here and go straight to Shopify checkout. Full
@@ -142,7 +142,7 @@ What's wired in the code:
 
 ### Already done in Shopify (Oct 2026)
 
-- Whitefall Crewneck, $69.99, sizes S–XXL with SKUs `WHF-CN-001-S…XXL`
+- Founding Member Crewneck, $69.99, sizes S–XXL with SKUs `WHF-CN-001-S…XXL`
 - Every size: track quantity ON, "continue selling when out of stock" OFF
   (DENY), stock 0 — **nothing can be bought until you enter stock**
 - Storefront password ON — a second lock: checkout links can't get past it
@@ -193,7 +193,7 @@ Test order, start to finish:
 1. In Safari, open `a1xduc-bf.myshopify.com` and enter the store password
    once (Online Store → Preferences shows it) — that lets *your* phone past the
    lock.
-2. Shopify → Products → Whitefall Crewneck → set size **S** to 1.
+2. Shopify → Products → Founding Member Crewneck → set size **S** to 1.
 3. Preview link + `?shop-preview` → S → BUY NOW → pay with your own card.
 4. Shopify → Orders → refund it in full (Shopify keeps the small card fee),
    then set S back to 0.
@@ -202,7 +202,7 @@ Test order, start to finish:
 
 At the drop moment, in this order:
 
-1. **Stock in** — Products → Whitefall Crewneck → enter each size's count.
+1. **Stock in** — Products → Founding Member Crewneck → enter each size's count.
 2. **Password off** — Online Store → Preferences → Password protection → off.
 3. **Site** — if `VITE_DROP_DATE` is set, the site opens itself at that exact
    second. If not, set `VITE_DROP_LIVE=1` in Vercel → Redeploy.

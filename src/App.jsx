@@ -73,7 +73,7 @@ const LOOKBOOK = [
    Payments, inventory that can't oversell, shipping, taxes and refunds all
    stay on Shopify.
 
-   The variant IDs are the five sizes of the Whitefall Crewneck in Shopify —
+   The variant IDs are the five sizes of the Founding Member Crewneck in Shopify —
    public numbers, not secrets. If a size is ever deleted and re-added in
    Shopify it gets a new ID and must be updated here (Shopify admin → the
    product → tap the size → the number at the end of the page address).
