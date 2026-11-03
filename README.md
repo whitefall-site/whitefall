@@ -49,8 +49,9 @@ Done and live:
 
 **The commerce plan (decided):** the site is the storefront; **Shopify is the
 engine** behind it — payments, inventory that can't oversell, shipping labels,
-taxes, refunds. The drop is the **Whitefall Crewneck only**; pieces
-02–04 sit in a NEXT UP section until their first looks are ready. The whole
+taxes, refunds. The founding run is **one piece only — the Founding Member
+Crewneck** (still titled "Whitefall Crewneck" in Shopify). A NEXT UP section
+appears automatically if more pieces are ever added to `PIECES`. The whole
 shop turns on and off from Vercel environment variables — no code edits on
 drop day. Buyers pick a size here and go straight to Shopify checkout. Full
 instructions: "Shopify — the commerce engine" below.

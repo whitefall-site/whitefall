@@ -13,12 +13,13 @@ import { WORDMARK_VIEWBOX, WORDMARK_GLYPHS } from "./wordmarkPaths.js";
 const LOGO = "/logo.png";
 
 /* FW26 lineup. The piece with `dropping: true` renders as THE DROP — full
-   photo feature with the live shop states. The rest sit in NEXT UP as
-   compact rows until their first look is ready. */
+   photo feature with the live shop states. Any other piece added here sits
+   in NEXT UP as a compact row; with none, NEXT UP doesn't render at all.
+   The founding run is one piece only — the Founding Member Crewneck. */
 const PIECES = [
   {
     n: "01",
-    name: "WHITEFALL CREWNECK",
+    name: "FOUNDING MEMBER CREWNECK",
     cat: "FRENCH TERRY · CONTRAST PIPING · 320 GSM · 80% COTTON / 20% POLYESTER",
     colorway: "BLACK / WHITE PIPING",
     fit: "RUNS TAILORED",
@@ -41,13 +42,10 @@ const PIECES = [
       "EMBROIDERED CHEST LOCKUP",
       "RAISED WHITE CONTRAST PIPING",
     ],
-    alt: "Whitefall Crewneck in black, back view — outlined mountain A screen print across the shoulders with contrast piping along the sleeves and body.",
+    alt: "Founding Member Crewneck in black, back view — outlined mountain A screen print across the shoulders with contrast piping along the sleeves and body.",
     dropping: true,
     shop: "crewneck",
   },
-  { n: "02", name: "AVALANCHE HOODIE", cat: "500GSM · BOX LOGO" },
-  { n: "03", name: "MOMENTUM ATHLETIC SHIRT", cat: "PERFORMANCE KNIT · BUILT TO TRAIN" },
-  { n: "04", name: "FREEFALL DOWN PUFFER", cat: "700-FILL DOWN · STORM SHELL" },
 ];
 
 /* FW26 lookbook — the shoot. Each entry is a base path in public/lookbook/:
@@ -55,17 +53,17 @@ const PIECES = [
    Order alternates night and studio frames so neighbours never match. */
 const LOOKBOOK = [
   ["fw26-lb-01", "Four people in Whitefall crewnecks around a fire table at night, flames lighting the chest lockups."],
-  ["fw26-lb-02", "Back of the Whitefall Crewneck in the studio — mountain A screen print across the shoulders, piping down the sleeves."],
-  ["fw26-lb-03", "Arms stretched wide in an oversized Whitefall Crewneck, grinning."],
+  ["fw26-lb-02", "Back of the Founding Member Crewneck in the studio — mountain A screen print across the shoulders, piping down the sleeves."],
+  ["fw26-lb-03", "Arms stretched wide in an oversized Founding Member Crewneck, grinning."],
   ["fw26-lb-04", "Low angle at night — two people on a stone planter, the crewnecks' piping and back logo catching the light."],
-  ["fw26-lb-05", "Whitefall Crewneck at night, basketball under one arm, chest lockup in focus."],
+  ["fw26-lb-05", "Founding Member Crewneck at night, basketball under one arm, chest lockup in focus."],
   ["fw26-lb-06", "Two guys in Whitefall crewnecks, one carrying the other, both chest lockups showing."],
-  ["fw26-lb-07", "Smiling over the shoulder in the Whitefall Crewneck against a pale studio wall."],
+  ["fw26-lb-07", "Smiling over the shoulder in the Founding Member Crewneck against a pale studio wall."],
   ["fw26-lb-08", "Six friends in Whitefall crewnecks pointing at the camera at night, piping lit by the flash."],
   ["fw26-lb-09", "Back view at night beside a skateboard, the mountain A bright across the crewneck."],
-  ["fw26-lb-10", "Pointing at the camera in the Whitefall Crewneck, chain over the collar."],
-  ["fw26-lb-11", "Hand on chin, looking up, in the Whitefall Crewneck."],
-  ["fw26-lb-12", "Back of the Whitefall Crewneck — mountain A logo and contrast piping."],
+  ["fw26-lb-10", "Pointing at the camera in the Founding Member Crewneck, chain over the collar."],
+  ["fw26-lb-11", "Hand on chin, looking up, in the Founding Member Crewneck."],
+  ["fw26-lb-12", "Back of the Founding Member Crewneck — mountain A logo and contrast piping."],
 ].map(([base, alt]) => ({ base: `/lookbook/${base}`, alt }));
 
 /* ——— SHOP CONFIG — the site is the storefront, Shopify is the checkout ———
@@ -107,8 +105,9 @@ const checkoutLink = (variantId) => `https://${SHOP_DOMAIN}/cart/${variantId}:1`
 /* OPEN_SHOP_NOW — the on/off switch for selling early.
    true  → BUY NOW shows on the live site right away, ignoring the drop date.
    false → the shop stays hidden until the drop date below, then opens itself.
-   Selling also needs the Whitefall Crewneck set to Active in Shopify — it is
-   kept as Draft while closed, so nothing can be bought even by direct link. */
+   Selling also needs the crewneck live on Shopify's Online Store channel —
+   the product is Active but its Online Store listing is scheduled for the
+   drop (Nov 4, 7:00 PM Central), so cart links can't check out before then. */
 const OPEN_SHOP_NOW = false;
 const FORCE_DROP_LIVE = OPEN_SHOP_NOW || import.meta.env.VITE_DROP_LIVE === "1";
 // matches the five Shopify variants
@@ -1269,7 +1268,7 @@ export default function App() {
             <h2 style={{ ...anton, fontSize: "clamp(40px,7vw,96px)", margin: 0, lineHeight: 1 }}>
               FW26
             </h2>
-            <span style={{ ...mono, fontSize: 12, color: S.ash, letterSpacing: "0.18em" }}>FALL / WINTER 2026 · FOUR PIECES</span>
+            <span style={{ ...mono, fontSize: 12, color: S.ash, letterSpacing: "0.18em" }}>FALL / WINTER 2026 · FOUNDING RUN</span>
           </div>
           {/* drop countdown */}
           <div className="rv" style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", margin: "22px 0 40px" }}>
@@ -1317,7 +1316,8 @@ export default function App() {
             )))}
           </div>
 
-          {/* the rest of the collection — teased, not yet revealed */}
+          {/* the rest of the collection — teased, not yet revealed (hidden while the drop is one piece) */}
+          {PIECES.some((p) => !p.dropping) && (
           <div className="rv" style={{ marginTop: 54 }}>
             <p style={{ ...mono, color: S.frost, fontSize: 11, letterSpacing: "0.24em", margin: "0 0 14px" }}>NEXT UP</p>
             <div style={{ borderTop: `1px solid ${S.line}` }}>
@@ -1334,6 +1334,7 @@ export default function App() {
               ))}
             </div>
           </div>
+          )}
         </div>
       </section>
 
