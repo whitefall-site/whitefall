@@ -518,6 +518,44 @@ const DROP_DATE_RAW = import.meta.env.VITE_DROP_DATE || "2026-11-04T19:00:00-06:
 const parsedDrop = DROP_DATE_RAW ? new Date(DROP_DATE_RAW).getTime() : NaN;
 const DROP_DATE = Number.isFinite(parsedDrop) ? parsedDrop : null;
 
+/* The drop moment in words, always in Central time whatever the visitor's own
+   time zone, so it reads the same as the Instagram posts:
+     dropLabel    → "WED 11.04 · 7 PM CT"            (tags, ticker, buttons)
+     dropSentence → "Wednesday, November 4 at 7 PM Central"   (FAQ) */
+const dropParts = (opts) => {
+  if (DROP_DATE == null) return null;
+  try {
+    return Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", hour: "numeric", minute: "2-digit", hour12: true, ...opts })
+      .formatToParts(new Date(DROP_DATE)).map((p) => [p.type, p.value]));
+  } catch (e) { return null; }
+};
+const dropTime = (p) => `${p.hour}${p.minute === "00" ? "" : ":" + p.minute} ${p.dayPeriod}`;
+const dropLabel = (() => {
+  const p = dropParts({ weekday: "short", month: "2-digit", day: "2-digit" });
+  return p ? `${p.weekday} ${p.month}.${p.day} · ${dropTime(p)} CT`.toUpperCase() : null;
+})();
+const dropSentence = (() => {
+  const p = dropParts({ weekday: "long", month: "long", day: "numeric" });
+  return p ? `${p.weekday}, ${p.month} ${p.day} at ${dropTime(p)} Central` : null;
+})();
+
+/* Is the drop open? One answer for the whole page — hero, ticker, join bar
+   and the shop all flip together, at the second, without a reload. */
+const dropIsOpen = () => FORCE_DROP_LIVE || SHOP_PREVIEW || (DROP_DATE != null && Date.now() >= DROP_DATE);
+function useDropLive() {
+  const [live, setLive] = useState(dropIsOpen);
+  useEffect(() => {
+    if (live || DROP_DATE == null) return;
+    const check = () => { if (dropIsOpen()) setLive(true); };
+    const ms = DROP_DATE - Date.now();
+    const exact = ms < 2147483647 ? setTimeout(check, ms + 250) : null; // to the second
+    const t = setInterval(check, 15000); // backstop: phones pause timers in the background
+    document.addEventListener("visibilitychange", check);
+    return () => { clearTimeout(exact); clearInterval(t); document.removeEventListener("visibilitychange", check); };
+  }, [live]);
+  return live;
+}
+
 /* Self-contained so its once-a-second tick re-renders only these tiles,
    not the whole page */
 function Countdown() {
@@ -594,21 +632,10 @@ function useStock(handle, enabled) {
 
 /* The shop states for a dropping piece: GET NOTIFIED before the drop,
    size picker + BUY NOW once live, SOLD OUT when the run is gone (flips by
-   itself from live stock). Checks the clock on a slow tick so the drop
-   opens without a reload. */
-function PieceShop({ shopId, fit, onNotify }) {
+   itself from live stock). `live` comes from useDropLive, so the shop opens
+   at the drop second without a reload. */
+function PieceShop({ shopId, fit, onNotify, live }) {
   const cfg = SHOP[shopId] || {};
-  // With no date set, the shop stays shut unless deliberately forced live.
-  const [live, setLive] = useState(
-    FORCE_DROP_LIVE || SHOP_PREVIEW || (DROP_DATE != null && Date.now() >= DROP_DATE)
-  );
-  useEffect(() => {
-    if (live || DROP_DATE == null) return;
-    const t = setInterval(() => {
-      if (Date.now() >= DROP_DATE) { setLive(true); clearInterval(t); }
-    }, 15000);
-    return () => clearInterval(t);
-  }, [live]);
   const stock = useStock(cfg.handle, live);
   const [size, setSize] = useState(null);
   const chipsRef = useRef(null);
@@ -622,9 +649,6 @@ function PieceShop({ shopId, fit, onNotify }) {
     const first = chipsRef.current && chipsRef.current.querySelector(".size-chip:not(:disabled)");
     if (first) first.focus();
   };
-  const dropDay = DROP_DATE == null
-    ? null
-    : new Date(DROP_DATE).toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase();
   const chip = { ...mono, fontSize: 10, letterSpacing: "0.14em", padding: "6px 10px" };
   return (
     <div>
@@ -679,8 +703,10 @@ function PieceShop({ shopId, fit, onNotify }) {
           ) : (
             <button type="button" className="buy-btn wait" onClick={pointToSizes}>SELECT A SIZE</button>
           )}
-          <p style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.16em", margin: "14px 0 0" }}>
-            CHECKOUT BY SHOPIFY · US SHIPPING ONLY
+          <p style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.16em", lineHeight: 1.9, margin: "14px 0 0" }}>
+            CHECKOUT BY SHOPIFY · US ONLY<br />
+            NO REFUNDS · EXCHANGES WITHIN 14 DAYS<br />
+            <span style={{ color: S.frost }}>HAVE A CODE? ADD IT AT CHECKOUT</span>
           </p>
         </>
       ) : (
@@ -690,24 +716,28 @@ function PieceShop({ shopId, fit, onNotify }) {
         </button>
       )}
       {/* with no date, the countdown block above already says "TBA" */}
-      {!live && !cfg.soldOut && dropDay && (
-        <p style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.16em", margin: "14px 0 0" }}>
-          DROPS {dropDay} · UPDATES ON @WHITEFALL26
+      {!live && !cfg.soldOut && dropLabel && (
+        <p style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.16em", lineHeight: 1.9, margin: "14px 0 0" }}>
+          DROPS {dropLabel}<br />UNDER 50 PIECES · UPDATES ON @WHITEFALL26
         </p>
       )}
     </div>
   );
 }
 
-/* Same facts as the FAQ, cut down to lines — keep the two in step. */
+/* Same facts as the FAQ and the Shopify policies, cut down to lines — keep
+   all three in step. */
 const SHIPPING_FACTS = [
-  "UNITED STATES ONLY, FOR NOW",
+  "UNITED STATES ONLY",
+  "TWIN CITIES: HAND DELIVERY — $5 WITHIN 3 DAYS · $15 SAME DAY",
+  "TRY ANOTHER SIZE AT DROP-OFF",
   "TRACKING LINK BY EMAIL WITHIN 24 HOURS OF SHIPPING",
 ];
 const RETURN_FACTS = [
-  "30 DAYS, NO QUESTIONS",
-  "UNWORN, TAGS ON — FULL REFUND",
-  "EMAIL YOUR ORDER NUMBER, WE SEND INSTRUCTIONS",
+  "NO REFUNDS — EXCHANGES ONLY",
+  "WITHIN 14 DAYS OF DELIVERY",
+  "UNWORN, TAGS ON",
+  "EMAIL YOUR ORDER NUMBER + NEW SIZE, WE SEND INSTRUCTIONS",
 ];
 
 /* DETAILS / SHIPPING / RETURNS under a piece. Native <details>, so it works
@@ -727,13 +757,22 @@ function ProductInfo({ details = [] }) {
   );
 }
 
-const FAQS = [
-  { id: "drop", q: "When does FW26 drop?", a: "Release dates and every update go up on Instagram — follow @whitefall26. Join the waitlist and you'll also get an email when it drops." },
+/* The FAQ. The drop answer changes once the drop is open. */
+const buildFaqs = (live) => [
+  {
+    id: "drop", q: "When does it drop?",
+    a: live
+      ? "It's live. The Founding Member Crewneck is up top until it sells out — under 50 pieces. Every update goes up on Instagram, @whitefall26."
+      : dropSentence
+        ? `${dropSentence}, right here on whitefall26.com. The Founding Member Crewneck, under 50 pieces. Every update goes up on Instagram, @whitefall26.`
+        : "Release dates and every update go up on Instagram — follow @whitefall26.",
+  },
   { id: "tracking", q: "Where's my order?", a: "Every order gets a tracking link by email within 24 hours of shipping. Can't find it? Email us your order number, or DM us on Instagram — we respond within one business day." },
-  { id: "returns", q: "What's your return policy?", a: "30 days, no questions. Unworn, tags on, full refund to your original payment method. Email us your order number and we'll send you return instructions." },
-  { id: "sizing", q: "How does sizing run?", a: "It varies piece to piece — some are cut boxy and oversized, others tailored and slim. Every piece lists its fit next to its sizes. Want exact measurements for a size? Email us or DM us on Instagram and we'll send them." },
-  { id: "restocks", q: "Will pieces restock?", a: "Rarely, and never guaranteed. Runs are small and numbered by design — when a piece sells out, don't count on seeing it again. If a restock ever happens, the waitlist hears first." },
-  { id: "shipping", q: "Where do you ship?", a: "The United States for now. International is on the list — join the waitlist and you'll hear the moment it opens up." },
+  { id: "returns", q: "What's your return policy?", a: "No refunds — exchanges only, within 14 days of delivery. Pieces must be unworn with tags on. Email us your order number and the size you want, and we'll send instructions. Twin Cities hand delivery: try another size at drop-off and swap on the spot. Arrived damaged or wrong? Email us within 14 days and we'll make it right." },
+  { id: "sizing", q: "How does sizing run?", a: "The Founding Member Crewneck runs tailored — cut long in the body and sleeves. Every photo shows the size the model has on. Between sizes? Size up. Want exact measurements? Email us or DM us on Instagram and we'll send them." },
+  { id: "restocks", q: "Will pieces restock?", a: "Rarely, and never guaranteed. Runs are small by design — when a piece sells out, don't count on seeing it again. If a restock ever happens, the email list hears first." },
+  { id: "shipping", q: "Where do you ship?", a: "The United States only. In the Twin Cities we hand-deliver: $5 within 3 days, or $15 same day — and you can try another size at drop-off. Shipping options and costs show at checkout before you pay." },
+  { id: "local", q: "How does local delivery work?", a: "Choose local delivery at checkout for $5 and it's at your door within 3 days. Need it same day ($15)? DM @whitefall26 and we'll set it up. Not sure on size? Ask, and we'll bring another size to the drop-off." },
 ];
 
 /* Brand support inbox — published on the site on purpose. Keep this a brand
@@ -751,15 +790,19 @@ export default function App() {
      people who already joined see "you're on the list" instead of the form,
      and anyone who closed the popup or bar isn't asked again for a week. */
   const [visitor] = useState(readVisitor);
+  const live = useDropLive();
+  const FAQS = buildFaqs(live);
   useEffect(() => {
     const v = readVisitor();
-    if (v.joinedAt || recent(v.popupDismissedAt)) return;
+    // once the drop is open the page's job is selling — no email ask in the way
+    if (v.joinedAt || recent(v.popupDismissedAt) || dropIsOpen()) return;
     /* Ask once they've shown interest (scrolled past most of the hero) or
        after 12 seconds — never on arrival, and never while they're already
        looking at the waitlist form. */
     let fired = false;
     const fire = () => {
       if (fired) return;
+      if (dropIsOpen()) { fired = true; stop(); return; }
       const w = document.getElementById("waitlist");
       if (w) {
         const r = w.getBoundingClientRect();
@@ -769,7 +812,7 @@ export default function App() {
       setPopup(true);
       stop();
     };
-    /* Decide only once scrolling settles: a tap on "JOIN THE WAITLIST"
+    /* Decide only once scrolling settles: a tap on a hero button
        smooth-scrolls past the trigger point on its way to the form, and
        that visitor must not be interrupted mid-glide. */
     let settle, scrolling = false, timeUp = false;
@@ -797,6 +840,8 @@ export default function App() {
   const [shared, setShared] = useState(false);
   const [barDismissed, setBarDismissed] = useState(() => recent(visitor.barDismissedAt));
   const [waitlistInView, setWaitlistInView] = useState(false);
+  const [shopInView, setShopInView] = useState(false);
+  const [shopBarDismissed, setShopBarDismissed] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [joinedAt, setJoinedAt] = useState(() => (visitor.joinedAt ? new Date(visitor.joinedAt) : null));
   const [zoom, setZoom] = useState(null); // { name, alt, alts?, images, start? } while the photo viewer is open
@@ -816,7 +861,11 @@ export default function App() {
     .toUpperCase();
 
   const shareSite = async () => {
-    const data = { title: "WHITEFALL", text: "FW26 is coming. FREEDOM TO FALL.", url: typeof location !== "undefined" ? location.href : "" };
+    const data = {
+      title: "WHITEFALL",
+      text: live ? "Founding Member Crewneck — out now. Under 50 pieces." : `Founding Member Crewneck — drops ${dropLabel || "soon"}. Under 50 pieces.`,
+      url: typeof location !== "undefined" ? location.origin + "/" : "",
+    };
     try {
       if (navigator.share) { await navigator.share(data); setShared(true); return; }
       await navigator.clipboard.writeText(data.url || data.text);
@@ -1011,12 +1060,15 @@ export default function App() {
     if (popupDone && !popupJoined) writeVisitor({ popupDismissedAt: Date.now() });
   }, [popupDone, popupJoined]);
 
-  // the mobile join bar steps aside while the real form is on screen
+  // the mobile bar steps aside while what it points to is already on screen:
+  // the email form before the drop, the shop once it's open
   useEffect(() => {
-    const w = document.getElementById("waitlist");
-    if (!w || typeof IntersectionObserver === "undefined") return;
-    const io = new IntersectionObserver(([e]) => setWaitlistInView(e.isIntersecting), { threshold: 0.15 });
-    io.observe(w);
+    if (typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver((entries) => entries.forEach((e) => {
+      if (e.target.id === "waitlist") setWaitlistInView(e.isIntersecting);
+      else setShopInView(e.isIntersecting);
+    }), { threshold: 0.15 });
+    ["waitlist", "fw26"].forEach((id) => { const el = document.getElementById(id); if (el) io.observe(el); });
     return () => io.disconnect();
   }, []);
 
@@ -1194,7 +1246,7 @@ export default function App() {
         {/* headline block */}
         <div className="hero-copy" style={{ position: "absolute", left: 0, right: 0, padding: "0 22px", textAlign: "center", zIndex: 2 }}>
           <p className="hero-in hd-kicker" style={{ ...mono, color: S.frost, fontSize: 12, letterSpacing: "0.28em", margin: "0 0 14px" }}>
-            FALL / WINTER 2026
+            {live ? "FW26 · OUT NOW" : dropLabel ? `FW26 · ${dropLabel}` : "FALL / WINTER 2026"}
           </p>
           <h1 style={{ margin: 0, lineHeight: 1 }}>
             <HeroBanner />
@@ -1203,11 +1255,11 @@ export default function App() {
             FREEDOM TO FALL.
           </p>
           <div className="hero-in hd-cta" style={{ marginTop: 22, display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <a href="#waitlist" onClick={go("waitlist")} style={{ ...mono, background: S.snow, color: S.night, padding: "16px 32px", textDecoration: "none", fontSize: 13, letterSpacing: "0.1em", fontWeight: 700 }}>
-              JOIN THE WAITLIST
+            <a href="#fw26" onClick={go("fw26")} style={{ ...mono, background: S.snow, color: S.night, padding: "16px 32px", textDecoration: "none", fontSize: 13, letterSpacing: "0.1em", fontWeight: 700 }}>
+              {live ? "SHOP THE DROP ▲" : "SEE THE CREWNECK"}
             </a>
-            <a href="#fw26" onClick={go("fw26")} style={{ ...mono, border: `1px solid ${S.line}`, color: S.snow, padding: "16px 32px", textDecoration: "none", fontSize: 13, letterSpacing: "0.1em", background: "rgba(5,7,13,.4)", backdropFilter: "blur(4px)" }}>
-              PREVIEW FW26
+            <a href="#lookbook" onClick={go("lookbook")} style={{ ...mono, border: `1px solid ${S.line}`, color: S.snow, padding: "16px 32px", textDecoration: "none", fontSize: 13, letterSpacing: "0.1em", background: "rgba(5,7,13,.4)", backdropFilter: "blur(4px)" }}>
+              LOOKBOOK
             </a>
           </div>
         </div>
@@ -1219,7 +1271,7 @@ export default function App() {
           {[0, 1].map((k) => (
             <div key={k} style={{ ...mono, display: "flex", gap: 52, paddingRight: 52, fontSize: 12, letterSpacing: "0.2em", color: S.ash, whiteSpace: "nowrap" }}>
               {Array.from({ length: 5 }).map((_, i) => (
-                <span key={i}>FW26 · COMING SOON <span style={{ color: S.frost }}>▲</span> FREEDOM TO FALL <span style={{ color: S.frost }}>▲</span> WHITEFALL — FW26</span>
+                <span key={i}>FOUNDING MEMBER CREWNECK · {live ? "OUT NOW" : dropLabel || "COMING SOON"} <span style={{ color: S.frost }}>▲</span> UNDER 50 PIECES <span style={{ color: S.frost }}>▲</span> FREEDOM TO FALL <span style={{ color: S.frost }}>▲</span></span>
               ))}
             </div>
           ))}
@@ -1261,7 +1313,7 @@ export default function App() {
       </section>
       )}
 
-      {/* ——— FW26 COMING SOON ——— */}
+      {/* ——— FW26 — THE DROP ——— */}
       <section id="fw26" style={{ padding: "7vw 22px 6vw", background: S.steel, borderTop: `1px solid ${S.line}` }}>
         <div style={{ maxWidth: 1400, margin: "0 auto" }}>
           <div className="rv-l" style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 12, marginBottom: 12 }}>
@@ -1299,7 +1351,7 @@ export default function App() {
                   </div>
                   <h3 style={{ ...anton, fontSize: "clamp(26px, 4.2vw, 54px)", letterSpacing: "0.02em", margin: "0 0 14px", lineHeight: 1.05 }}>{p.name}</h3>
                   <p style={{ ...mono, fontSize: 11, color: S.ash, letterSpacing: "0.14em", lineHeight: 1.9, margin: "0 0 16px" }}>{p.colorway || p.cat}</p>
-                  <PieceShop shopId={p.shop} fit={p.fit} onNotify={go("waitlist")} />
+                  <PieceShop shopId={p.shop} fit={p.fit} onNotify={go("waitlist")} live={live} />
                   <ProductInfo details={p.details} />
                 </div>
               </div>
@@ -1362,7 +1414,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* ——— WAITLIST ——— */}
+      {/* ——— EMAIL LIST (section id stays "waitlist" so old links still land) ——— */}
       <section id="waitlist" style={{ padding: "6vw 22px 7vw", background: S.night, textAlign: "center", position: "relative", overflow: "hidden", borderTop: `1px solid ${S.line}` }}>
         <div className="snowfall" style={{ position: "absolute", inset: 0, opacity: 0.4, pointerEvents: "none" }} aria-hidden />
         <div className="rv-scale" style={{ position: "relative" }}>
@@ -1377,10 +1429,10 @@ export default function App() {
                 YOU'RE ON THE LIST
               </div>
               <p style={{ ...mono, color: S.frost, fontSize: 12, letterSpacing: "0.2em", margin: "0 0 20px" }}>
-                ▲ WE'LL EMAIL YOU WHEN IT DROPS
+                ▲ WE'LL EMAIL YOU WHEN {live ? "THE NEXT ONE DROPS" : "IT DROPS"}
               </p>
               {relayFailed && (
-                <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("FW26 waitlist signup")}&body=${encodeURIComponent("Add me to the FW26 waitlist: " + email.trim().toLowerCase())}`}
+                <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Whitefall list signup")}&body=${encodeURIComponent("Add me to the Whitefall drop list: " + email.trim().toLowerCase())}`}
                   style={{ ...mono, display: "inline-block", border: "1px solid rgba(191,211,219,.4)", color: S.frost, padding: "10px 16px", fontSize: 10, letterSpacing: "0.14em", textDecoration: "none", margin: "0 0 18px" }}>
                   ONE LAST STEP — TAP TO CONFIRM YOUR SPOT BY EMAIL ▲
                 </a>
@@ -1481,7 +1533,7 @@ export default function App() {
                 ["SHOP", [
                   { t: "FW26", href: "#fw26", onClick: go("fw26") },
                   { t: "Lookbook", href: "#lookbook", onClick: go("lookbook") },
-                  { t: "Waitlist", href: "#waitlist", onClick: go("waitlist") },
+                  { t: "Drop alerts", href: "#waitlist", onClick: go("waitlist") },
                 ]],
                 ["HELP", [
                   { t: "Shipping", href: "#faq-shipping", onClick: openFaq("shipping") },
@@ -1514,7 +1566,7 @@ export default function App() {
           </div>
           <div style={{ borderTop: `1px solid ${S.line}`, paddingTop: 22, display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
             <span style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.14em", display: "flex", flexWrap: "wrap", columnGap: 14, rowGap: 6 }}>
-              {["© 2026 WHITEFALL", "US SHIPPING", "30-DAY RETURNS"].map((t) => <span key={t} style={{ whiteSpace: "nowrap" }}>{t}</span>)}
+              {["© 2026 WHITEFALL", "US SHIPPING", "14-DAY EXCHANGES"].map((t) => <span key={t} style={{ whiteSpace: "nowrap" }}>{t}</span>)}
             </span>
             <span style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.14em" }}>
               <button onClick={() => { setOwnerOpen(true); if (ownerUnlocked) loadList(); }}
@@ -1527,31 +1579,37 @@ export default function App() {
         </div>
       </footer>
 
-      {/* ——— STICKY MOBILE JOIN BAR ——— */}
-      {!joined && !barDismissed && (
-        <div className={"join-bar" + (waitlistInView ? " join-bar-away" : "")} aria-hidden={waitlistInView || undefined} style={{
+      {/* ——— STICKY MOBILE BAR — email alerts before the drop, the shop once it's open ——— */}
+      {/* closing the alerts bar before the drop doesn't hide the shop bar after it */}
+      {(live ? !shopBarDismissed : !joined && !barDismissed) && (() => {
+        const away = live ? shopInView : waitlistInView;
+        return (
+        <div className={"join-bar" + (away ? " join-bar-away" : "")} aria-hidden={away || undefined} style={{
           position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 55,
           alignItems: "center", justifyContent: "space-between", gap: 10,
           background: "rgba(5,7,13,.92)", backdropFilter: "blur(12px)",
           borderTop: "1px solid rgba(191,211,219,.25)", padding: "12px 14px",
         }}>
           <span style={{ ...mono, fontSize: 10, letterSpacing: "0.12em", color: S.ash, lineHeight: 1.4 }}>
-            FW26 — DROP<br />ALERTS BY EMAIL
+            {live
+              ? <>FOUNDING MEMBER<br />CREWNECK · <span style={{ color: S.snow }}>{SHOP.crewneck.price}</span></>
+              : <>FW26 — DROPS<br />{dropLabel || "SOON"}</>}
           </span>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <button onClick={(e) => { go("waitlist")(e); }}
+            <button onClick={(e) => { go(live ? "fw26" : "waitlist")(e); }}
               style={{ ...mono, background: S.snow, color: S.night, border: "none", padding: "13px 20px", fontSize: 12, fontWeight: 700, letterSpacing: "0.1em", cursor: "pointer" }}>
-              JOIN ▲
+              {live ? "SHOP ▲" : "GET ALERTS ▲"}
             </button>
-            <button onClick={() => { setBarDismissed(true); writeVisitor({ barDismissedAt: Date.now() }); }} aria-label="Dismiss"
+            <button onClick={() => { if (live) setShopBarDismissed(true); else { setBarDismissed(true); writeVisitor({ barDismissedAt: Date.now() }); } }} aria-label="Dismiss"
               style={{ ...mono, background: "none", border: "none", color: S.ash, fontSize: 13, cursor: "pointer", padding: "6px" }}>✕</button>
           </div>
         </div>
-      )}
+        );
+      })()}
 
-      {/* ——— ENTRY POPUP — waitlist ask ——— */}
+      {/* ——— ENTRY POPUP — email list ask (pre-drop only) ——— */}
       {popup && !popupDone && (popupJoined || !joined) && (
-        <div role="dialog" aria-modal="true" aria-label="Join the waitlist" style={{ position: "fixed", inset: 0, zIndex: 90 }}>
+        <div role="dialog" aria-modal="true" aria-label="Join the list" style={{ position: "fixed", inset: 0, zIndex: 90 }}>
           <div onClick={() => setPopupDone(true)} style={{ position: "absolute", inset: 0, background: "rgba(3,4,10,.78)", backdropFilter: "blur(6px)" }} />
           <div className="pop-in" style={{
             position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)",
@@ -1570,10 +1628,10 @@ export default function App() {
                   YOU'RE ON THE LIST
                 </div>
                 <p style={{ ...mono, fontSize: 10, color: S.frost, letterSpacing: "0.18em", margin: "0 0 14px" }}>
-                  WE'LL EMAIL YOU WHEN IT DROPS ▲
+                  WE'LL EMAIL YOU WHEN {live ? "THE NEXT ONE DROPS" : "IT DROPS"} ▲
                 </p>
                 {relayFailed && (
-                  <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("FW26 waitlist signup")}&body=${encodeURIComponent("Add me to the FW26 waitlist: " + email.trim().toLowerCase())}`}
+                  <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Whitefall list signup")}&body=${encodeURIComponent("Add me to the Whitefall drop list: " + email.trim().toLowerCase())}`}
                     style={{ ...mono, display: "inline-block", border: "1px solid rgba(191,211,219,.4)", color: S.frost, padding: "9px 14px", fontSize: 9, letterSpacing: "0.12em", textDecoration: "none", margin: "0 0 12px" }}>
                     ONE LAST STEP — TAP TO CONFIRM YOUR SPOT ▲
                   </a>
@@ -1692,7 +1750,7 @@ export default function App() {
               <button onClick={() => setPrivacyOpen(false)} aria-label="Close" style={{ ...mono, background: "none", border: "none", color: S.ash, fontSize: 13, cursor: "pointer" }}>✕</button>
             </div>
             <p style={{ color: S.ash, fontSize: 14, lineHeight: 1.75, margin: "0 0 14px" }}>
-              When you join the waitlist we store your email address. That's the whole list.
+              When you join the list we store your email address. That's the whole list.
             </p>
             <p style={{ color: S.ash, fontSize: 14, lineHeight: 1.75, margin: "0 0 14px" }}>
               It's used for one thing: telling you about drops. It is never sold, rented, or shared with anyone else.
@@ -1714,7 +1772,7 @@ export default function App() {
             background: S.panel, border: `1px solid rgba(191,211,219,.3)`, padding: "28px 26px",
           }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-              <span style={{ ...anton, fontSize: 20, letterSpacing: "0.08em" }}>OWNER — WAITLIST</span>
+              <span style={{ ...anton, fontSize: 20, letterSpacing: "0.08em" }}>OWNER — EMAIL LIST</span>
               <button onClick={() => setOwnerOpen(false)} aria-label="Close owner panel"
                 style={{ ...mono, background: "none", border: "none", color: S.ash, fontSize: 13, cursor: "pointer" }}>✕</button>
             </div>
@@ -1757,7 +1815,7 @@ export default function App() {
 
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 18 }}>
                   <a
-                    href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Whitefall waitlist export — " + list.length + " signups")}&body=${encodeURIComponent(list.map((r) => r.email + (r.interests && r.interests.length ? "  [wants: " + r.interests.join(", ") + "]" : "") + "  (" + (r.at || "").slice(0, 10) + ")").join("\n") || "No signups yet.")}`}
+                    href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Whitefall list export — " + list.length + " signups")}&body=${encodeURIComponent(list.map((r) => r.email + (r.interests && r.interests.length ? "  [wants: " + r.interests.join(", ") + "]" : "") + "  (" + (r.at || "").slice(0, 10) + ")").join("\n") || "No signups yet.")}`}
                     style={{ ...mono, background: S.snow, color: S.night, padding: "12px 18px", textDecoration: "none", fontSize: 11, fontWeight: 700, letterSpacing: "0.1em" }}>
                     EMAIL LIST TO ME ▲
                   </a>

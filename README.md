@@ -140,46 +140,33 @@ What's wired in the code:
   buyers).
 - **Rehearsal switch** — see "Rehearse the drop" below.
 
-### Already done in Shopify (Oct 2026)
+### Where Shopify stands (Nov 3, 2026 — night before the drop)
 
-- Founding Member Crewneck, $69.99, sizes S–XXL with SKUs `WHF-CN-001-S…XXL`
-- Every size: track quantity ON, "continue selling when out of stock" OFF
-  (DENY), stock 0 — **nothing can be bought until you enter stock**
-- Storefront password ON — a second lock: checkout links can't get past it
-- Shipping (US): Standard $8 · Standard free at $70+ · Express $15
+- Founding Member Crewneck, $69.99, S–XXL (`WHF-CN-001-S…XXL`), handle
+  `whitefall-crewneck`. Stock in: S 4 · M 8 · L 19 · XL 9 · XXL 5 (45).
+  Every size DENY — it can't oversell.
+- Online Store listing **scheduled for Nov 4, 7:00 PM Central** — the same
+  second the site's countdown opens the shop. Hidden on the Shop app.
+- Storefront password OFF. Live theme is the checkout-only copy, so any plain
+  Shopify page bounces back to whitefall26.com.
+- Shipping (US): Standard $8 · Express $15 · free at $100+ (note: the site's
+  BUY NOW sends one piece per checkout, so one crewneck never reaches $100).
+- Policies (Settings → Policies) match the site: **no refunds, exchanges only
+  within 14 days**, unworn with tags on; US only; Twin Cities hand delivery
+  $5 within 3 days / $15 same day, try another size at drop-off.
 
 ### Still yours to do in Shopify (phone is fine)
 
-1. **Payments** — Settings → Payments: make sure Shopify Payments is active
-   (ID + bank account). Without it, checkout can't take a card.
-2. **Policies** — Settings → Policies. Paste these so the checkout footer links
-   match the site's FAQ word for word:
-
-   **Refund policy**
-   > 30 days, no questions. You have 30 days from the day your order arrives
-   > to send back any Whitefall piece. Pieces must be unworn, with tags on.
-   > Approved returns are refunded in full to your original payment method. To
-   > start a return, email whitefall26@gmail.com with your order number and
-   > we'll send you return instructions. Questions? Email us or DM
-   > @whitefall26 on Instagram — we respond within one business day.
-
-   **Shipping policy**
-   > United States only, for now. Shipping options and costs are shown at
-   > checkout before you pay. Every order gets a tracking link by email within
-   > 24 hours of shipping. Can't find it? Email whitefall26@gmail.com with your
-   > order number, or DM @whitefall26 on Instagram — we respond within one
-   > business day.
-
-   Still open: who pays return shipping. Decide, then add one line.
-3. **Brand email** — Settings → General → store contact email is currently
-   your personal Gmail; buyers see it on order emails. Switch it to
+1. **Local delivery** — Settings → Shipping and delivery → Local delivery →
+   turn on for your location, set the Twin Cities zone (postal codes or
+   distance), price **$5**, delivery info "Within 3 days". The site tells
+   Twin Cities buyers to pick it at checkout. Shopify only allows one local
+   price per address, so **same day ($15) runs through DMs**.
+2. **Brand email** — Settings → General → store contact email is still your
+   personal Gmail; buyers see it on order emails. Switch it to
    whitefall26@gmail.com to match the site.
-4. **Checkout look** — Settings → Checkout → Customize. Upload the dark logo
-   (`checkout-logo.png`, midnight on transparent — the white site logo
-   disappears on checkout's white background), set buttons to `#05070D`.
-5. **Free-shipping line** — the crewneck is $69.99 and free shipping starts at
-   $70.00, so one crewneck pays $8. Intentional? If not: Settings → Shipping
-   → General profile → the free rate → change the minimum to $69.99.
+3. **Checkout look** — Settings → Checkout → Customize. Upload the dark logo
+   (`checkout-logo.png`, midnight on transparent), buttons `#05070D`.
 
 ### Rehearse the drop (before drop day)
 
@@ -198,17 +185,14 @@ Test order, start to finish:
 4. Shopify → Orders → refund it in full (Shopify keeps the small card fee),
    then set S back to 0.
 
-### Drop day (about 2 minutes)
+### Drop day
 
-At the drop moment, in this order:
-
-1. **Stock in** — Products → Founding Member Crewneck → enter each size's count.
-2. **Password off** — Online Store → Preferences → Password protection → off.
-3. **Site** — if `VITE_DROP_DATE` is set, the site opens itself at that exact
-   second. If not, set `VITE_DROP_LIVE=1` in Vercel → Redeploy.
-
-Do 1 and 2 at drop time, not the night before: once both are done, anyone
-holding a checkout link can buy.
+Nothing to press. At 7:00 PM Central the Online Store listing publishes itself
+and the site flips on its own: countdown → size picker + BUY NOW, the hero says
+SHOP THE DROP, the phone bar turns into a SHOP button, the email popup stops.
+At 7:01, on your phone: pick a size → BUY NOW → make sure Shopify checkout
+opens with that size in it (no need to pay), then post. Email everyone on the list — they were promised an email
+when it drops.
 
 ### Vercel switches (optional — no code edits)
 
@@ -223,14 +207,10 @@ After adding or changing any of these: **Deployments → Redeploy**.
 
 ### The drop date
 
-**No date is set right now.** While `VITE_DROP_DATE` is empty the site shows
-"DATE TO BE ANNOUNCED · RELEASE DATES ON INSTAGRAM" instead of a countdown,
-and the shop stays shut — a public countdown to a date that later slips costs
-more credibility than no countdown at all.
-
-Format is ISO with a timezone offset. Central time: `-05:00` until Nov 1,
-2026, `-06:00` after (clocks fall back Nov 1). An unparseable value falls back
-to "to be announced" rather than breaking the page.
+Set in `src/App.jsx` → `DROP_DATE_RAW`: `2026-11-04T19:00:00-06:00` (Wed Nov 4,
+7 PM Central). `VITE_DROP_DATE` in Vercel overrides it. Format is ISO with a
+timezone offset — Central is `-06:00` until March 2027. The site always shows
+the time in Central ("WED 11.04 · 7 PM CT"), whatever the visitor's own zone.
 
 ### When it sells out
 
