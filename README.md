@@ -145,8 +145,10 @@ What's wired in the code:
 - Founding Member Crewneck, $69.99, S–XXL (`WHF-CN-001-S…XXL`), handle
   `whitefall-crewneck`. Stock in: S 4 · M 8 · L 19 · XL 9 · XXL 5 (45).
   Every size DENY — it can't oversell.
-- Online Store listing **scheduled for Nov 4, 7:00 PM Central** — the same
-  second the site's countdown opens the shop. Hidden on the Shop app.
+- Online Store listing **scheduled for Nov 4, 6:55 PM Central** — five minutes
+  before the site's countdown opens the shop, so checkout is already live at 7:00
+  (was 7:00 sharp; moved so the first buyers never hit a still-publishing
+  product). Hidden on the Shop app.
 - Storefront password OFF. Live theme is the checkout-only copy, so any plain
   Shopify page bounces back to whitefall26.com.
 - Shipping (US): Standard $8 · Express $15 · free Standard at $70+ in Shopify
@@ -189,8 +191,8 @@ Test order, start to finish:
 
 ### Drop day
 
-Nothing to press. At 7:00 PM Central the Online Store listing publishes itself
-and the site flips on its own: countdown → size picker + BUY NOW, the hero says
+Nothing to press. At 6:55 PM Central the Online Store listing publishes itself;
+at 7:00 the site flips on its own: countdown → size picker + BUY NOW, the hero says
 SHOP THE DROP, the phone bar turns into a SHOP button, the email popup stops.
 At 7:01, on your phone: pick a size → BUY NOW → make sure Shopify checkout
 opens with that size in it (no need to pay), then post. Email everyone on the list — they were promised an email
@@ -202,6 +204,10 @@ when it drops.
 |---|---|---|
 | `VITE_DROP_DATE` | e.g. `2026-11-14T12:00:00-06:00` | starts the countdown and auto-opens the shop at that moment |
 | `VITE_DROP_LIVE` | `1` | force the shop live now |
+
+**Code links:** `whitefall26.com/?code=WAITLIST` (or any code, e.g. an
+ambassador's `?code=EVAN`) puts that code straight into checkout — the buy box
+shows "CODE … APPLIES AT CHECKOUT". No code in the address → nothing changes.
 | `VITE_CREWNECK_PRICE` | e.g. `$74.99` | change the displayed price (change it in Shopify too) |
 | `VITE_CREWNECK_SOLDOUT` | `1` | force SOLD OUT (normally automatic) |
 

@@ -123,13 +123,32 @@ const SHOP = {
     soldOut: import.meta.env.VITE_CREWNECK_SOLDOUT === "1",
   },
 };
-const checkoutLink = (variantId) => `https://${SHOP_DOMAIN}/cart/${variantId}:1`;
+/* Code links — whitefall26.com/?code=WAITLIST (or an ambassador's code, e.g.
+   ?code=EVAN) carries the code straight into checkout, so the buyer never has
+   to find Shopify's discount box. Letters and numbers only; anything else is
+   ignored. Kept for the visit, so it survives scrolling and in-page links.
+   No code in the address → the checkout link is exactly what it always was.
+   An expired code doesn't block checkout — Shopify just says it isn't valid. */
+const PROMO_OK = (c) => /^[A-Z0-9]{2,30}$/.test(c);
+const PROMO = (() => {
+  let c = "";
+  try { c = (new URLSearchParams(window.location.search).get("code") || "").trim().toUpperCase(); } catch (e) {}
+  if (!PROMO_OK(c)) c = "";
+  try {
+    if (c) sessionStorage.setItem("wf-code", c);
+    else c = (sessionStorage.getItem("wf-code") || "").toUpperCase();
+  } catch (e) {}
+  return PROMO_OK(c) ? c : "";
+})();
+const checkoutLink = (variantId) =>
+  `https://${SHOP_DOMAIN}/cart/${variantId}:1${PROMO ? `?discount=${encodeURIComponent(PROMO)}` : ""}`;
 /* OPEN_SHOP_NOW — the on/off switch for selling early.
    true  → BUY NOW shows on the live site right away, ignoring the drop date.
    false → the shop stays hidden until the drop date below, then opens itself.
    Selling also needs the crewneck live on Shopify's Online Store channel —
-   the product is Active but its Online Store listing is scheduled for the
-   drop (Nov 4, 7:00 PM Central), so cart links can't check out before then. */
+   the product is Active but its Online Store listing is scheduled for 6:55 PM
+   Central on Nov 4 — five minutes before the site opens the shop at 7:00, so
+   Shopify's scheduler has finished by the time the first BUY NOW is tapped. */
 const OPEN_SHOP_NOW = false;
 const FORCE_DROP_LIVE = OPEN_SHOP_NOW || import.meta.env.VITE_DROP_LIVE === "1";
 // matches the five Shopify variants
@@ -732,7 +751,7 @@ function PieceShop({ shopId, fit, onNotify, live }) {
           <p style={{ ...mono, fontSize: 10, color: S.ash, letterSpacing: "0.16em", lineHeight: 1.9, margin: "14px 0 0" }}>
             US SHIPPING · LOCAL HAND DELIVERY<br />
             NO REFUNDS · EXCHANGES WITHIN 14 DAYS<br />
-            <span style={{ color: S.frost }}>HAVE A CODE? ADD IT AT CHECKOUT</span>
+            <span style={{ color: S.frost }}>{PROMO ? `CODE ${PROMO} APPLIES AT CHECKOUT` : "HAVE A CODE? ADD IT AT CHECKOUT"}</span>
           </p>
         </>
       ) : (
