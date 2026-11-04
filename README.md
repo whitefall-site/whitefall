@@ -127,7 +127,7 @@ Or without GitHub: `npx vercel` in this folder and follow the prompts.
 The site stays the face of the brand; Shopify handles the money. Buyers pick a
 size **on whitefall**, tap BUY NOW, and land **straight on Shopify checkout**
 with that size already in the bag — Shopify's own store pages are never seen.
-(Technically a "cart permalink": `a1xduc-bf.myshopify.com/cart/<size id>:1`.)
+(Technically a "cart permalink": `whitefall26.myshopify.com/cart/<size id>:1`.)
 
 What's wired in the code:
 
@@ -181,7 +181,7 @@ on drop day — size picker, BUY NOW, the lot — with a blue PREVIEW banner.
 
 Test order, start to finish:
 
-1. In Safari, open `a1xduc-bf.myshopify.com` and enter the store password
+1. In Safari, open `whitefall26.myshopify.com` and enter the store password
    once (Online Store → Preferences shows it) — that lets *your* phone past the
    lock.
 2. Shopify → Products → Founding Member Crewneck → set size **S** to 1.

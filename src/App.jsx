@@ -108,7 +108,9 @@ const LOOKBOOK = [
 
    BUY NOW only appears once the drop is live, so none of this shows early.
    Full owner runbook in README → "Shopify — the commerce engine". */
-const SHOP_DOMAIN = "a1xduc-bf.myshopify.com";
+// The store's primary address (was a1xduc-bf.myshopify.com, which still
+// forwards here) — linking straight to it skips a redirect at checkout.
+const SHOP_DOMAIN = "whitefall26.myshopify.com";
 const SHOP = {
   crewneck: {
     price: import.meta.env.VITE_CREWNECK_PRICE || "$69.99",

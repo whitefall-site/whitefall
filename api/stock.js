@@ -20,7 +20,7 @@
 ———————————————————————————————————————————————— */
 
 const shopDomain = () =>
-  (process.env.SHOPIFY_STORE || "a1xduc-bf.myshopify.com")
+  (process.env.SHOPIFY_STORE || "whitefall26.myshopify.com")
     .replace(/^https?:\/\//, "")
     .replace(/\/+$/, "");
 
@@ -46,14 +46,17 @@ export default async function handler(req, res) {
   let r;
   try {
     r = await fetch(`https://${shopDomain()}/products/${handle}.js`, {
-      redirect: "manual", // a redirect here means the password page
+      // Follow redirects: the store's primary address moved from
+      // a1xduc-bf.myshopify.com to whitefall26.myshopify.com, and the old one
+      // now forwards to the new one. Only a landing on /password means locked.
+      redirect: "follow",
       headers: { accept: "application/json" },
       signal: AbortSignal.timeout(6000),
     });
   } catch (e) {
     return fail("unreachable");
   }
-  if (r.status >= 300 && r.status < 400) return fail("store-locked");
+  if (/\/password(\/|\?|$)/.test(r.url || "")) return fail("store-locked");
   if (r.status === 404) return fail("not-published");
   if (!r.ok) return fail(`shopify-${r.status}`);
 
