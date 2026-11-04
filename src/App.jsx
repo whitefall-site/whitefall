@@ -765,7 +765,7 @@ const SHIPPING_FACTS = [
 const RETURN_FACTS = [
   "NO REFUNDS — EXCHANGES ONLY",
   "WITHIN 14 DAYS OF DELIVERY",
-  "UNWORN, TAGS ON",
+  "MUST BE UNWORN",
   "EMAIL YOUR ORDER NUMBER + NEW SIZE, WE SEND INSTRUCTIONS",
 ];
 
@@ -797,7 +797,7 @@ const buildFaqs = (live) => [
         : "Release dates and every update go up on Instagram — follow @whitefall26.",
   },
   { id: "tracking", q: "Where's my order?", a: "Every order gets a tracking link by email within 24 hours of shipping. Can't find it? Email us your order number, or DM us on Instagram — we respond within one business day." },
-  { id: "returns", q: "What's your return policy?", a: "No refunds — exchanges only, within 14 days of delivery. Pieces must be unworn with tags on. Email us your order number and the size you want, and we'll send instructions. Twin Cities hand delivery: try another size at drop-off and swap on the spot. Arrived damaged or wrong? Email us within 14 days and we'll make it right." },
+  { id: "returns", q: "What's your return policy?", a: "No refunds — exchanges only, within 14 days of delivery. Pieces must be unworn. Email us your order number and the size you want, and we'll send instructions. Twin Cities hand delivery: try another size at drop-off and swap on the spot. Arrived damaged or wrong? Email us within 14 days and we'll make it right." },
   { id: "sizing", q: "How does sizing run?", a: "The Founding Member Crewneck runs tailored — cut long in the body and sleeves. Every photo shows the size the model has on. Between sizes? Size up. Want exact measurements? Email us or DM us on Instagram and we'll send them." },
   { id: "restocks", q: "Will pieces restock?", a: "Rarely, and never guaranteed. Runs are small by design — when a piece sells out, don't count on seeing it again. If a restock ever happens, the email list hears first." },
   { id: "shipping", q: "Where do you ship?", a: "Anywhere in the United States. Standard shipping is $8 and express is $15 — you pick at checkout, and every shipped order gets a tracking link by email within 24 hours of shipping. In the Twin Cities you can also choose hand delivery: $5 within 3 days, or $15 same day, and you can try another size at drop-off." },
