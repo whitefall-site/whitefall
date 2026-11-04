@@ -149,11 +149,13 @@ What's wired in the code:
   second the site's countdown opens the shop. Hidden on the Shop app.
 - Storefront password OFF. Live theme is the checkout-only copy, so any plain
   Shopify page bounces back to whitefall26.com.
-- Shipping (US): Standard $8 · Express $15 · free at $100+ (note: the site's
-  BUY NOW sends one piece per checkout, so one crewneck never reaches $100).
-- Policies (Settings → Policies) match the site: **no refunds, exchanges only
-  within 14 days**, unworn with tags on; US only; Twin Cities hand delivery
-  $5 within 3 days / $15 same day, try another size at drop-off.
+- Shipping (US): Standard $8 · Express $15 · free Standard at $70+ in Shopify
+  right now. The policy says $100+, so change the free rate's minimum to $100
+  (Settings → Shipping → General profile). One crewneck ($69.99) never
+  qualifies either way, since BUY NOW sends one piece per checkout.
+- Policies: only the privacy policy is in Shopify so far. Paste the refund
+  (no refunds, exchanges within 14 days) and shipping policies in Settings →
+  Policies. The Shopify connection can't write them.
 
 ### Still yours to do in Shopify (phone is fine)
 
