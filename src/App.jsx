@@ -50,21 +50,43 @@ const PIECES = [
 
 /* FW26 lookbook — the shoot. Each entry is a base path in public/lookbook/:
    <base>-600.webp (grid), <base>.webp (full screen), <base>.jpg (fallback).
-   Order alternates night and studio frames so neighbours never match. */
+   Tall frames are 1200×1800 (grid copy 600×900). A frame marked "wide" is a
+   landscape shot, 1800×1200 (grid copy 900×600): it takes two columns in the
+   grid so it isn't cropped down to a sliver.
+   Array order is display order — it alternates night and studio frames so
+   neighbours never match, and spaces out repeat scenes (fire table, hoop,
+   doorway, pickleball). File numbers are just names: 01–12 were the first
+   batch, 13–28 the second. */
 const LOOKBOOK = [
   ["fw26-lb-01", "Four people in Whitefall crewnecks around a fire table at night, flames lighting the chest lockups."],
-  ["fw26-lb-02", "Back of the Founding Member Crewneck in the studio — mountain A screen print across the shoulders, piping down the sleeves."],
+  ["fw26-lb-18", "Pointing at the WHITEFALL / FOUNDING MEMBER chest lockup in the studio."],
+  ["fw26-lb-27", "Four backs under a basketball hoop at night — four mountain A logos in a row."],
   ["fw26-lb-03", "Arms stretched wide in an oversized Founding Member Crewneck, grinning."],
+  ["fw26-lb-08", "Six friends in Whitefall crewnecks pointing at the camera at night, piping lit by the flash."],
+  ["fw26-lb-19", "Both thumbs pointing back at the mountain A screen print, studio."],
+  ["fw26-lb-23", "Two guys at the fire table at night, chest lockups lit gold by the flames.", "wide"],
+  ["fw26-lb-14", "Back view on a pickleball court at night, mountain A across the shoulders, ball in the air."],
+  ["fw26-lb-07", "Smiling over the shoulder in the Founding Member Crewneck against a pale studio wall."],
   ["fw26-lb-04", "Low angle at night — two people on a stone planter, the crewnecks' piping and back logo catching the light."],
+  ["fw26-lb-21", "Laughing, eyes shut, in the Founding Member Crewneck."],
+  ["fw26-lb-16", "Six people walking into a lit doorway at night, mountain A logos and piping glowing on every back."],
+  ["fw26-lb-02", "Back of the Founding Member Crewneck in the studio — mountain A screen print across the shoulders, piping down the sleeves."],
+  ["fw26-lb-28", "Four guys standing under a basketball hoop at night in Founding Member Crewnecks.", "wide"],
+  ["fw26-lb-25", "Four people on lit stone steps at night, the crewnecks' piping glowing orange."],
+  ["fw26-lb-10", "Pointing at the camera in the Founding Member Crewneck, chain over the collar."],
   ["fw26-lb-05", "Founding Member Crewneck at night, basketball under one arm, chest lockup in focus."],
   ["fw26-lb-06", "Two guys in Whitefall crewnecks, one carrying the other, both chest lockups showing."],
-  ["fw26-lb-07", "Smiling over the shoulder in the Founding Member Crewneck against a pale studio wall."],
-  ["fw26-lb-08", "Six friends in Whitefall crewnecks pointing at the camera at night, piping lit by the flash."],
+  ["fw26-lb-26", "Laughing on a pickleball court at night, paddle in hand, chest lockup showing."],
+  ["fw26-lb-22", "Back turned, arm across the face, mountain A screen print across the back."],
   ["fw26-lb-09", "Back view at night beside a skateboard, the mountain A bright across the crewneck."],
-  ["fw26-lb-10", "Pointing at the camera in the Founding Member Crewneck, chain over the collar."],
+  ["fw26-lb-17", "Grinning in a Founding Member Crewneck sized way up, the hem past the hips."],
+  ["fw26-lb-24", "Three people behind a wall of flame at the fire table at night."],
   ["fw26-lb-11", "Hand on chin, looking up, in the Founding Member Crewneck."],
+  ["fw26-lb-15", "Two at a lit front door at night — one turned to show the mountain A, one facing the camera, piping glowing."],
+  ["fw26-lb-20", "Low lunge, finger pointed at the camera, chest lockup in view."],
+  ["fw26-lb-13", "Profile in the dark, head down, the crewneck's piping catching a sliver of light."],
   ["fw26-lb-12", "Back of the Founding Member Crewneck — mountain A logo and contrast piping."],
-].map(([base, alt]) => ({ base: `/lookbook/${base}`, alt }));
+].map(([base, alt, shape]) => ({ base: `/lookbook/${base}`, alt, wide: shape === "wide" }));
 
 /* ——— SHOP CONFIG — the site is the storefront, Shopify is the checkout ———
    The buyer picks a size HERE and BUY NOW drops them straight onto Shopify's
@@ -309,7 +331,11 @@ body { margin: 0; }
   .piece-shot, .shot-btn { max-width: 440px; margin: 0 auto; }
 }
 /* lookbook — 2 / 3 / 4 columns of 2:3 frames */
-.lb-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.lb-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; grid-auto-flow: dense; }
+/* landscape frames: a full row on phones at their own 3:2; on wider screens
+   two columns, matching the height of the tall frame beside them */
+.lb-tile.wide { grid-column: span 2; aspect-ratio: 3 / 2; }
+@media (min-width: 760px) { .lb-tile.wide { aspect-ratio: auto; } }
 @media (min-width: 760px) { .lb-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; } }
 @media (min-width: 1100px) { .lb-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; } }
 .lb-tile { display: block; padding: 0; border: 1px solid rgba(237,236,232,.08); background: #0E131E; cursor: zoom-in; overflow: hidden; aspect-ratio: 2 / 3; }
@@ -1401,12 +1427,17 @@ export default function App() {
           </div>
           <div className="lb-grid">
             {LOOKBOOK.map((f, i) => (
-              <button key={f.base} type="button" className="lb-tile" aria-label={`Open lookbook photo ${i + 1} of ${LOOKBOOK.length} full screen`}
+              <button key={f.base} type="button" className={"lb-tile" + (f.wide ? " wide" : "")} aria-label={`Open lookbook photo ${i + 1} of ${LOOKBOOK.length} full screen`}
                 onClick={() => setZoom({ name: "FW26 LOOKBOOK", alt: f.alt, alts: LOOKBOOK.map((x) => x.alt), images: LOOKBOOK.map((x) => `${x.base}.webp`), start: i })}>
                 <picture>
-                  <source type="image/webp" srcSet={`${f.base}-600.webp 600w, ${f.base}.webp 1200w`}
-                    sizes="(max-width: 759px) 50vw, (max-width: 1099px) 33vw, 340px" />
-                  <img src={`${f.base}.jpg`} alt={f.alt} width="1200" height="1800" loading="lazy" decoding="async" />
+                  {f.wide ? (
+                    <source type="image/webp" srcSet={`${f.base}-600.webp 900w, ${f.base}.webp 1800w`}
+                      sizes="(max-width: 759px) 100vw, (max-width: 1099px) 66vw, 690px" />
+                  ) : (
+                    <source type="image/webp" srcSet={`${f.base}-600.webp 600w, ${f.base}.webp 1200w`}
+                      sizes="(max-width: 759px) 50vw, (max-width: 1099px) 33vw, 340px" />
+                  )}
+                  <img src={`${f.base}.jpg`} alt={f.alt} width={f.wide ? 1800 : 1200} height={f.wide ? 1200 : 1800} loading="lazy" decoding="async" />
                 </picture>
               </button>
             ))}
@@ -1687,7 +1718,9 @@ export default function App() {
             onScroll={(e) => setZoomAt(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))}>
             {zoom.images.map((src, i) => (
               <div key={src} className="zoom-slide" onClick={(e) => { if (e.target === e.currentTarget) setZoom(null); }}>
-                <img src={src} alt={zoom.alts ? zoom.alts[i] : i === 0 ? zoom.alt : `${zoom.name}, view ${i + 1}`} />
+                {/* only the tapped photo loads up front — 28 full-size frames at once is a lot on a phone plan */}
+                <img src={src} alt={zoom.alts ? zoom.alts[i] : i === 0 ? zoom.alt : `${zoom.name}, view ${i + 1}`}
+                  loading={Math.abs(i - (zoom.start || 0)) <= 1 ? "eager" : "lazy"} decoding="async" />
               </div>
             ))}
           </div>
