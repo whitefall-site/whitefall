@@ -780,7 +780,7 @@ const SHIPPING_FACTS = [
   "SHIPS ANYWHERE IN THE US",
   "STANDARD $8 · EXPRESS $15 — PICK AT CHECKOUT",
   "TRACKING LINK BY EMAIL WITHIN 24 HOURS OF SHIPPING",
-  "TWIN CITIES: HAND DELIVERY — $5 WITHIN 3 DAYS · $15 SAME DAY",
+  "TWIN CITIES: HAND DELIVERY — $7 WITHIN 3 DAYS · $15 SAME DAY",
   "TRY ANOTHER SIZE AT DROP-OFF",
 ];
 const RETURN_FACTS = [
@@ -821,8 +821,8 @@ const buildFaqs = (live) => [
   { id: "returns", q: "What's your return policy?", a: "No refunds — exchanges only, within 14 days of delivery. Pieces must be unworn. Email us your order number and the size you want, and we'll send instructions. Twin Cities hand delivery: try another size at drop-off and swap on the spot. Arrived damaged or wrong? Email us within 14 days and we'll make it right." },
   { id: "sizing", q: "How does sizing run?", a: "The Founding Member Crewneck runs tailored — cut long in the body and sleeves. Every photo shows the size the model has on. Between sizes? Size up. Want exact measurements? Email us or DM us on Instagram and we'll send them." },
   { id: "restocks", q: "Will pieces restock?", a: "Rarely, and never guaranteed. Runs are small by design — when a piece sells out, don't count on seeing it again. If a restock ever happens, the email list hears first." },
-  { id: "shipping", q: "Where do you ship?", a: "Anywhere in the United States. Standard shipping is $8 and express is $15 — you pick at checkout, and every shipped order gets a tracking link by email within 24 hours of shipping. In the Twin Cities you can also choose hand delivery: $5 within 3 days, or $15 same day, and you can try another size at drop-off." },
-  { id: "local", q: "How does local delivery work?", a: "Choose local delivery at checkout for $5 and it's at your door within 3 days. Need it same day ($15)? DM @whitefall26 and we'll set it up. Not sure on size? Ask, and we'll bring another size to the drop-off." },
+  { id: "shipping", q: "Where do you ship?", a: "Anywhere in the United States. Standard shipping is $8 and express is $15 — you pick at checkout, and every shipped order gets a tracking link by email within 24 hours of shipping. In the Twin Cities you can also choose hand delivery: $7 within 3 days, or $15 same day, and you can try another size at drop-off." },
+  { id: "local", q: "How does local delivery work?", a: "Choose local delivery at checkout for $7 and it's at your door within 3 days. Need it same day ($15)? DM @whitefall26 and we'll set it up. Not sure on size? Ask, and we'll bring another size to the drop-off." },
 ];
 
 /* Brand support inbox — published on the site on purpose. Keep this a brand

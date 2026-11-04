@@ -163,7 +163,7 @@ What's wired in the code:
 
 1. **Local delivery** — Settings → Shipping and delivery → Local delivery →
    turn on for your location, set the Twin Cities zone (postal codes or
-   distance), price **$5**, delivery info "Within 3 days". The site tells
+   distance), price **$7** (25 mi radius), delivery info "Within 3 days". The site tells
    Twin Cities buyers to pick it at checkout. Shopify only allows one local
    price per address, so **same day ($15) runs through DMs**.
 2. **Brand email** — Settings → General → store contact email is still your
