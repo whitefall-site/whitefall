@@ -1304,7 +1304,7 @@ export default function App() {
           </p>
           <div className="hero-in hd-cta" style={{ marginTop: 22, display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <a href="#fw26" onClick={go("fw26")} style={{ ...mono, background: S.snow, color: S.night, padding: "16px 32px", textDecoration: "none", fontSize: 13, letterSpacing: "0.1em", fontWeight: 700 }}>
-              {live ? "SHOP THE DROP ▲" : "SEE THE CREWNECK"}
+              {live ? "SHOP THE CREWNECK ▲" : "SEE THE CREWNECK"}
             </a>
             <a href="#lookbook" onClick={go("lookbook")} style={{ ...mono, border: `1px solid ${S.line}`, color: S.snow, padding: "16px 32px", textDecoration: "none", fontSize: 13, letterSpacing: "0.1em", background: "rgba(5,7,13,.4)", backdropFilter: "blur(4px)" }}>
               LOOKBOOK
