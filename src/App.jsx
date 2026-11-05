@@ -646,9 +646,7 @@ function Countdown() {
       ))}
       <span style={{ ...mono, fontSize: 10, letterSpacing: "0.18em", color: S.frost, marginLeft: 6 }}>UNTIL THE DROP</span>
     </>
-  ) : (
-    <span style={{ ...anton, fontSize: 30, color: S.frost, letterSpacing: "0.06em" }}>THE DROP IS LIVE ▲</span>
-  );
+  ) : null;
 }
 
 /* Live per-size stock from Shopify, via this site's /api/stock (cached at
@@ -1372,10 +1370,14 @@ export default function App() {
             </h2>
             <span style={{ ...mono, fontSize: 12, color: S.ash, letterSpacing: "0.18em" }}>FALL / WINTER 2026 · FOUNDING RUN</span>
           </div>
-          {/* drop countdown */}
-          <div className="rv" style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", margin: "22px 0 40px" }}>
-            <Countdown />
-          </div>
+          {/* drop countdown — gone entirely once the drop is open (no "live" banner) */}
+          {!live ? (
+            <div className="rv" style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", margin: "22px 0 40px" }}>
+              <Countdown />
+            </div>
+          ) : (
+            <div aria-hidden="true" style={{ height: 28 }} />
+          )}
 
           <div className="stagger" style={{ borderTop: `1px solid ${S.line}` }}>
             {PIECES.filter((p) => p.dropping).map((p) => (p.shot ? (
