@@ -1495,10 +1495,6 @@ export default function App() {
                 </a>
               )}
               <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap", marginTop: 18 }}>
-                <button onClick={buildCard} disabled={cardBusy}
-                  style={{ ...mono, background: S.snow, color: S.night, border: "none", padding: "14px 24px", fontSize: 12, fontWeight: 700, letterSpacing: "0.12em", cursor: "pointer" }}>
-                  {cardBusy ? "BUILDING…" : "GET YOUR MEMBER CARD ▲"}
-                </button>
                 <button onClick={shareSite}
                   style={{ ...mono, background: "none", border: `1px solid ${S.line}`, color: S.snow, padding: "14px 24px", fontSize: 12, letterSpacing: "0.12em", cursor: "pointer" }}>
                   {shared ? "LINK SENT ▲" : "PUT A FRIEND ON"}
@@ -1694,10 +1690,6 @@ export default function App() {
                   </a>
                 )}
                 <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap", marginTop: 18 }}>
-                  <button onClick={buildCard} disabled={cardBusy}
-                    style={{ ...mono, background: S.snow, color: S.night, border: "none", padding: "13px 18px", fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", cursor: "pointer" }}>
-                    {cardBusy ? "BUILDING…" : "GET YOUR MEMBER CARD ▲"}
-                  </button>
                   <button onClick={() => setPopupDone(true)}
                     style={{ ...mono, background: "none", border: `1px solid ${S.line}`, color: S.snow, padding: "13px 18px", fontSize: 11, letterSpacing: "0.1em", cursor: "pointer" }}>
                     DONE
