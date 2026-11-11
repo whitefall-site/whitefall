@@ -306,7 +306,15 @@ body { margin: 0; }
 }
 .size-chip:hover:not(:disabled) { border-color: #BFD3DB; }
 .size-chip.on { background: #EDECE8; color: #05070D; border-color: #EDECE8; }
-.size-chip:disabled { color: #7E8590; border-color: rgba(237,236,232,.1); text-decoration: line-through; cursor: not-allowed; }
+/* sold-out size: stays in the row with a corner-to-corner X through the box,
+   the way most stores mark a size that's gone. Two diagonal hairlines drawn
+   as gradients, so the X fits any chip width (they stretch on phones). */
+.size-chip:disabled {
+  color: #7E8590; border-color: rgba(237,236,232,.16); cursor: not-allowed;
+  background:
+    linear-gradient(to top right, transparent calc(50% - 0.75px), rgba(237,236,232,.32) calc(50% - 0.75px), rgba(237,236,232,.32) calc(50% + 0.75px), transparent calc(50% + 0.75px)),
+    linear-gradient(to bottom right, transparent calc(50% - 0.75px), rgba(237,236,232,.32) calc(50% - 0.75px), rgba(237,236,232,.32) calc(50% + 0.75px), transparent calc(50% + 0.75px));
+}
 .buy-btn {
   display: inline-block; box-sizing: border-box; text-align: center; text-decoration: none; cursor: pointer;
   font-family: 'Space Mono', monospace; font-size: 14px; font-weight: 700; letter-spacing: 0.1em;
