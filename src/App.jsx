@@ -1479,6 +1479,28 @@ export default function App() {
         </div>
       </section>
 
+      {/* ——— THE NAME — what Whitefall and Freedom to Fall mean ——— */}
+      <section id="meaning" style={{ padding: "8vw 22px", background: S.steel, borderTop: `1px solid ${S.line}`, position: "relative", overflow: "hidden" }}>
+        <img src={LOGO} alt="" aria-hidden style={{
+          position: "absolute", right: "-12%", top: "50%", width: "min(560px, 70vw)", opacity: 0.035,
+          transform: "translateY(-50%) rotate(6deg)", pointerEvents: "none",
+        }} />
+        <div style={{ maxWidth: 1000, margin: "0 auto", position: "relative" }}>
+          <h2 className="rv" style={{ ...mono, fontWeight: 400, color: S.frost, fontSize: 12, letterSpacing: "0.28em", margin: "0 0 clamp(28px, 4vw, 56px)" }}>THE NAME</h2>
+          {[
+            <><span style={{ color: S.frost }}>Whitefall</span> is the moment a mountain lets go, when still snow turns into a force nothing on the slope can stop.</>,
+            <><span style={{ color: S.frost }}>Freedom to Fall</span> means fear isn't a stop sign. It's the signal to move.</>,
+            <>A fall only happens to someone who was climbing, and the climb matters more than the peak.</>,
+          ].map((line, i, all) => (
+            <p key={i} className="rv" style={{
+              ...anton, textTransform: "uppercase", color: S.snow,
+              fontSize: "clamp(24px, 3.8vw, 50px)", lineHeight: 1.12, letterSpacing: "0.01em",
+              margin: i === all.length - 1 ? 0 : "0 0 clamp(26px, 4vw, 52px)", maxWidth: 940,
+            }}>{line}</p>
+          ))}
+        </div>
+      </section>
+
       {/* ——— EMAIL LIST (section id stays "waitlist" so old links still land) ——— */}
       <section id="waitlist" style={{ padding: "6vw 22px 7vw", background: S.night, textAlign: "center", position: "relative", overflow: "hidden", borderTop: `1px solid ${S.line}` }}>
         <div className="snowfall" style={{ position: "absolute", inset: 0, opacity: 0.4, pointerEvents: "none" }} aria-hidden />
