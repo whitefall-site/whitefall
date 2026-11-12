@@ -276,6 +276,14 @@ body { margin: 0; }
 @media (max-width: 640px) {
   .contact-row { grid-template-columns: 1fr; gap: 6px; }
 }
+/* THE NAME definition rows */
+.name-row {
+  display: grid; grid-template-columns: minmax(200px, 320px) 1fr; gap: 24px; align-items: baseline;
+  padding: 24px 0; border-bottom: 1px solid rgba(237,236,232,.12);
+}
+@media (max-width: 640px) {
+  .name-row { grid-template-columns: 1fr; gap: 8px; padding: 20px 0; }
+}
 /* footer */
 .foot-cols { display: flex; gap: 56px; flex-wrap: wrap; }
 .foot-link {
@@ -1485,19 +1493,21 @@ export default function App() {
           position: "absolute", right: "-12%", top: "50%", width: "min(560px, 70vw)", opacity: 0.035,
           transform: "translateY(-50%) rotate(6deg)", pointerEvents: "none",
         }} />
-        <div style={{ maxWidth: 1000, margin: "0 auto", position: "relative" }}>
-          <h2 className="rv" style={{ ...mono, fontWeight: 400, color: S.frost, fontSize: 12, letterSpacing: "0.28em", margin: "0 0 clamp(28px, 4vw, 56px)" }}>THE NAME</h2>
-          {[
-            <><span style={{ color: S.frost }}>Whitefall</span> is the moment a mountain lets go, when still snow turns into a force nothing on the slope can stop.</>,
-            <><span style={{ color: S.frost }}>Freedom to Fall</span> means fear isn't a stop sign. It's the signal to move.</>,
-            <>A fall only happens to someone who was climbing, and the climb matters more than the peak.</>,
-          ].map((line, i, all) => (
-            <p key={i} className="rv" style={{
-              ...anton, textTransform: "uppercase", color: S.snow,
-              fontSize: "clamp(24px, 3.8vw, 50px)", lineHeight: 1.12, letterSpacing: "0.01em",
-              margin: i === all.length - 1 ? 0 : "0 0 clamp(26px, 4vw, 52px)", maxWidth: 940,
-            }}>{line}</p>
-          ))}
+        <div style={{ maxWidth: 1100, margin: "0 auto", position: "relative" }}>
+          <h2 className="rv" style={{ ...mono, fontWeight: 400, color: S.frost, fontSize: 12, letterSpacing: "0.28em", margin: "0 0 18px" }}>THE NAME</h2>
+          {/* plain definitions, house voice: stated, not sold */}
+          <dl className="rv" style={{ margin: 0, borderTop: `1px solid ${S.line}` }}>
+            {[
+              ["WHITEFALL", "SNOW BREAKING LOOSE FROM A MOUNTAIN"],
+              ["THE LOGO", "THE MOUNTAIN, INSIDE THE A"],
+              ["FREEDOM TO FALL", "THE RIGHT TO GO FOR SOMETHING AND MISS"],
+            ].map(([term, def]) => (
+              <div key={term} className="name-row">
+                <dt style={{ ...anton, fontSize: "clamp(22px, 2.6vw, 32px)", letterSpacing: "0.03em", color: S.snow }}>{term}</dt>
+                <dd style={{ ...mono, margin: 0, fontSize: 13, letterSpacing: "0.14em", lineHeight: 1.6, color: S.ash }}>{def}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
       </section>
 
